@@ -1,5 +1,8 @@
 package com.jtel.mtproto.tl;
 
+import com.sun.org.apache.xerces.internal.impl.dv.util.HexBin;
+
+import java.nio.ByteBuffer;
 import java.util.List;
 
 /**
@@ -16,4 +19,9 @@ public class TlMethod {
     public String method;
     public List<TlParam> params;
     public String type;
+
+    @Override
+    public String toString() {
+        return String.format("%s#%s %s = %s",method, HexBin.encode( ByteBuffer.allocate(4).putInt(id).array()),params.toString(),type);
+    }
 }
