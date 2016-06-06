@@ -9,7 +9,7 @@ public class Main {
 
     public static void main(String[] args) throws IOException {
         TlSchemaManagerService schemaManagerService = TlSchemaManagerService.getInstance();
-        TlMethod o =schemaManagerService.getMethod("req_pq",true);
+        TlMethod o =schemaManagerService.getMethod("ping_delay_disconnect",true);
         System.out.println(o);
     }
 }
