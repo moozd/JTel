@@ -10,6 +10,7 @@ import com.jtel.mtproto.tl.TlSchema;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -36,6 +37,7 @@ public final class TlSchemaManagerService {
     private TlSchema apiSchema;
 
     private TlSchemaManagerService() throws IOException{
+        long time = System.currentTimeMillis();
         try(Reader reader = new FileReader(Config.mtpSchema)){
             Gson gson = new GsonBuilder().create();
             mtpSchema = gson.fromJson(reader, TlSchema.class);
@@ -45,6 +47,10 @@ public final class TlSchemaManagerService {
             apiSchema = gson.fromJson(reader, TlSchema.class);
         }
 
+        System.out.println(String.format(getClass().getSimpleName() + " [Started]  Schema layer %s",Config.schemaLayer));
+        System.out.println(String.format("Mtproto \n\tcostructors : %s \n\tmethods     : %s", mtpSchema.constructors.size() , mtpSchema.methods.size()));
+        System.out.println(String.format("API     \n\tcostructors : %s \n\tmethods     : %s", apiSchema.constructors.size() , apiSchema.methods.size()));
+        System.out.println();
     }
 
     public TlObject getConstructor(String predicate, boolean mtp) {
@@ -63,7 +69,37 @@ public final class TlSchemaManagerService {
         }
         return null;
     }
+    public TlObject getConstructor(String predicate) {
+        TlObject tlObject = getConstructor(predicate,false);
+        if(tlObject == null) {
+            tlObject = getConstructor(predicate,true);
+        }
+        return tlObject;
+    }
+    public List<TlObject> getDefinitions(String type, boolean mtp) {
+        List<TlObject> constructors;
+        List<TlObject> definitions = new ArrayList<>();
+        if(mtp) {
+            constructors = mtpSchema.constructors;
+        }
+        else {
+            constructors = apiSchema.constructors;
+        }
 
+        for (TlObject o : constructors) {
+            if (o.type.equals(type)) {
+                definitions.add(o);
+            }
+        }
+        return definitions;
+    }
+    public TlMethod getMethod(String method){
+        TlMethod tlMethod = getMethod(method,false);
+        if (tlMethod == null) {
+            tlMethod = getMethod(method,true);
+        }
+        return tlMethod;
+    }
     public TlMethod getMethod(String method,boolean mtp){
         List<TlMethod> methods;
         if(mtp) {
@@ -81,11 +117,4 @@ public final class TlSchemaManagerService {
         return null;
     }
 
-    public TlSchema getApiSchema() {
-        return apiSchema;
-    }
-
-    public TlSchema getMtpSchema() {
-        return mtpSchema;
-    }
 }
