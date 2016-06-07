@@ -64,6 +64,7 @@ public final class TlSchemaManagerService {
 
         for (TlObject o : constructors) {
             if (o.predicate.equals(predicate)) {
+                System.out.println(o);
                 return o;
             }
         }
@@ -111,6 +112,7 @@ public final class TlSchemaManagerService {
 
         for (TlMethod o : methods) {
             if (o.method.equals(method)) {
+                System.out.println(o);
                 return o;
             }
         }

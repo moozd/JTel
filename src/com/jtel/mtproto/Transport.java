@@ -15,5 +15,5 @@ public interface  Transport {
 
     void send(byte[] message) throws IOException;
 
-    byte[] receive();
+    byte[] receive() throws IOException;
 }

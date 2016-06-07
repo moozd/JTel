@@ -15,6 +15,17 @@ public class TlParam {
 
     public String name;
 
+    Object value;
+
+    public void setValue(Object value) {
+        this.value = value;
+    }
+
+    public <T> T getValue() throws ClassCastException {
+        return (T) this.value;
+    }
+
+
     @Override
     public String toString() {
         return String.format(" %s:%s ",name,type);

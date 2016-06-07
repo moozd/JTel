@@ -1,9 +1,12 @@
 package com.jtel.mtproto;
 
-import java.io.IOException;
-import java.net.Inet4Address;
+import com.jtel.mtproto.services.TimeManagerService;
+
+import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+
+import static com.jtel.mtproto.tl.Streams.*;
 
 /**
  * This file is part of JTel
@@ -27,14 +30,28 @@ public class PlainTcpTransport implements Transport {
 
     @Override
     public void send(byte[] message) throws IOException {
-        long auth=0;
-        socket.getOutputStream().write(new byte[]{0,0,0,0,0,0,0,0});
+
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        writeInt64(os, 0L);
+        writeInt64(os, TimeManagerService.getInstance().generateMessageId());
+        writeInt32(os,message.length);
+        os.write(message);
+        printHexTable(os.toByteArray());
 
     }
 
     @Override
-    public byte[] receive() {
-        return new byte[0];
+    public byte[] receive() throws IOException {
+        InputStream is = socket.getInputStream();
+        long auth_id    = readInt64(is);
+        long message_id = readInt64(is);
+        int message_len = readInt32(is);
+
+        byte[] response = new byte[message_len];
+
+        is.read(response);
+
+        return  response;
     }
 
     public Socket getSocket() {

@@ -1,5 +1,7 @@
 package com.jtel.mtproto.services;
 
+import java.util.Random;
+
 /**
  * This file is part of JTel
  * IntelliJ idea.
@@ -36,7 +38,10 @@ public final class TimeManagerService {
     }
 
     public long generateMessageId() {
-        return ((getLocalTime()+timeDelta)/1000) << 32;
+
+    int a=        new Random().nextInt(0x0FFFFFFF);
+
+        return  ((getLocalTime()+timeDelta)/1000) << 32 | a ;
     }
 
 
