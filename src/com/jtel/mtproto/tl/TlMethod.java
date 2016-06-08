@@ -48,8 +48,8 @@ public class TlMethod implements Tl {
 
 
     @Override
-    public TlObject deSerialize(InputStream is) throws IOException {
-        return null;
+    public void deSerialize(InputStream is) throws IOException {
+        return;
     }
 
     @Override

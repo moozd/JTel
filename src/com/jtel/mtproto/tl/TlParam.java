@@ -13,9 +13,9 @@ public class TlParam {
 
     public String type;
 
-    public String name;
+    public String name = "primitive";
 
-    Object value;
+    Object value = null;
 
     public void setValue(Object value) {
         this.value = value;
@@ -26,8 +26,20 @@ public class TlParam {
     }
 
 
+    public TlParam(){
+
+    }
+
+    public TlParam(String type){
+        this.type=type;
+    }
     @Override
     public String toString() {
-        return String.format(" %s:%s ",name,type);
+
+        String val = "= " + getValue();
+        if( getValue() instanceof byte[]){
+            val = "= " + "[len: "+ ((byte[]) getValue()).length + "]" + getValue();
+        }
+        return String.format(" %s:%s %s  ",name,type,val);
     }
 }

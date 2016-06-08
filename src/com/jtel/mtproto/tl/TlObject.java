@@ -1,5 +1,6 @@
 package com.jtel.mtproto.tl;
 
+import com.jtel.mtproto.services.TlSchemaManagerService;
 import com.sun.org.apache.xerces.internal.impl.dv.util.HexBin;
 
 import java.io.ByteArrayOutputStream;
@@ -21,7 +22,7 @@ import static com.jtel.mtproto.tl.Streams.*;
 
 public class TlObject implements Tl {
 
-    int id;
+    public int id;
     public String predicate;
     public List<TlParam> params;
     public String type;
@@ -47,8 +48,13 @@ public class TlObject implements Tl {
 
 
     @Override
-    public TlObject deSerialize(InputStream is) throws IOException {
-        return null;
+    public void deSerialize(InputStream is) throws IOException {
+        int id = readInt32(is);
+        TlObject object = TlSchemaManagerService.getInstance().getConstructor(id);
+        this.id        = object.id;
+        this.predicate = object.predicate;
+        this.type      = object.type;
+        this.params = readParams(is, object.params);
     }
 
     @Override

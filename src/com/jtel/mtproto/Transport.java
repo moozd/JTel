@@ -1,5 +1,8 @@
 package com.jtel.mtproto;
 
+import com.jtel.mtproto.tl.TlMethod;
+import com.jtel.mtproto.tl.TlObject;
+
 import java.io.IOException;
 
 /**
@@ -13,7 +16,7 @@ import java.io.IOException;
 
 public interface  Transport {
 
-    void send(byte[] message) throws IOException;
+    void send(TlMethod method) throws IOException;
 
-    byte[] receive() throws IOException;
+    TlObject receive() throws IOException;
 }

@@ -47,10 +47,6 @@ public final class TlSchemaManagerService {
             apiSchema = gson.fromJson(reader, TlSchema.class);
         }
 
-        System.out.println(String.format(getClass().getSimpleName() + " [Started]  Schema layer %s",Config.schemaLayer));
-        System.out.println(String.format("Mtproto \n\tcostructors : %s \n\tmethods     : %s", mtpSchema.constructors.size() , mtpSchema.methods.size()));
-        System.out.println(String.format("API     \n\tcostructors : %s \n\tmethods     : %s", apiSchema.constructors.size() , apiSchema.methods.size()));
-        System.out.println();
     }
 
     public TlObject getConstructor(String predicate, boolean mtp) {
@@ -64,7 +60,7 @@ public final class TlSchemaManagerService {
 
         for (TlObject o : constructors) {
             if (o.predicate.equals(predicate)) {
-                System.out.println(o);
+                //System.out.println(o);
                 return o;
             }
         }
@@ -76,6 +72,23 @@ public final class TlSchemaManagerService {
             tlObject = getConstructor(predicate,true);
         }
         return tlObject;
+    }
+    public TlObject getConstructor(int id) {
+
+
+        for (TlObject o : mtpSchema.constructors) {
+            if (o.id == id) {
+               // System.out.println(o);
+                return o;
+            }
+        }
+        for (TlObject o : apiSchema.constructors) {
+            if (o.id == id) {
+                //System.out.println(o);
+                return o;
+            }
+        }
+        return null;
     }
     public List<TlObject> getDefinitions(String type, boolean mtp) {
         List<TlObject> constructors;
@@ -112,7 +125,7 @@ public final class TlSchemaManagerService {
 
         for (TlMethod o : methods) {
             if (o.method.equals(method)) {
-                System.out.println(o);
+//                System.out.println(o);
                 return o;
             }
         }

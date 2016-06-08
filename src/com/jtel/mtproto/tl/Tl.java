@@ -15,5 +15,5 @@ import java.io.OutputStream;
 
 public interface Tl {
     byte[] serialize() throws IOException;
-    TlObject deSerialize(InputStream is) throws IOException;
+    void  deSerialize(InputStream is) throws IOException;
 }
