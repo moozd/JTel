@@ -1,8 +1,8 @@
-package com.jtel.mtproto;
+package com.jtel.mtproto.services;
 
 import com.jtel.common.log.Logger;
-import com.jtel.mtproto.pq.Pq;
-import com.jtel.mtproto.pq.PqSolver;
+import com.jtel.mtproto.Config;
+import com.jtel.mtproto.transport.PlainHttpTransport;
 import com.jtel.mtproto.tl.TlMethod;
 import com.jtel.mtproto.tl.TlObject;
 
@@ -15,19 +15,19 @@ import com.jtel.mtproto.tl.TlObject;
  * @author <a href="mailto:mohammad.mdz72@gmail.com">Mohammad Mohammad Zade</a>
  */
 
-public class Mtproto {
-    private static Mtproto instance;
+public class MtprotoService {
+    private static MtprotoService instance;
 
-    public static Mtproto getInstance() {
+    public static MtprotoService getInstance() {
         if (instance == null) {
-            instance = new Mtproto();
+            instance = new MtprotoService();
         }
         return instance;
     }
 
     private int currentDcID = 1;
 
-    private Mtproto(){
+    private MtprotoService(){
 
     }
 

@@ -1,4 +1,4 @@
-package com.jtel.mtproto;
+package com.jtel.mtproto.transport;
 
 import com.jtel.common.log.Logger;
 import com.jtel.mtproto.services.TimeManagerService;

@@ -1,4 +1,4 @@
-package com.jtel.mtproto;
+package com.jtel.mtproto.transport;
 
 import com.jtel.mtproto.tl.TlMethod;
 import com.jtel.mtproto.tl.TlObject;
