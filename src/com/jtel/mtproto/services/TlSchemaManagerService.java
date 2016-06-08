@@ -107,29 +107,19 @@ public final class TlSchemaManagerService {
         }
         return definitions;
     }
-    public TlMethod getMethod(String method){
-        TlMethod tlMethod = getMethod(method,false);
-        if (tlMethod == null) {
-            tlMethod = getMethod(method,true);
-        }
-        return tlMethod;
-    }
-    public TlMethod getMethod(String method,boolean mtp){
-        List<TlMethod> methods;
-        if(mtp) {
-            methods = mtpSchema.methods;
-        }
-        else {
-            methods = apiSchema.methods;
-        }
 
-        for (TlMethod o : methods) {
+    public TlMethod getMethod(String method){
+        for (TlMethod o : mtpSchema.methods) {
             if (o.method.equals(method)) {
-//                System.out.println(o);
                 return o;
             }
         }
-        return null;
+        for (TlMethod o : apiSchema.methods) {
+            if (o.method.equals(method)) {
+                return o;
+            }
+        }
+        return new TlMethod();
     }
 
 }

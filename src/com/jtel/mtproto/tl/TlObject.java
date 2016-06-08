@@ -6,8 +6,8 @@ import com.sun.org.apache.xerces.internal.impl.dv.util.HexBin;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.jtel.mtproto.tl.Streams.*;
@@ -27,13 +27,38 @@ public class TlObject implements Tl {
     public List<TlParam> params;
     public String type;
 
-    public void putParam(String field, Object o) {
+    public TlObject(){
+        this.id     = 0;
+        this.predicate = "unknown";
+        this.params = new ArrayList<>();
+        this.type   =  "unknown";
+    }
+    public TlObject(String predicate) throws IOException{
+        TlSchemaManagerService schemaManagerService = TlSchemaManagerService.getInstance();
+        TlObject object = schemaManagerService.getConstructor(predicate);
+        this.id     = object.id;
+        this.predicate = object.predicate;
+        this.params = object.params;
+        this.type   = object.type;
+    }
+    public void put(String field, Object o) {
+
         for (TlParam param : params) {
             if(param.name.equals(field)){
                 param.setValue(o);
                 return;
             }
         }
+    }
+
+    public <T> T get(String field){
+        for (TlParam param : params) {
+            if(param.name.equals(field)){
+
+                return param.getValue() ;
+            }
+        }
+        return null;
     }
 
     @Override
@@ -59,6 +84,6 @@ public class TlObject implements Tl {
 
     @Override
     public String toString() {
-        return String.format("%s#%s %s = %s",predicate, HexBin.encode( ByteBuffer.allocate(4).putInt(id).array()),params.toString(),type);
+        return String.format("\n%s#%s  \n%s  = %s",predicate, HexBin.encode( ByteBuffer.allocate(4).putInt(id).array()),params.toString(),type);
     }
 }

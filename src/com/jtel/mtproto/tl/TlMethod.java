@@ -1,5 +1,7 @@
 package com.jtel.mtproto.tl;
 
+import com.jtel.mtproto.services.TlSchemaManagerService;
+import com.sun.istack.internal.Nullable;
 import com.sun.org.apache.xerces.internal.impl.dv.util.HexBin;
 
 import java.io.ByteArrayOutputStream;
@@ -7,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.jtel.mtproto.tl.Streams.writeInt32;
@@ -27,7 +30,21 @@ public class TlMethod implements Tl {
     public List<TlParam> params;
     public String type;
 
-    public void putParam(String field, Object o) {
+    public TlMethod(String methodName) throws IOException{
+        TlSchemaManagerService schemaManagerService = TlSchemaManagerService.getInstance();
+        TlMethod method = schemaManagerService.getMethod(methodName);
+        this.id     = method.id;
+        this.method = method.method;
+        this.params = method.params;
+        this.type   = method.type;
+    }
+    public  TlMethod(){
+        method ="unknown";
+        params = new ArrayList<>();
+        type   = "unknown";
+    }
+    @Nullable
+    public void put(String field, @Nullable Object o) {
         for (TlParam param : params) {
             if(param.name.equals(field)){
                 param.setValue(o);
@@ -54,6 +71,6 @@ public class TlMethod implements Tl {
 
     @Override
     public String toString() {
-        return String.format("%s#%s %s = %s",method, HexBin.encode( ByteBuffer.allocate(4).putInt(id).array()),params.toString(),type);
+        return String.format("\n%s#%s \n%s = %s",method, HexBin.encode( ByteBuffer.allocate(4).putInt(id).array()),params.toString(),type);
     }
 }

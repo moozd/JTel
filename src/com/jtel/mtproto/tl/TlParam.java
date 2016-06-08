@@ -1,5 +1,7 @@
 package com.jtel.mtproto.tl;
 
+import com.sun.org.apache.xerces.internal.impl.dv.util.HexBin;
+
 /**
  * This file is part of JTel
  * IntelliJ idea.
@@ -38,8 +40,17 @@ public class TlParam {
 
         String val = "= " + getValue();
         if( getValue() instanceof byte[]){
-            val = "= " + "[len: "+ ((byte[]) getValue()).length + "]" + getValue();
+            StringBuilder builder = new StringBuilder();
+            builder.append("=(len:");
+            builder.append(((byte[]) getValue()).length);
+            builder.append(")[");
+            for (byte b : (byte[]) getValue()){
+                builder.append(" ");
+                builder.append(HexBin.encode(new byte[]{b}));
+            }
+            builder.append(" ]");
+            val = builder.toString();
         }
-        return String.format(" %s:%s %s  ",name,type,val);
+        return String.format("\n\t %s:%s %s  \n",name,type,val);
     }
 }

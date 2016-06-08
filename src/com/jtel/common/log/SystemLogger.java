@@ -1,6 +1,8 @@
 package com.jtel.common.log;
 
+import java.security.Timestamp;
 import java.util.Arrays;
+import java.util.Date;
 
 /**
  * This file is part of JTel
@@ -16,10 +18,10 @@ public class SystemLogger implements ILogger {
     protected String createMessage(String superTag,Object tag,Object... o){
         String t ="";
         for (Object l : o){
-            t += String.format(",%s ", l );
+            t += String.format(" %s ", l );
         }
-        t= t.substring(t.indexOf(",")+1);
-        return String.format("[%s] %s : %s " ,superTag,tag,t);
+        //t= t.substring(t.indexOf(",")+1);
+        return String.format("[ %s ] %s \t %s \n" ,superTag,tag,t);
     }
 
     @Override
