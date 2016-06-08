@@ -2,6 +2,7 @@ package com.jtel;
 
 import com.jtel.common.secure.Randoms;
 import com.jtel.mtproto.Config;
+import com.jtel.mtproto.Mtproto;
 import com.jtel.mtproto.PlainHttpTransport;
 import com.jtel.mtproto.pq.Pq;
 import com.jtel.mtproto.pq.PqSolver;
@@ -17,16 +18,16 @@ import static com.jtel.mtproto.tl.Streams.writeInt64;
 public class Main {
 
     public static void main(String[] args) throws IOException {
+        Mtproto mtproto = Mtproto.getInstance();
+        mtproto.setCurrentDcID(1);
 
+        TlObject resPq = mtproto.invokeApiCall
+                (
+                     new TlMethod("req_pq")
+                    .put("nonce", Randoms.nextRandomBytes(16))
+                );
 
-        TlMethod method = new TlMethod("req_pq");
-        method.put("nonce", Randoms.nextRandomBytes(16));
-
-        PlainHttpTransport transport = new PlainHttpTransport(Config.dcAddresses.get(1));
-        transport.send(method);
-        TlObject resPq = transport.receive();
         PqSolver.Solve(new Pq(resPq.get("pq")));
-
     }
 
 

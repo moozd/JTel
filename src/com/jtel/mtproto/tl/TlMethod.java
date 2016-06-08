@@ -44,13 +44,14 @@ public class TlMethod implements Tl {
         type   = "unknown";
     }
     @Nullable
-    public void put(String field, @Nullable Object o) {
+    public TlMethod put(String field, @Nullable Object o) {
         for (TlParam param : params) {
             if(param.name.equals(field)){
                 param.setValue(o);
-                return;
+                return this;
             }
         }
+        return this;
     }
 
     @Override
