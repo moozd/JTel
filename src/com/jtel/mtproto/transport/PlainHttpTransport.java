@@ -55,7 +55,7 @@ public class PlainHttpTransport implements Transport {
 
         l.log("Request",method);
 
-       // printHexTable(message);
+        printHexTable(message);
 
 
     }
@@ -76,7 +76,7 @@ public class PlainHttpTransport implements Transport {
         o.deSerialize(bis);
 
         l.log(  "Response", o );
-       // printHexTable(response);
+        printHexTable(response);
 
         return o;
     }
