@@ -16,7 +16,7 @@ import java.io.IOException;
 
 public interface  Transport {
 
-    void send(TlMethod method) throws IOException;
+   TlObject send(TlMethod method) throws IOException;
 
     TlObject receive() throws IOException;
 }

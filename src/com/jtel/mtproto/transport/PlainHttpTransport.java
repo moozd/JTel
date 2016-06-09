@@ -25,63 +25,81 @@ public class PlainHttpTransport implements Transport {
     protected HttpURLConnection connection;
     protected URL url;
 
-    protected Logger l = Logger.getInstance();
+
+    protected Logger console = Logger.getInstance();
+    private  boolean DEBUG = false;
 
     public PlainHttpTransport(String address) throws IOException {
         url=new URL("http://"+address+"/apiw1");
     }
 
     @Override
-    public void send(TlMethod method) throws IOException {
+    public TlObject send(TlMethod method) throws IOException {
         byte[] message = method.serialize();
         long message_id=0L;
+
 
         System.setProperty("http.keepAlive", "true");
         connection = (HttpURLConnection) url.openConnection();
         connection.setDoInput(true);
         connection.setDoOutput(true);
+        //connection.setRequestProperty("Content-Type",null);
+        //connection.setRequestProperty("Accept",null);
         connection.setRequestMethod("POST");
 
         ByteArrayOutputStream os = new ByteArrayOutputStream();
 
-        writeInt64(os, 0L);
-        writeInt64(os,(  message_id = TimeManagerService.getInstance().generateMessageId()));
-        writeInt32(os,message.length);
+        writeLong(os, 0L,"Auth Key");
+        writeLong(os,(  message_id = TimeManagerService.getInstance().generateMessageId()),"Message ID");
+        writeInt(os,message.length,"Message length");
         os.write(message);
 
         connection.getOutputStream().write(os.toByteArray());
         connection.getOutputStream().flush();
         connection.getOutputStream().close();
 
-        l.log("Request",method);
+        console.log("Request",method);
 
-        printHexTable(message);
-
+        printHexTable(os.toByteArray());
+        return receive();
 
     }
 
     @Override
     public TlObject receive() throws IOException {
         InputStream is  = connection.getInputStream();
-        long auth_id    = readInt64(is);
-        long message_id = readInt64(is);
-        int message_len = readInt32(is);
+        long auth_id    = readLong(is);
+        long message_id = readLong(is);
+        int message_len = readInt(is);
 
-        byte[] response = new byte[message_len];
+        if(DEBUG){
+            console.log("auth_id",auth_id);
+            console.log("msg_id",message_id);
+            console.log("msg_len",message_len);
+        }
 
-        is.read(response);
-        ByteArrayInputStream bis = new ByteArrayInputStream(response);
+        byte[] responseBytes = new byte[message_len];
+        is.read(responseBytes);
+        ByteArrayInputStream bis = new ByteArrayInputStream(responseBytes);
+        TlObject responseObject = new TlObject();
+        responseObject.deSerialize(bis);
 
-        TlObject o = new TlObject();
-        o.deSerialize(bis);
+        console.log(  "Response", responseObject);
+        printHexTable(responseBytes);
 
-        l.log(  "Response", o );
-        printHexTable(response);
-
-        return o;
+        return responseObject;
     }
 
-   /*// public Socket getSocket() {
+    public int getCode(){
+        try {
+            return connection.getResponseCode();
+        }catch (Exception e){
+            return 0;
+        }
+    }
+
+
+    /*// public Socket getSocket() {
         return socket;
     }*/
 }

@@ -1,8 +1,11 @@
 package com.jtel.mtproto.pq;
 
 import com.jtel.common.log.Logger;
+import com.sun.org.apache.xerces.internal.impl.dv.util.HexBin;
 
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Random;
 
 /**
@@ -42,6 +45,7 @@ import java.util.Random;
 
 public class PqSolver {
 
+    private static Logger console = Logger.getInstance();
     private long GCD(long a, long b) {
         while (a != 0 && b != 0) {
             while ((b & 1) == 0) {
@@ -107,9 +111,9 @@ public class PqSolver {
     public static Pq Solve(Pq pq){
         long time  = System.currentTimeMillis();
         PqSolver solver = new PqSolver();
-        Logger log = Logger.getInstance();
-        BigInteger pqInt = new BigInteger(pq.pq);
 
+        String x = HexBin.encode(ByteBuffer.allocate(8).order(ByteOrder.BIG_ENDIAN).put(pq.pq).array());
+        BigInteger pqInt = new BigInteger(x,16);
 
         BigInteger p = new BigInteger("" + solver.findP(pqInt.longValue()));
         BigInteger q = pqInt.divide(p);
@@ -117,7 +121,7 @@ public class PqSolver {
         pq.p = p.toByteArray();
         pq.q = q.toByteArray();
 
-        log.log("Pq solved ","Finished in " + ( System.currentTimeMillis() - time )/1000f + " s" ,pqInt.toString(), "=",p.toString()," x ",q.toString());
+        console.log("Pq solved ","Finished in " + ( System.currentTimeMillis() - time )/1000f + " s" ,pqInt.toString(), "=",p.toString()," x ",q.toString());
         return pq;
     }
 }

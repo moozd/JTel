@@ -1,8 +1,10 @@
 package com.jtel.mtproto.tl;
 
 
+import com.jtel.common.log.Logger;
 import com.jtel.mtproto.services.TlSchemaManagerService;
 import com.sun.org.apache.xerces.internal.impl.dv.util.HexBin;
+
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,6 +13,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
+
 
 /**
  * This file is part of JTel
@@ -23,105 +26,108 @@ import java.util.List;
 
 public final class Streams {
 
-    private static void writeIntBytes(OutputStream os, byte[] b) throws IOException {
+    private static Logger console = Logger.getInstance();
+    private final static boolean DEBUG = false;
+    public static void writeIntBytes(OutputStream os, byte[] b,String field) throws IOException {
         if(b.length %4 != 0) {
             return;
         }
 
         os.write(b);
+
+    if (DEBUG)       console.log(String.format("%s<%s%s>:%s",field,"Int",b.length*8,HexBin.encode(b)));
     }
-
-
-    public static void writeInt32(OutputStream os, int n) throws IOException {
+    public static void writeInt(OutputStream os, int n, String field) throws IOException {
         ByteBuffer buffer = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN);
         buffer.putInt(n);
         os.write(buffer.array());
+        if(field.equals("")) return;
+        if (DEBUG) console.log(String.format("%s<%s>:%s",field,"int",n));
     }
-
-    public static void writeInt64(OutputStream os, int high, int low) throws IOException {
-        writeInt32(os,low);
-        writeInt32(os,high);
+    public static void writeLong(OutputStream os, long num, String field) throws IOException {
+        byte[] bu = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN).putLong(num).array();
+        os.write(bu);
+        if (DEBUG)  console.log(String.format("%s<%s>:%s",field,"long",HexBin.encode(bu)));
     }
-
-    public static void writeInt64(OutputStream os, long num) throws IOException {
-        writeInt64(os,(int)(num >> 32),(int)num);
-    }
-
-    public static void writeInt128(OutputStream os, byte[] n) throws IOException {
-        if (n.length  * 8 != 128 ) {
+    public static void writeInt128(OutputStream os, byte[] n,String field) throws IOException {
+        if ((n.length  * 8) != 128 ) {
             return;
         }
-        writeIntBytes(os,n);
+        writeIntBytes(os,n,field);
     }
-
-    public static void writeInt256(OutputStream os, byte[] n) throws IOException {
-        if (n.length * 8 != 256 ) {
-            writeIntBytes(os,n);
+    public static void writeInt256(OutputStream os, byte[] n,String field) throws IOException {
+        if ((n.length * 8) != 256 ) {
+            return;
         }
-    }
 
-    public static void writeInt512(OutputStream os, byte[] n) throws IOException {
+            writeIntBytes(os,n,field);
+
+    }
+    public static void writeInt512(OutputStream os, byte[] n,String field) throws IOException {
         if (n.length * 8 != 512 ) {
-            writeIntBytes(os,n);
+            writeIntBytes(os,n,field);
         }
     }
-
-    public static void writeBytes(OutputStream os , byte[] n) throws IOException {
+    public static void writeBool(OutputStream os, boolean b,String field) throws IOException {
+        if (b) {
+            writeInt(os, 0x997275b5,field+"[bool]");
+        }
+        else {
+            writeInt(os, 0xbc799737,field+"[bool]");
+        }
+    }
+    public static void writeBytes(OutputStream os , byte[] n,String field) throws IOException {
         int len =n.length;
+        int pad =0;
         if ( len <= 253) {
             os.write((byte) len);
+            pad = (len+1) %4;
         }
         else {
             os.write((byte)254);
             os.write((byte)(len & 0xff));
             os.write((byte)((len & 0xFF00) >> 8));
             os.write((byte)((len & 0xFF0000) >> 16));
+            pad = (len) %4;
         }
         os.write(n);
-        while (len%4 !=0){
-            os.write((byte)0);
-            len++;
-        }
-    }
 
-    public static void writeBool(OutputStream os, boolean b) throws IOException {
-        if (b) {
-            writeInt32(os, 0x997275b5);
+        while (pad%4 !=0){
+            os.write((byte) 0);
+            pad++;
         }
-        else {
-            writeInt32(os, 0xbc799737);
-        }
+        if (DEBUG)    console.log(String.format("%s<%s(padding=%s)>:%s ",field,"Bytes",pad,HexBin.encode(n)));
     }
-
-    public static void writeParams(OutputStream os,  List<TlParam> params ) throws IOException {
+    public static void writeParams(OutputStream os,  List<TlParam> params,String field ) throws IOException {
         for (TlParam param : params)
         {
 
             switch (param.type) {
                 case "#":
                 case "int":
-                    writeInt32(os,param.getValue());
+                    writeInt(os,param.getValue(),param.name);
                     break;
                 case "long":
-                    writeInt64(os, param.getValue());
+                    writeLong(os, param.getValue(),param.name);
                     break;
                 case "int128":
-                    writeInt128(os, param.getValue());
+                    writeInt128(os, param.getValue(),param.name);
                     break;
                 case "int256":
-                    writeInt256(os,param.getValue());
+                    writeInt256(os,param.getValue(),param.name);
                     break;
                 case "int512":
-                    writeInt512(os,param.getValue());
+                    writeInt512(os,param.getValue(),param.name);
                     break;
                 case "string":
                 case "bytes":
-                    writeBytes(os,param.getValue());
+                    writeBytes(os,param.getValue(),param.name);
+                    break;
                 case "double":
-                    writeInt64(os,param.getValue());
+                    writeLong(os,param.getValue(),param.name);
                     break;
                 case "Bool":
-                    writeBool(os,param.getValue());
+                    writeBool(os,param.getValue(),param.name);
                 case "true":   return;
                 default:
                     if(param.type.startsWith("Vector") || param.type.startsWith("vector")) {
@@ -129,8 +135,8 @@ public final class Streams {
                         TlObject vector = TlSchemaManagerService.getInstance().getConstructor("Vector");
                         List<TlObject> items = param.getValue();
 
-                        writeInt32(os,vector.id);
-                        writeInt32(os,items.size());
+                        writeInt(os,vector.id,type+ "(" +param.name+")");
+                        writeInt(os,items.size(),"Length");
                         for (TlObject object : items) {
                             os.write(object.serialize());
                         }
@@ -142,36 +148,31 @@ public final class Streams {
 
             }
 
-
         }
+        if (DEBUG) console.log("");
     }
 
 
 
 
-
-    public static int readInt32(InputStream is) throws IOException{
+    public static int readInt(InputStream is) throws IOException{
 
         byte[] b = new byte[4];
         is.read(b);
         int num = ByteBuffer.wrap(b).order(ByteOrder.LITTLE_ENDIAN).getInt();
-        return (num <0 ) ?  num*-1:num ;
+        return num ;
     }
-
-    public static long readInt64(InputStream is) throws IOException{
+    public static long readLong(InputStream is) throws IOException{
         byte[] b = new byte[8];
         is.read(b);
         return ByteBuffer.wrap(b).order(ByteOrder.LITTLE_ENDIAN).getLong();
     }
-
     public static byte[] readInt128(InputStream is) throws IOException{
        return readIntBytes(is,128);
     }
-
     public static byte[] readInt256(InputStream is) throws IOException{
         return readIntBytes(is,256);
     }
-
     public static byte[] readIntBytes(InputStream is,int bits) throws IOException{
 
         byte[] r = new byte[bits/8];
@@ -180,47 +181,36 @@ public final class Streams {
         }
         return r;
     }
-
     public static byte[] readBytes(InputStream is) throws IOException{
 
-       int len = is.read();
-       if (len == 254) {
-           byte[] t = new byte[3];
-           is.read(t);
-          len =  t[0] | (t[1] << 8) |  (t[2] << 16);
-       }
-       byte[] buff = new byte[len];
-       is.read(buff);
-        len++;
-        while (len%4 !=0){
-            len++;
-            is.read();
-        }
-       return buff;
-    }
+           int len = is.read();
+            int pad = 0;
+           if (len == 254) {
+               byte[] t = new byte[3];
+               is.read(t);
+              len =  t[0] | (t[1] << 8) |  (t[2] << 16);
+               pad = (len) %4;
+           }
+            else {
+               pad = (len +1) %4;
+           }
 
+           byte[] buff = new byte[len];
+
+           is.read(buff);
+           while (pad%4 != 0){
+               is.read();
+               pad++;
+           }
+           return buff;
+    }
     public static boolean readBool(InputStream is) throws IOException{
-        int b = readInt32(is);
+        int b = readInt(is);
         if(b==0x997275b5) {
             return true;
         }
         return false;
     }
-
-
-    public static void printHexTable(byte[] data){
-
-        for(int i=0;i<data.length;i++){
-            if (i%1 == 0)System.out.print(" ");
-            if (i%32 == 0) System.out.println();
-
-            System.out.print(HexBin.encode(new byte[]{data[i]}));
-
-        }
-        System.out.println();
-        System.out.println();
-    }
-
     public static List<TlParam> readParams(InputStream is,List<TlParam> params) throws IOException {
 
             for(TlParam param : params) {
@@ -229,16 +219,14 @@ public final class Streams {
             }
        return params;
     }
-
-
     public static TlParam readParam(InputStream is , TlParam param) throws IOException {
         switch (param.type) {
             case "#":
             case "int":
-                param.setValue(readInt32(is));
+                param.setValue(readInt(is));
                 break;
             case "long":
-                param.setValue(readInt64(is));
+                param.setValue(readLong(is));
                 break;
             case "int128":
                 param.setValue(readInt128(is));
@@ -254,7 +242,7 @@ public final class Streams {
                 param.setValue(readBytes(is));
                 break;
             case "double":
-                param.setValue(readInt64(is));
+                param.setValue(readLong(is));
                 break;
             case "Bool":
                 param.setValue(readBool(is));
@@ -262,8 +250,8 @@ public final class Streams {
                 if (param.type.startsWith("Vector") || param.type.startsWith("vector")) {
 
                     String condType = param.type.substring(param.type.indexOf("<") + 1, param.type.indexOf(">"));
-                    int cons= readInt32(is);
-                    int len = readInt32(is);
+                    int cons= readInt(is);
+                    int len = readInt(is);
                     List<TlParam> t = new ArrayList<>(len);
                     for (int i = 0; i < len; i++) {
                         TlParam item = readParam(is,new TlParam(condType));
@@ -278,5 +266,19 @@ public final class Streams {
 
         }
         return  param;
+    }
+
+    public static void printHexTable(byte[] data){
+
+        System.out.print("len :" +data.length);
+        for(int i=0;i<data.length;i++){
+            if (i%1 == 0)System.out.print(" ");
+            if (i%32 == 0) System.out.println();
+
+            System.out.print(HexBin.encode(new byte[]{data[i]}));
+
+        }
+        System.out.println();
+        System.out.println();
     }
 }

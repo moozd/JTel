@@ -7,12 +7,11 @@ import com.sun.org.apache.xerces.internal.impl.dv.util.HexBin;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.jtel.mtproto.tl.Streams.writeInt32;
+import static com.jtel.mtproto.tl.Streams.writeInt;
 import static com.jtel.mtproto.tl.Streams.writeParams;
 
 /**
@@ -57,8 +56,8 @@ public class TlMethod implements Tl {
     @Override
     public byte[] serialize() throws IOException {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
-        writeInt32(os,id);
-        writeParams(os,params);
+        writeInt(os,id,method);
+        writeParams(os,params,method + " params");
         return os.toByteArray();
     }
 

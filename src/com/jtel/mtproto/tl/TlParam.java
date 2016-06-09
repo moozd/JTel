@@ -44,9 +44,14 @@ public class TlParam {
             builder.append("=(len:");
             builder.append(((byte[]) getValue()).length);
             builder.append(")[");
+            int count=0;
             for (byte b : (byte[]) getValue()){
                 builder.append(" ");
                 builder.append(HexBin.encode(new byte[]{b}));
+                if(++count >6){
+                    builder.append("...");
+                    break;
+                }
             }
             builder.append(" ]");
             val = builder.toString();

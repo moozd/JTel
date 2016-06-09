@@ -1,10 +1,12 @@
 package com.jtel.mtproto.services;
 
-import com.jtel.common.log.Logger;
 import com.jtel.mtproto.Config;
-import com.jtel.mtproto.transport.PlainHttpTransport;
 import com.jtel.mtproto.tl.TlMethod;
 import com.jtel.mtproto.tl.TlObject;
+import com.jtel.mtproto.transport.Transport;
+import com.jtel.mtproto.transport.TransportFactory;
+
+import java.io.IOException;
 
 /**
  * This file is part of JTel
@@ -39,14 +41,15 @@ public class MtprotoService {
         return currentDcID;
     }
 
-    public TlObject invokeApiCall(TlMethod method)  {
-        try {
-            PlainHttpTransport transport = new PlainHttpTransport(Config.dcAddresses.get(1));
-            transport.send(method);
-            return transport.receive();
-        }catch (Exception e){
-            Logger.getInstance().error(e.getMessage());
-        }
-        return new TlObject();
+    public TlObject invokeMtpCall(TlMethod method) throws IOException {
+
+
+//        try {
+            Transport transport = TransportFactory.Create("http",Config.dcAddresses.get(2));
+            return transport.send(method);
+//        }catch (Exception e) {
+//            Logger.getInstance().error(e.getMessage());
+//        }
+//        return new TlObject();
     }
 }

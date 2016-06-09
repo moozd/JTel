@@ -1,5 +1,6 @@
 package com.jtel.mtproto.tl;
 
+import com.jtel.common.log.Logger;
 import com.jtel.mtproto.services.TlSchemaManagerService;
 import com.sun.org.apache.xerces.internal.impl.dv.util.HexBin;
 
@@ -26,7 +27,7 @@ public class TlObject implements Tl {
     public String predicate;
     public List<TlParam> params;
     public String type;
-
+    private Logger console = Logger.getInstance();
     public TlObject(){
         this.id     = 0;
         this.predicate = "unknown";
@@ -34,12 +35,13 @@ public class TlObject implements Tl {
         this.type   =  "unknown";
     }
     public TlObject(String predicate) throws IOException{
+
         TlSchemaManagerService schemaManagerService = TlSchemaManagerService.getInstance();
         TlObject object = schemaManagerService.getConstructor(predicate);
-        this.id     = object.id;
+        this.id        = object.id;
         this.predicate = object.predicate;
-        this.params = object.params;
-        this.type   = object.type;
+        this.params    = object.params;
+        this.type      = object.type;
     }
     public void put(String field, Object o) {
 
@@ -64,8 +66,8 @@ public class TlObject implements Tl {
     @Override
     public byte[] serialize() throws IOException {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
-        writeInt32(os,id);
-        writeParams(os,params);
+        writeInt(os,id,predicate);
+        writeParams(os,params,predicate+" params");
         return os.toByteArray();
     }
 
@@ -74,7 +76,7 @@ public class TlObject implements Tl {
 
     @Override
     public void deSerialize(InputStream is) throws IOException {
-        int id = readInt32(is);
+        int id = readInt(is);
         TlObject object = TlSchemaManagerService.getInstance().getConstructor(id);
         this.id        = object.id;
         this.predicate = object.predicate;
