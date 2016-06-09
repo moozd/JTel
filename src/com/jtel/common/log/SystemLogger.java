@@ -20,7 +20,6 @@ public class SystemLogger implements ILogger {
         for (Object l : o){
             t += String.format(" %s ", l );
         }
-        //t= t.substring(t.indexOf(",")+1);
         return String.format("[ %s ] %s \t %s " ,superTag,tag,t);
     }
 
