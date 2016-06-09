@@ -51,6 +51,6 @@ public class TlParam {
             builder.append(" ]");
             val = builder.toString();
         }
-        return String.format("\n\t %s:%s %s  \n",name,type,val);
+        return String.format(" %s:%s %s  ",name,type,val);
     }
 }

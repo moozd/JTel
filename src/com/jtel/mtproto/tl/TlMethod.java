@@ -72,6 +72,6 @@ public class TlMethod implements Tl {
 
     @Override
     public String toString() {
-        return String.format("\n%s#%s \n%s = %s",method, HexBin.encode( ByteBuffer.allocate(4).putInt(id).array()),params.toString(),type);
+        return String.format("%s#%s %s = %s",method, HexBin.encode( ByteBuffer.allocate(4).putInt(id).array()),params.toString(),type);
     }
 }

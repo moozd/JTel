@@ -84,6 +84,6 @@ public class TlObject implements Tl {
 
     @Override
     public String toString() {
-        return String.format("\n%s#%s  \n%s  = %s",predicate, HexBin.encode( ByteBuffer.allocate(4).putInt(id).array()),params.toString(),type);
+        return String.format("%s#%s  %s  = %s",predicate, HexBin.encode( ByteBuffer.allocate(4).putInt(id).array()),params.toString(),type);
     }
 }
