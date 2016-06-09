@@ -1,6 +1,6 @@
 package com.jtel;
 
-import com.jtel.common.secure.Randoms;
+import com.jtel.mtproto.secure.Randoms;
 import com.jtel.mtproto.services.MtprotoService;
 import com.jtel.mtproto.pq.Pq;
 import com.jtel.mtproto.pq.PqSolver;

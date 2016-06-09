@@ -1,4 +1,4 @@
-package com.jtel.common.secure;
+package com.jtel.mtproto.secure;
 
 import java.util.Random;
 
@@ -6,7 +6,7 @@ import java.util.Random;
  * This file is part of JTel
  * IntelliJ idea.
  * Date     : 6/9/16
- * Package : com.jtel.common.secure
+ * Package : com.jtel.mtproto.secure
  *
  * @author <a href="mailto:mohammad.mdz72@gmail.com">Mohammad Mohammad Zade</a>
  */
