@@ -82,7 +82,7 @@ public class PlainHttpTransport implements Transport {
 
         if (DEBUG){
             console.log(method);
-            printHexTable(os.toByteArray());
+            console.table(os.toByteArray(),method.method);
         }
 
         return  receive();
@@ -111,7 +111,7 @@ public class PlainHttpTransport implements Transport {
 
         if(DEBUG){
             console.log(responseObject);
-            printHexTable(responseBytes);
+            console.table(responseBytes,responseObject.predicate);
         }
 
         return responseObject;

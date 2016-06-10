@@ -17,6 +17,7 @@
 
 package com.jtel.common.log;
 
+
 /**
  * This file is part of JTel
  * IntelliJ idea.
@@ -44,6 +45,10 @@ public class Logger implements ILogger {
     }
 
 
+    @Override
+    public void table(byte[] data,String name) {
+           context.table(data,name);
+    }
 
     @Override
     public void error(Object... os) {

@@ -34,4 +34,7 @@ public interface ILogger {
 
     void error(Object... os);
 
+    void table(byte[] d, String name);
+
+
 }

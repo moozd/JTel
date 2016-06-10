@@ -282,17 +282,5 @@ public final class Streams {
         return  param;
     }
 
-    public static void printHexTable(byte[] data){
 
-        System.out.print("len :" +data.length);
-        for(int i=0;i<data.length;i++){
-            if (i%1 == 0)System.out.print(" ");
-            if (i%32 == 0) System.out.println();
-
-            System.out.print(HexBin.encode(new byte[]{data[i]}));
-
-        }
-        System.out.println();
-        System.out.println();
-    }
 }

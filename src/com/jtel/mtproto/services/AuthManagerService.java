@@ -279,12 +279,14 @@ public final class AuthManagerService {
             byte[] auth_key_sha = Crypto.SHA1(auth_key);
             byte[] auth_key_sha_aux = subArray(auth_key_sha,0,8);
 
+
             //server_salt is xor of first eight byte of new_nonce and first eight byte of server_nonce
             byte[] server_salt = xor(subArray(new_nonce,0,8),subArray(server_nonce,0,8));
 
             //printing hex table of server salt and auth_key
-            Streams.printHexTable(server_salt);
-            Streams.printHexTable(auth_key);
+
+            console.table(server_salt,"server_salt");
+            console.table(auth_key,"auth_key");
 
             //saving auth_key and server_salt for this data center id
             save(dcid,new AuthBag(auth_key,server_salt));

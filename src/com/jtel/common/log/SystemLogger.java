@@ -18,6 +18,8 @@
 package com.jtel.common.log;
 
 
+import com.sun.org.apache.xerces.internal.impl.dv.util.HexBin;
+
 import java.util.Arrays;
 
 
@@ -37,13 +39,13 @@ public class SystemLogger implements ILogger {
         for (Object l : o){
             t += String.format(" %s ", l );
         }
-        return String.format("[ %s ] %s %s " ,superTag,tag,t);
+        return String.format("[%s] %s %s " ,superTag,tag,t);
     }
 
     @Override
     public void log(Object... os) {
         Object[] o =Arrays.copyOfRange(os,1,os.length);
-        System.out.println(createMessage("LOG",os[0],o));
+        System.out.println(createMessage("  LOG  ",os[0],o));
     }
 
 
@@ -57,7 +59,24 @@ public class SystemLogger implements ILogger {
     @Override
     public void error(Object... os) {
         Object[] o =Arrays.copyOfRange(os,1,os.length);
-        System.out.println(createMessage("ERROR",os[0],o));
+        System.out.println(createMessage(" ERROR ",os[0],o));
+    }
+
+    @Override
+    public void table(byte[] data ,String name) {
+        System.out.println(createMessage(" TABLE ", name , data.length + " Bytes"));
+        System.out.print("\t\t  ");
+        for(int i=0;i<data.length;i++){
+
+            System.out.print(HexBin.encode(new byte[]{data[i]}) + " ");
+            if ((i+1)%30 == 0) {
+                System.out.println();
+                System.out.print("\t\t  ");
+            }
+
+
+        }
+        System.out.println();
     }
 
 

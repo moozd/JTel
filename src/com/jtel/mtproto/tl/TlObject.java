@@ -107,4 +107,8 @@ public class TlObject implements Tl {
     public String toString() {
         return String.format("%s#%s  %s  = %s",predicate, HexBin.encode( ByteBuffer.allocate(4).putInt(id).array()),params.toString(),type);
     }
+
+    public void toSystemOut(){
+        console.log();
+    }
 }
