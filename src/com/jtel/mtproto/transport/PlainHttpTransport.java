@@ -1,6 +1,7 @@
 package com.jtel.mtproto.transport;
 
 import com.jtel.common.log.Logger;
+import com.jtel.mtproto.Config;
 import com.jtel.mtproto.services.TimeManagerService;
 import com.jtel.mtproto.tl.TlMethod;
 import com.jtel.mtproto.tl.TlObject;
@@ -27,7 +28,7 @@ public class PlainHttpTransport implements Transport {
 
 
     protected Logger console = Logger.getInstance();
-    private  boolean DEBUG = false;
+    private  boolean DEBUG = Config.DEBUG;
 
     public PlainHttpTransport(String address) throws IOException {
         url=new URL("http://"+address+"/apiw1");
@@ -58,9 +59,9 @@ public class PlainHttpTransport implements Transport {
         connection.getOutputStream().flush();
         connection.getOutputStream().close();
 
-        console.log("Request",method);
+        console.log(method);
 
-        printHexTable(os.toByteArray());
+        if (DEBUG)printHexTable(os.toByteArray());
         return receive();
 
     }
@@ -84,8 +85,8 @@ public class PlainHttpTransport implements Transport {
         TlObject responseObject = new TlObject();
         responseObject.deSerialize(bis);
 
-        console.log(  "Response", responseObject);
-        printHexTable(responseBytes);
+        console.log(responseObject);
+        if(DEBUG) printHexTable(responseBytes);
 
         return responseObject;
     }

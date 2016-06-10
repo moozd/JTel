@@ -1,6 +1,7 @@
 package com.jtel.mtproto.pq;
 
 import com.jtel.common.log.Logger;
+import com.jtel.mtproto.Config;
 import com.sun.org.apache.xerces.internal.impl.dv.util.HexBin;
 
 import java.math.BigInteger;
@@ -121,7 +122,7 @@ public class PqSolver {
         pq.p = p.toByteArray();
         pq.q = q.toByteArray();
 
-        console.log("Pq solved ","Finished in " + ( System.currentTimeMillis() - time )/1000f + " s" ,pqInt.toString(), "=",p.toString()," x ",q.toString());
+        if(Config.DEBUG) console.log("Pq solved ","Finished in " + ( System.currentTimeMillis() - time )/1000f + " s" ,pqInt.toString(), "=",p.toString()," x ",q.toString());
         return pq;
     }
 }

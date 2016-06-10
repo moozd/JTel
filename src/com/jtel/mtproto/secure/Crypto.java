@@ -2,6 +2,7 @@ package com.jtel.mtproto.secure;
 
 import com.jtel.mtproto.secure.aes.AESFastEngine;
 import com.jtel.mtproto.secure.aes.KeyParameter;
+import com.jtel.mtproto.tl.Streams;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -11,12 +12,16 @@ import java.math.BigInteger;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.RSAPublicKeySpec;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * This file is part of JTel
  * IntelliJ idea.
  * Date    : 6/9/2016
  * Package : com.jtel.mtproto.secure
+ *
+ * using aes ige from https://github.com/ex3ndr/telegram-mt/blob/master/src/main/java/org/telegram/mtproto/secure/aes/DefaultAESImplementation.java
  *
  * @author <a href="mailto:mohammad.mdz72@gmail.com">Mohammad Mohammad Zade</a>
  */
@@ -33,19 +38,6 @@ public class Crypto {
 
         }
         return new byte[0];
-    }
-    public static byte[] concat(byte[]... arr){
-        int len =0;
-        for (byte[] a : arr ){
-            len +=a.length;
-        }
-        byte[] buff = new byte[len];
-        int offset =0;
-        for (byte[] a : arr ){
-            System.arraycopy(a,0,buff,offset,a.length);
-            offset+=a.length;
-        }
-        return  buff;
     }
     public static byte[] RSA(byte[] src, BigInteger key, BigInteger exponent) {
         try {
@@ -71,7 +63,8 @@ public class Crypto {
     }
 
 
-    public void AES256IGEDecrypt(byte[] src, byte[] dest, int len, byte[] iv, byte[] key) {
+    public static void AES256IGEDecrypt(byte[] src, byte[] dest, byte[] iv, byte[] key) {
+        int len = src.length;
         AESFastEngine engine = new AESFastEngine();
         engine.init(false, new KeyParameter(key));
 
@@ -108,8 +101,8 @@ public class Crypto {
         }
     }
 
-
-    public void AES256IGEEncrypt(byte[] src, byte[] dest, int len, byte[] iv, byte[] key) {
+    public static void AES256IGEEncrypt(byte[] src, byte[] dest , byte[] iv, byte[] key) {
+        int len = src.length;
         AESFastEngine engine = new AESFastEngine();
         engine.init(true, new KeyParameter(key));
 
@@ -137,6 +130,60 @@ public class Crypto {
             curIvY = dest;
             curIvYOffset = offset;
         }
+    }
+
+
+    /*  sha1_a = SHA1 (msg_key + substr (auth_key, x, 32));
+        sha1_b = SHA1 (substr (auth_key, 32+x, 16) + msg_key + substr (auth_key, 48+x, 16));
+        sha1_с = SHA1 (substr (auth_key, 64+x, 32) + msg_key);
+        sha1_d = SHA1 (msg_key + substr (auth_key, 96+x, 32));
+        aes_key = substr (sha1_a, 0, 8) + substr (sha1_b, 8, 12) + substr (sha1_c, 4, 12);
+        aes_iv = substr (sha1_a, 8, 12) + substr (sha1_b, 0, 8) + substr (sha1_c, 16, 4) + substr (sha1_d, 0, 8);
+    */
+
+    public Map<String, byte[]> getAESKeyIV(byte[] messageKey, byte[] authKey, boolean toServer){
+        int x = 8;
+        if(toServer) x  = 0;
+
+        byte[] sha1_a   = SHA1(concat(messageKey,subArray(authKey,x,32)));
+        byte[] sha1_b   = SHA1(concat(subArray(authKey, 32+x, 16), messageKey, subArray(authKey, 48+x,16)));
+        byte[] sha1_c   = SHA1(concat(subArray(authKey, 64+x, 32),messageKey));
+        byte[] sha1_d   = SHA1(concat(messageKey, subArray(authKey, 96+x, 32)));
+
+        byte[] aes_key  = concat(subArray(sha1_a, 0, 8),subArray(sha1_b, 8, 12),subArray(sha1_c, 4, 12));
+        byte[] aes_iv   = concat(subArray(sha1_a,8,12),subArray(sha1_b,0,8),subArray(sha1_c,16,4),subArray(sha1_d,0,8));
+
+        Map<String,byte[]> ret = new HashMap<>();
+        ret.put("aes_key",aes_key);
+        ret.put("aes_iv", aes_iv);
+        return ret;
+    }
+
+    public static byte[] concat(byte[]... arr){
+        int len =0;
+        for (byte[] a : arr ){
+            len +=a.length;
+        }
+        byte[] buff = new byte[len];
+        int offset =0;
+        for (byte[] a : arr ){
+            System.arraycopy(a,0,buff,offset,a.length);
+            offset+=a.length;
+        }
+        return  buff;
+    }
+
+    public static byte[] subArray(byte[]src,int start, int limit){
+        byte[] buff = new byte[limit];
+
+        for (int i =0; i<limit;i++){
+            buff[i]=src[start++];
+        }
+        return buff;
+    }
+    public static byte[] subArray(byte[]src,int start){
+
+        return subArray(src,start,src.length-start);
     }
 
 

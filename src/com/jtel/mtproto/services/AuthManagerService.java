@@ -7,10 +7,16 @@ import com.jtel.mtproto.secure.Crypto;
 import com.jtel.mtproto.secure.PublicKeyHolder;
 import com.jtel.mtproto.secure.Randoms;
 import com.jtel.mtproto.services.data.AuthBag;
+import com.jtel.mtproto.tl.Streams;
 import com.jtel.mtproto.tl.TlMethod;
 import com.jtel.mtproto.tl.TlObject;
+import sun.security.provider.SHA;
 
+import static com.jtel.mtproto.secure.Crypto.*;
+
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
 
@@ -64,6 +70,7 @@ public final class AuthManagerService {
 
 
     public void authenticate(int dcid) throws IOException{
+
         MtprotoService mtproto = MtprotoService.getInstance();
         mtproto.setCurrentDcID(dcid);
 
@@ -81,13 +88,14 @@ public final class AuthManagerService {
 
         pq =  PqSolver.Solve(pq);
 
-        TlObject p_q_inner_data = new TlObject("p_q_inner_data");
-        p_q_inner_data.put("pq"          ,pq.pq);
-        p_q_inner_data.put("p"           ,pq.p);
-        p_q_inner_data.put("q"           ,pq.q);
-        p_q_inner_data.put("nonce"       ,nonce);
-        p_q_inner_data.put("server_nonce", server_nonce);
-        p_q_inner_data.put("new_nonce"   ,Randoms.nextRandomBytes(32));
+        byte[] new_nonce = Randoms.nextRandomBytes(32);
+        TlObject p_q_inner_data = new TlObject("p_q_inner_data")
+                .put("pq"          ,pq.pq)
+                .put("p"           ,pq.p)
+                .put("q"           ,pq.q)
+                .put("nonce"       ,nonce)
+                .put("server_nonce", server_nonce)
+                .put("new_nonce"   ,new_nonce);
 
         byte[] pqInner = p_q_inner_data.serialize();
         byte[] hash = Crypto.SHA1(pqInner);
@@ -114,6 +122,62 @@ public final class AuthManagerService {
 
         byte[] encrypted_answer = Server_Dh_Params.get("encrypted_answer");
 
+        byte[] tmp_key = concat(Crypto.SHA1(concat(new_nonce,server_nonce)), subArray(Crypto.SHA1(concat(server_nonce,new_nonce)),0,12));
+        byte[] tmp_iv  = concat(subArray(Crypto.SHA1(concat(server_nonce,new_nonce)),12),Crypto.SHA1(concat(new_nonce,new_nonce)),subArray(new_nonce,0,4));
+        byte[] answer_with_hash = new byte[encrypted_answer.length];
+
+        Crypto.AES256IGEDecrypt(encrypted_answer,answer_with_hash,tmp_iv,tmp_key);
+
+        byte[] answer_hash = subArray(answer_with_hash,0,20);
+        byte[] answer      = subArray(answer_with_hash,20);
+
+        TlObject server_DH_inner_data = new TlObject();
+        server_DH_inner_data.deSerialize(new ByteArrayInputStream(answer));
+        console.log(server_DH_inner_data);
+
+        int    g            = server_DH_inner_data.get("g");
+        byte[] b            = Randoms.nextRandomBytes(256);
+        byte[] dh_prime     = server_DH_inner_data.get("dh_prime");
+        byte[] g_a          = server_DH_inner_data.get("g_a");
+        int    server_time  = server_DH_inner_data.get("server_time");
+
+        BigInteger bInt       = new BigInteger(b);
+        BigInteger dhPrimeInt = new BigInteger(dh_prime).abs();
+        BigInteger gaInt      = new BigInteger(g_a);
+
+
+        byte[] g_b            = new BigInteger(""+g).modPow(bInt,dhPrimeInt).toByteArray();
+
+        TlObject client_DH_inner_data = new TlObject("client_DH_inner_data")
+                .put("nonce",nonce)
+                .put("server_nonce",server_nonce)
+                .put("retry_id",0L)
+                .put("g_b",g_b);
+
+        byte[] clientInnerData = client_DH_inner_data.serialize();
+        byte[] data_with_sha   = concat(Crypto.SHA1(clientInnerData),clientInnerData);
+
+        int pad =data_with_sha.length;
+        while (pad % 16 !=0){
+            pad++;
+        }
+        pad-=data_with_sha.length;
+        console.log("padd",pad);
+
+        byte[] data_with_sha_pa= concat(data_with_sha,Randoms.nextRandomBytes(pad));
+
+        Streams.printHexTable(data_with_sha);
+        Streams.printHexTable(data_with_sha_pa);
+        encrypted_data  = new byte[data_with_sha_pa.length];
+
+        AES256IGEEncrypt(data_with_sha_pa,encrypted_data,tmp_iv,tmp_key);
+
+        mtproto.invokeMtpCall(
+                    new TlMethod("set_client_DH_params")
+                            .put("nonce",nonce)
+                            .put("server_nonce",server_nonce)
+                            .put("encrypted_data",encrypted_data)
+                );
 
 
     }

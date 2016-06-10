@@ -2,6 +2,7 @@ package com.jtel.mtproto.tl;
 
 
 import com.jtel.common.log.Logger;
+import com.jtel.mtproto.Config;
 import com.jtel.mtproto.services.TlSchemaManagerService;
 import com.sun.org.apache.xerces.internal.impl.dv.util.HexBin;
 
@@ -27,7 +28,7 @@ import java.util.List;
 public final class Streams {
 
     private static Logger console = Logger.getInstance();
-    private final static boolean DEBUG = false;
+    private final static boolean DEBUG = Config.DEBUG;
     public static void writeIntBytes(OutputStream os, byte[] b,String field) throws IOException {
         if(b.length %4 != 0) {
             return;

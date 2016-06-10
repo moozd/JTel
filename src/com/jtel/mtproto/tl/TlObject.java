@@ -43,14 +43,15 @@ public class TlObject implements Tl {
         this.params    = object.params;
         this.type      = object.type;
     }
-    public void put(String field, Object o) {
+    public TlObject put(String field, Object o) {
 
         for (TlParam param : params) {
             if(param.name.equals(field)){
                 param.setValue(o);
-                return;
+                return this;
             }
         }
+        return this;
     }
 
     public <T> T get(String field){
@@ -78,6 +79,7 @@ public class TlObject implements Tl {
     public void deSerialize(InputStream is) throws IOException {
         int id = readInt(is);
         TlObject object = TlSchemaManagerService.getInstance().getConstructor(id);
+        if(object == null) console.error("not found",id);
         this.id        = object.id;
         this.predicate = object.predicate;
         this.type      = object.type;

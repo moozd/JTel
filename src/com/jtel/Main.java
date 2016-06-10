@@ -22,6 +22,10 @@ public class Main {
         AuthManagerService service = AuthManagerService.getInstance();
         service.authenticate(2);
 
+       /* byte[] arr = Randoms.nextRandomBytes(50);
+        Streams.printHexTable(arr);
+        Streams.printHexTable(Crypto.subArray(arr,0,2));*/
+
  /*       TlObject p_q_inner_data = new TlObject("p_q_inner_data");
         p_q_inner_data.put("pq"          ,HexBin.decode("17ED48941A08F981"));
         p_q_inner_data.put("p"           ,HexBin.decode("494C553B"));
