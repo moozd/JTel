@@ -54,7 +54,7 @@ public class TlMethod implements Tl {
     }
 
     @Override
-    public byte[] serialize() throws IOException {
+    public byte[] serialize() throws IOException,InvalidTlParamException {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         writeInt(os,id,method);
         writeParams(os,params,method + " params");

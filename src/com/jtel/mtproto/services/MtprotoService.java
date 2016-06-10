@@ -1,6 +1,7 @@
 package com.jtel.mtproto.services;
 
 import com.jtel.mtproto.Config;
+import com.jtel.mtproto.tl.InvalidTlParamException;
 import com.jtel.mtproto.tl.TlMethod;
 import com.jtel.mtproto.tl.TlObject;
 import com.jtel.mtproto.transport.Transport;
@@ -41,7 +42,7 @@ public class MtprotoService {
         return currentDcID;
     }
 
-    public TlObject invokeMtpCall(TlMethod method) throws IOException {
+    public TlObject invokeMtpCall(TlMethod method) throws IOException,InvalidTlParamException {
 
 
 //        try {

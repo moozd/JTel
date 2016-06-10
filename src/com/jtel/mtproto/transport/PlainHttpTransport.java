@@ -3,6 +3,7 @@ package com.jtel.mtproto.transport;
 import com.jtel.common.log.Logger;
 import com.jtel.mtproto.Config;
 import com.jtel.mtproto.services.TimeManagerService;
+import com.jtel.mtproto.tl.InvalidTlParamException;
 import com.jtel.mtproto.tl.TlMethod;
 import com.jtel.mtproto.tl.TlObject;
 
@@ -35,7 +36,8 @@ public class PlainHttpTransport implements Transport {
     }
 
     @Override
-    public TlObject send(TlMethod method) throws IOException {
+    public TlObject send(TlMethod method) throws IOException,InvalidTlParamException {
+
         byte[] message = method.serialize();
         long message_id=0L;
 

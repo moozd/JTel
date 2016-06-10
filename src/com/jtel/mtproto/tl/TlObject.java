@@ -65,7 +65,7 @@ public class TlObject implements Tl {
     }
 
     @Override
-    public byte[] serialize() throws IOException {
+    public byte[] serialize() throws IOException,InvalidTlParamException {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         writeInt(os,id,predicate);
         writeParams(os,params,predicate+" params");

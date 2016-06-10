@@ -14,6 +14,6 @@ import java.io.OutputStream;
  */
 
 public interface Tl {
-    byte[] serialize() throws IOException;
+    byte[] serialize() throws IOException,InvalidTlParamException;
     void  deSerialize(InputStream is) throws IOException;
 }

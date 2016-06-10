@@ -4,13 +4,13 @@ import com.jtel.common.log.Logger;
 import com.jtel.mtproto.pq.Pq;
 import com.jtel.mtproto.pq.PqSolver;
 import com.jtel.mtproto.secure.Crypto;
-import com.jtel.mtproto.secure.PublicKeyHolder;
+import com.jtel.mtproto.secure.PublicKeyStorage;
 import com.jtel.mtproto.secure.Randoms;
 import com.jtel.mtproto.services.data.AuthBag;
+import com.jtel.mtproto.tl.InvalidTlParamException;
 import com.jtel.mtproto.tl.Streams;
 import com.jtel.mtproto.tl.TlMethod;
 import com.jtel.mtproto.tl.TlObject;
-import sun.security.provider.SHA;
 
 import static com.jtel.mtproto.secure.Crypto.*;
 
@@ -69,7 +69,7 @@ public final class AuthManagerService {
     }
 
 
-    public void authenticate(int dcid) throws IOException{
+    public void authenticate(int dcid) throws IOException,InvalidTlParamException{
 
         MtprotoService mtproto = MtprotoService.getInstance();
         mtproto.setCurrentDcID(dcid);
@@ -101,7 +101,7 @@ public final class AuthManagerService {
         byte[] hash = Crypto.SHA1(pqInner);
         byte[] padd = Randoms.nextRandomBytes(255 - hash.length- pqInner.length);
         byte[] data_with_hash = Crypto.concat(hash,pqInner,padd);
-        byte[] encrypted_data = Crypto.RSA(data_with_hash, PublicKeyHolder.modulus,PublicKeyHolder.exponent);
+        byte[] encrypted_data = Crypto.RSA(data_with_hash, PublicKeyStorage.modulus, PublicKeyStorage.exponent);
 
         TlObject Server_Dh_Params = mtproto.invokeMtpCall
                 (

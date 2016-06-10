@@ -29,7 +29,8 @@ public final class Streams {
 
     private static Logger console = Logger.getInstance();
     private final static boolean DEBUG = Config.DEBUG;
-    public static void writeIntBytes(OutputStream os, byte[] b,String field) throws IOException {
+    public static void writeIntBytes(OutputStream os, byte[] b,int len,String field) throws IOException {
+
         if(b.length %4 != 0) {
             return;
         }
@@ -39,7 +40,7 @@ public final class Streams {
     if (DEBUG)       console.log(String.format("%s<%s%s>:%s",field,"Int",b.length*8,HexBin.encode(b)));
     }
     public static void writeInt(OutputStream os, int n, String field) throws IOException {
-        ByteBuffer buffer = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN);
+            ByteBuffer buffer = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN);
         buffer.putInt(n);
         os.write(buffer.array());
         if(field.equals("")) return;
@@ -50,25 +51,7 @@ public final class Streams {
         os.write(bu);
         if (DEBUG)  console.log(String.format("%s<%s>:%s",field,"long",HexBin.encode(bu)));
     }
-    public static void writeInt128(OutputStream os, byte[] n,String field) throws IOException {
-        if ((n.length  * 8) != 128 ) {
-            return;
-        }
-        writeIntBytes(os,n,field);
-    }
-    public static void writeInt256(OutputStream os, byte[] n,String field) throws IOException {
-        if ((n.length * 8) != 256 ) {
-            return;
-        }
 
-            writeIntBytes(os,n,field);
-
-    }
-    public static void writeInt512(OutputStream os, byte[] n,String field) throws IOException {
-        if (n.length * 8 != 512 ) {
-            writeIntBytes(os,n,field);
-        }
-    }
     public static void writeBool(OutputStream os, boolean b,String field) throws IOException {
         if (b) {
             writeInt(os, 0x997275b5,field+"[bool]");
@@ -99,41 +82,54 @@ public final class Streams {
         }
         if (DEBUG)    console.log(String.format("%s<%s(padding=%s)>:%s ",field,"Bytes",pad,HexBin.encode(n)));
     }
-    public static void writeParams(OutputStream os,  List<TlParam> params,String field ) throws IOException {
+    public static void writeParams(OutputStream os,  List<TlParam> params,String field ) throws IOException,InvalidTlParamException {
         for (TlParam param : params)
         {
 
             switch (param.type) {
                 case "#":
                 case "int":
+                    if(! (param.getValue() instanceof Integer)){
+                        throw new InvalidTlParamException(param);
+                    }
                     writeInt(os,param.getValue(),param.name);
                     break;
+                case "double":
                 case "long":
+                    if(! (param.getValue() instanceof Long)){
+                        throw new InvalidTlParamException(param);
+                    }
                     writeLong(os, param.getValue(),param.name);
                     break;
                 case "int128":
-                    writeInt128(os, param.getValue(),param.name);
-                    break;
                 case "int256":
-                    writeInt256(os,param.getValue(),param.name);
-                    break;
                 case "int512":
-                    writeInt512(os,param.getValue(),param.name);
+                    if(! (param.getValue() instanceof byte[])){
+                        throw new InvalidTlParamException(param);
+                    }
+                    writeIntBytes(os,param.getValue(),((byte[])param.getValue()).length,param.name);
                     break;
                 case "string":
                 case "bytes":
+                    if(! (param.getValue() instanceof byte[])){
+                        throw new InvalidTlParamException(param);
+                    }
                     writeBytes(os,param.getValue(),param.name);
                     break;
-                case "double":
-                    writeLong(os,param.getValue(),param.name);
-                    break;
                 case "Bool":
+                    if(! (param.getValue() instanceof Boolean)){
+                        throw new InvalidTlParamException(param);
+                    }
                     writeBool(os,param.getValue(),param.name);
+                    break;
                 case "true":   return;
                 default:
                     if(param.type.startsWith("Vector") || param.type.startsWith("vector")) {
                         String type = param.type.substring(param.type.indexOf("<")+1,param.type.indexOf(">"));
                         TlObject vector = TlSchemaManagerService.getInstance().getConstructor("Vector");
+                        if(! (param.getValue() instanceof List)){
+                            throw new InvalidTlParamException(param);
+                        }
                         List<TlObject> items = param.getValue();
 
                         writeInt(os,vector.id,type+ "(" +param.name+")");

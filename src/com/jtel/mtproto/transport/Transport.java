@@ -1,5 +1,6 @@
 package com.jtel.mtproto.transport;
 
+import com.jtel.mtproto.tl.InvalidTlParamException;
 import com.jtel.mtproto.tl.TlMethod;
 import com.jtel.mtproto.tl.TlObject;
 
@@ -16,7 +17,7 @@ import java.io.IOException;
 
 public interface  Transport {
 
-   TlObject send(TlMethod method) throws IOException;
+   TlObject send(TlMethod method) throws IOException,InvalidTlParamException;
 
     TlObject receive() throws IOException;
 }
