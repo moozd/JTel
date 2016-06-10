@@ -133,7 +133,7 @@ public final class AuthManagerService {
 
         TlObject server_DH_inner_data = new TlObject();
         server_DH_inner_data.deSerialize(new ByteArrayInputStream(answer));
-        console.log(server_DH_inner_data);
+        // console.log(server_DH_inner_data);
 
         int    g            = server_DH_inner_data.get("g");
         byte[] b            = Randoms.nextRandomBytes(256);
@@ -162,17 +162,14 @@ public final class AuthManagerService {
             pad++;
         }
         pad-=data_with_sha.length;
-        console.log("padd",pad);
 
         byte[] data_with_sha_pa= concat(data_with_sha,Randoms.nextRandomBytes(pad));
 
-        Streams.printHexTable(data_with_sha);
-        Streams.printHexTable(data_with_sha_pa);
         encrypted_data  = new byte[data_with_sha_pa.length];
 
         AES256IGEEncrypt(data_with_sha_pa,encrypted_data,tmp_iv,tmp_key);
 
-        mtproto.invokeMtpCall(
+        TlObject set_client_DH_params=  mtproto.invokeMtpCall(
                     new TlMethod("set_client_DH_params")
                             .put("nonce",nonce)
                             .put("server_nonce",server_nonce)
@@ -180,6 +177,19 @@ public final class AuthManagerService {
                 );
 
 
+        if (set_client_DH_params.predicate.equals("dh_gen_ok")) {
+            byte[] auth_key = gaInt.modPow(bInt,dhPrimeInt).toByteArray();
+            byte[] auth_key_sha = Crypto.SHA1(auth_key);
+            byte[] auth_key_sha_aux = subArray(auth_key_sha,0,8);
+            byte[] server_salt = xor(subArray(new_nonce,0,8),subArray(server_nonce,0,8));
+            Streams.printHexTable(server_salt);
+            Streams.printHexTable(auth_key);
+
+            save(dcid,new AuthBag(auth_key,server_salt));
+        }
+
+
     }
+
 
 }

@@ -21,7 +21,7 @@ public final class Config {
     public final static int                      apiId;
     public final static int                      schemaLayer;
 
-    public final static boolean                  DEBUG = true;
+    public final static boolean                  DEBUG = false;
 
     public final static String                   mtpSchema;
     public final static String                   apiSchema;

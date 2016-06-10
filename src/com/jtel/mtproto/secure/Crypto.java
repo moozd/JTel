@@ -186,6 +186,14 @@ public class Crypto {
         return subArray(src,start,src.length-start);
     }
 
+    public static byte[] xor(byte[]a, byte[]b){
+        byte[] buff = new byte[a.length];
+        for(int i=0; i<buff.length;i++){
+            buff[i]=(byte)((int) a[i] ^(int) b[i]);
+        }
+        return buff;
+    }
+
 
 
 }
