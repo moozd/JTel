@@ -1,5 +1,6 @@
 package com.jtel.mtproto.transport;
 
+import com.jtel.mtproto.Config;
 import com.jtel.mtproto.tl.Streams;
 
 import java.io.IOException;
@@ -15,8 +16,8 @@ import java.io.IOException;
 
 public class TransportFactory {
 
-    public static Transport Create(String a,String address) throws IOException {
-        switch (a){
+    public static Transport Create(String address) throws IOException {
+        switch (Config.Transport){
             case "http":
                 return new PlainHttpTransport(address);
 

@@ -1,5 +1,6 @@
 package com.jtel.mtproto.services;
 
+import com.jtel.common.log.Logger;
 import com.jtel.mtproto.Config;
 import com.jtel.mtproto.tl.InvalidTlParamException;
 import com.jtel.mtproto.tl.TlMethod;
@@ -20,7 +21,7 @@ import java.io.IOException;
 
 public class MtprotoService {
     private static MtprotoService instance;
-
+    private Logger console = Logger.getInstance();
     public static MtprotoService getInstance() {
         if (instance == null) {
             instance = new MtprotoService();
@@ -46,8 +47,12 @@ public class MtprotoService {
 
 
 //        try {
-            Transport transport = TransportFactory.Create("http",Config.dcAddresses.get(2));
-            return transport.send(method);
+            long time = System.currentTimeMillis();
+            console.log("invokeMtpCall:" , method.method);
+            Transport transport = TransportFactory.Create(Config.dcAddresses.get(2));
+            TlObject ret = transport.send(method);
+            console.log("rpcResult    :",ret.predicate + " ("+ (System.currentTimeMillis() - time)/1000f+"s" +")."  );
+            return ret;
 //        }catch (Exception e) {
 //            Logger.getInstance().error(e.getMessage());
 //        }

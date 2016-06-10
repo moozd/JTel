@@ -7,11 +7,13 @@ import com.jtel.mtproto.tl.InvalidTlParamException;
 import com.jtel.mtproto.tl.TlMethod;
 import com.jtel.mtproto.tl.TlObject;
 
+import static com.jtel.mtproto.tl.Streams.*;
+
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-import static com.jtel.mtproto.tl.Streams.*;
+
 
 /**
  * This file is part of JTel
@@ -29,7 +31,7 @@ public class PlainHttpTransport implements Transport {
 
 
     protected Logger console = Logger.getInstance();
-    private  boolean DEBUG = Config.DEBUG;
+    private  boolean DEBUG = Config.Debug;
 
     public PlainHttpTransport(String address) throws IOException {
         url=new URL("http://"+address+"/apiw1");
@@ -61,9 +63,12 @@ public class PlainHttpTransport implements Transport {
         connection.getOutputStream().flush();
         connection.getOutputStream().close();
 
-        console.log(method);
 
-        if (DEBUG)printHexTable(os.toByteArray());
+
+        if (DEBUG){
+            console.log(method);
+            printHexTable(os.toByteArray());
+        }
         return receive();
 
     }
@@ -87,8 +92,11 @@ public class PlainHttpTransport implements Transport {
         TlObject responseObject = new TlObject();
         responseObject.deSerialize(bis);
 
-        console.log(responseObject);
-        if(DEBUG) printHexTable(responseBytes);
+
+        if(DEBUG){
+            console.log(responseObject);
+            printHexTable(responseBytes);
+        }
 
         return responseObject;
     }

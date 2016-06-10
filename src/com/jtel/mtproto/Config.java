@@ -20,9 +20,8 @@ public final class Config {
     public final static String                   apiHash;
     public final static int                      apiId;
     public final static int                      schemaLayer;
-
-    public final static boolean                  DEBUG = false;
-
+    public final static boolean                  Debug;
+    public final static String                   Transport;
     public final static String                   mtpSchema;
     public final static String                   apiSchema;
 
@@ -39,6 +38,9 @@ public final class Config {
         apiHash     = "6e7e20a046e44cb801dc1e8325233396";
         apiId       = 37516;
         schemaLayer = 45;
+
+        Debug =false;
+        Transport ="http";
 
         Path currentRelativePath = Paths.get("");
         String s = currentRelativePath.toAbsolutePath().toString();

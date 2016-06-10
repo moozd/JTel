@@ -28,7 +28,7 @@ import java.util.List;
 public final class Streams {
 
     private static Logger console = Logger.getInstance();
-    private final static boolean DEBUG = Config.DEBUG;
+    private final static boolean DEBUG = Config.Debug;
     public static void writeIntBytes(OutputStream os, byte[] b,int len,String field) throws IOException {
 
         if(b.length %4 != 0) {
