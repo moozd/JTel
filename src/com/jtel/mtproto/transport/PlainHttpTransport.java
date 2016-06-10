@@ -1,3 +1,20 @@
+/*
+ * This file is part of JTel.
+ *
+ *     JTel is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     JTel is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with JTel.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package com.jtel.mtproto.transport;
 
 import com.jtel.common.log.Logger;
@@ -6,6 +23,7 @@ import com.jtel.mtproto.services.TimeManagerService;
 import com.jtel.mtproto.tl.InvalidTlParamException;
 import com.jtel.mtproto.tl.TlMethod;
 import com.jtel.mtproto.tl.TlObject;
+import com.sun.istack.internal.Nullable;
 
 import static com.jtel.mtproto.tl.Streams.*;
 
@@ -38,24 +56,22 @@ public class PlainHttpTransport implements Transport {
     }
 
     @Override
+    @Nullable
     public TlObject send(TlMethod method) throws IOException,InvalidTlParamException {
 
         byte[] message = method.serialize();
-        long message_id=0L;
 
 
         System.setProperty("http.keepAlive", "true");
         connection = (HttpURLConnection) url.openConnection();
         connection.setDoInput(true);
         connection.setDoOutput(true);
-        //connection.setRequestProperty("Content-Type",null);
-        //connection.setRequestProperty("Accept",null);
         connection.setRequestMethod("POST");
 
         ByteArrayOutputStream os = new ByteArrayOutputStream();
 
         writeLong(os, 0L,"Auth Key");
-        writeLong(os,(  message_id = TimeManagerService.getInstance().generateMessageId()),"Message ID");
+        writeLong(os,( TimeManagerService.getInstance().generateMessageId()),"Message ID");
         writeInt(os,message.length,"Message length");
         os.write(message);
 
@@ -64,12 +80,12 @@ public class PlainHttpTransport implements Transport {
         connection.getOutputStream().close();
 
 
-
         if (DEBUG){
             console.log(method);
             printHexTable(os.toByteArray());
         }
-        return receive();
+
+        return  receive();
 
     }
 
