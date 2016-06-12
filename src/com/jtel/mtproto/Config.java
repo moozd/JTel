@@ -42,10 +42,10 @@ public final class Config {
     public final static String                   mtpSchema;
     public final static String                   apiSchema;
 
+
     static {
 
         dcAddresses = new HashMap<>();
-
         dcAddresses.put(1, "149.154.175.50");
         dcAddresses.put(2, "149.154.167.51");
         dcAddresses.put(3, "149.154.175.100");
@@ -57,13 +57,13 @@ public final class Config {
         schemaLayer = 45;
 
         Debug =false;
-        Transport ="http";
+        Transport = "http";
 
         Path currentRelativePath = Paths.get("");
         String s = currentRelativePath.toAbsolutePath().toString();
 
-        mtpSchema=s+"/mtp_schema.json";
-        apiSchema=s+"/api_schema.json";
+        mtpSchema= s+"/mtp_schema.json";
+        apiSchema= s+"/api_schema.json";
 
     }
 

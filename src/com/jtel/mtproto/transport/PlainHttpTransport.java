@@ -70,7 +70,7 @@ public class PlainHttpTransport implements Transport {
 
         ByteArrayOutputStream os = new ByteArrayOutputStream();
 
-        writeLong(os, 0L,"Auth Key");
+        writeLong(os, 0L,"AuthStorage Key");
         writeLong(os,( TimeManagerService.getInstance().generateMessageId()),"Message ID");
         writeInt(os,message.length,"Message length");
         os.write(message);

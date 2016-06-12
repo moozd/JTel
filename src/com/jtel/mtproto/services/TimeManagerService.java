@@ -40,10 +40,14 @@ public final class TimeManagerService {
     }
 
     private long timeDelta;
+    private int  seqNo;
 
 
     private TimeManagerService() {
-
+        seqNo =0;
+    }
+    public int generateSeqNo(){
+        return seqNo++;
     }
 
     public long getLocalTime() {

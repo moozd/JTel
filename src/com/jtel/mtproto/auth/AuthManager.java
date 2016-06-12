@@ -15,26 +15,42 @@
  *     along with JTel.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.jtel.mtproto.services;
+/*
+ * This file is part of JTel.
+ *
+ *     JTel is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     JTel is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with JTel.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
+package com.jtel.mtproto.auth;
+
+import com.jtel.common.io.Storage;
 import com.jtel.common.log.Logger;
 import com.jtel.mtproto.pq.Pq;
 import com.jtel.mtproto.pq.PqSolver;
 import com.jtel.mtproto.secure.Crypto;
 import com.jtel.mtproto.secure.PublicKeyStorage;
 import com.jtel.mtproto.secure.Randoms;
-import com.jtel.mtproto.services.data.AuthBag;
+import com.jtel.mtproto.services.MtpService;
+import com.jtel.mtproto.services.TimeManagerService;
 import com.jtel.mtproto.tl.InvalidTlParamException;
-import com.jtel.mtproto.tl.Streams;
 import com.jtel.mtproto.tl.TlMethod;
 import com.jtel.mtproto.tl.TlObject;
 
 import static com.jtel.mtproto.secure.Crypto.*;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.math.BigInteger;
-import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -46,29 +62,14 @@ import java.util.List;
  * @author <a href="mailto:mohammad.mdz72@gmail.com">Mohammad Mohammad Zade</a>
  */
 
-public final class AuthManagerService {
-    /**
-     * singleton instance
-     */
-    private static  AuthManagerService instance;
+public final class AuthManager {
+
 
     /**
      * private constructor class is available throw getInstance()
      */
-    private AuthManagerService() {
+    public AuthManager() {
         initialize();
-    }
-
-    /**
-     *
-     * @return new Object of this class or saved one in instance
-     */
-    public static AuthManagerService getInstance() {
-
-        if (instance == null) {
-            instance = new AuthManagerService();
-        }
-        return instance;
     }
 
     /**
@@ -79,38 +80,44 @@ public final class AuthManagerService {
     /**
      * stores authenticated data centers auth_key and server_salt
      */
-    private HashMap<Integer,AuthBag> authBags;
+    private Storage storage;
+
 
     /**
      * class initializer
      */
     private void initialize() {
-        authBags = new HashMap<>();
+        storage = AuthStorage.getInstance();
     }
 
-    /**
-     * get Auth object by data center id
-     * @param dc data center id
-     * @return auth_key and server_salt
-     */
-    public AuthBag get(int dc) {
 
-        if (! authBags.containsKey(dc)) {
-            return null;
-        }
-
-        return authBags.get(dc);
-    }
 
     /**
      * save authenticated state for data center
      * @param dc data center id
      * @param auth auth_key and server_salt
      */
-    public void save(int dc, AuthBag auth) {
-        authBags.put(dc, auth);
+    protected void save(int dc, AuthCredentials auth) {
+        storage.setItem("auth_state",true);
+        storage.setItem("dcId",dc);
+        storage.setItem("dcId_"+dc+"_auth", auth);
+        storage.save();
     }
 
+    /**
+     * authenticate to given data center
+     * @param dcid data center id
+     * @throws AuthFailedException if network fails or if invalid parameter is supplied
+     */
+
+    public void authenticate(int dcid) throws AuthFailedException{
+        try {
+            authAttempt(dcid);
+        }
+        catch (Exception e){
+            throw new AuthFailedException();
+        }
+    }
 
     /**
      * authenticate to given data center
@@ -118,10 +125,10 @@ public final class AuthManagerService {
      * @throws IOException if network fails
      * @throws InvalidTlParamException if invalid parameter is supplied
      */
-    public void authenticate(int dcid) throws IOException,InvalidTlParamException{
+    protected void authAttempt(int dcid) throws IOException,InvalidTlParamException{
 
         //configuring MTProto service and starting it
-        MTProtoService mtproto = MTProtoService.getInstance();
+        MtpService mtproto = MtpService.getInstance();
         mtproto.setCurrentDcID(dcid);
 
         //step 1 ,calling req_pq request
@@ -192,7 +199,7 @@ public final class AuthManagerService {
 
         if(Server_Dh_Params.predicate.equals("server_DH_params_fail")){
             console.error("dh key exchange failed","retrying...");
-            authenticate(dcid);
+            authAttempt(dcid);
             return;
         }
 
@@ -278,6 +285,7 @@ public final class AuthManagerService {
             byte[] auth_key = gaInt.modPow(bInt,dhPrimeInt).toByteArray();
             byte[] auth_key_sha = Crypto.SHA1(auth_key);
             byte[] auth_key_sha_aux = subArray(auth_key_sha,0,8);
+            byte[] auth_key_id =subArray(auth_key_sha,auth_key_sha.length-8,8);
 
 
             //server_salt is xor of first eight byte of new_nonce and first eight byte of server_nonce
@@ -289,7 +297,7 @@ public final class AuthManagerService {
             console.table(auth_key,"auth_key");
 
             //saving auth_key and server_salt for this data center id
-            save(dcid,new AuthBag(auth_key,server_salt));
+            save(dcid,new AuthCredentials(auth_key,server_salt,server_time,auth_key_id));
         }
 
 
