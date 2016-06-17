@@ -1,7 +1,7 @@
-package com.jtel.mtproto.pq;
+package com.jtel.mtproto.auth.pq;
 
 import com.jtel.common.log.Logger;
-import com.jtel.mtproto.Config;
+import com.jtel.mtproto.ConfStorage;
 import com.sun.org.apache.xerces.internal.impl.dv.util.HexBin;
 
 import java.math.BigInteger;
@@ -13,7 +13,7 @@ import java.util.Random;
  * This file is part of JTel
  * IntelliJ idea.
  * Date     : 6/9/16
- * Package : com.jtel.mtproto.pq
+ * Package : com.jtel.mtproto.auth.pq
  *
  * copied from https://github.com/ex3ndr/telegram-mt/blob/master/src/main/java/org/telegram/mtproto/secure/pq/PQLopatin.java
  *
@@ -122,7 +122,7 @@ public class PqSolver {
         pq.p = p.toByteArray();
         pq.q = q.toByteArray();
 
-        if(Config.Debug) console.log("Pq solved ","Finished in " + ( System.currentTimeMillis() - time )/1000f + " s" ,pqInt.toString(), "=",p.toString()," x ",q.toString());
+        if(ConfStorage.getInstance().debug()) console.log("Pq solved ","Finished in " + ( System.currentTimeMillis() - time )/1000f + " s" ,pqInt.toString(), "=",p.toString()," x ",q.toString());
         return pq;
     }
 }

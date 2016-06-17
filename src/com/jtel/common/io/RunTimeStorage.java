@@ -15,20 +15,29 @@
  *     along with JTel.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.jtel.mtproto.tl;
-
-import java.util.List;
+package com.jtel.common.io;
 
 /**
  * This file is part of JTel
  * IntelliJ idea.
- * Date     : 6/7/16
- * Package : com.jtel.mtproto.tl
+ * Date     : 6/16/16
+ * Package : com.jtel.common.io
  *
  * @author <a href="mailto:mohammad.mdz72@gmail.com">Mohammad Mohammad Zade</a>
  */
 
-public class TlSchema {
-    public List<TlObject> constructors;
-    public List<TlMethod> methods;
+public class RunTimeStorage extends Storage {
+
+    private static RunTimeStorage instance ;
+
+    public static RunTimeStorage getInstance() {
+        if (instance == null) {
+            instance = new RunTimeStorage();
+        }
+        return instance;
+    }
+
+    private RunTimeStorage(){
+        super();
+    }
 }

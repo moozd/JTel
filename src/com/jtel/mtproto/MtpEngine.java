@@ -15,23 +15,35 @@
  *     along with JTel.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.jtel.mtproto.services;
+/*
+ * This file is part of JTel.
+ *
+ *     JTel is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     JTel is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with JTel.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
-import com.jtel.common.io.Storage;
+package com.jtel.mtproto;
+
+import com.jtel.common.io.FileStorage;
 import com.jtel.common.log.Logger;
-
-import com.jtel.mtproto.Config;
-
 import com.jtel.mtproto.auth.AuthCredentials;
 import com.jtel.mtproto.auth.AuthFailedException;
 import com.jtel.mtproto.auth.AuthManager;
-import com.jtel.mtproto.auth.AuthStorage;
 
-import com.jtel.mtproto.tl.TlMethod;
-import com.jtel.mtproto.tl.TlObject;
+import com.jtel.mtproto.tl.*;
 
+import com.jtel.mtproto.transport.HttpTransport;
 import com.jtel.mtproto.transport.Transport;
-import com.jtel.mtproto.transport.TransportFactory;
 
 
 /**
@@ -49,23 +61,26 @@ import com.jtel.mtproto.transport.TransportFactory;
  * this class is singleton
  */
 
-public class MtpService {
+public class MtpEngine {
 
     /**
      * class instance to hold single instance of it
      */
-    private static MtpService instance;
+    private static MtpEngine instance;
 
     /**
      * method to getCredentialsForDc current instance or create new one in case it is not created yet
      * @return object of this class
      */
-    public static MtpService getInstance() {
+    public static MtpEngine getInstance() {
         if (instance == null) {
-            instance = new MtpService();
+            instance = new MtpEngine();
+
         }
         return instance;
     }
+
+
 
     /**
      * logger object to log operations for debugging
@@ -73,15 +88,31 @@ public class MtpService {
     private Logger console = Logger.getInstance();
 
 
-    private Storage storage;
+    ;
+
+    private boolean isApiInitialized;
+
+    private FileStorage storage;
+    private AuthManager authManager;
+    private Transport transport;
 
 
     /**
      * private constructor you cannot create instance of this class using new you must cull getInstance()
      */
-    private MtpService(){
-        this.storage = AuthStorage.getInstance();
+    private MtpEngine(){
+        this.isApiInitialized = false;
     }
+
+    public void setStorage(FileStorage storage) {
+        this.storage = storage;
+        this.authManager = new AuthManager(storage);
+    }
+
+    public void setTransport(Transport transport) {
+        this.transport = transport;
+    }
+
 
     /**
      * is user authenticated to telegram service?
@@ -89,9 +120,21 @@ public class MtpService {
      *         this means client has completed the authentication
      */
     protected boolean isAuthenticatedOnDc(int dc){
-         return storage.hasCache("dcId_"+dc+"_auth");
+         return storage.hasKey("dcId_"+dc+"_auth");
     }
 
+    /**
+     * if initConnection method has been executed then it will return true
+     * @return true or false
+     */
+    public boolean isApiInitialized() {
+        return isApiInitialized;
+    }
+
+
+    protected void setApiInitialized(boolean apiInitialized) {
+        isApiInitialized = apiInitialized;
+    }
 
     /**
      * change current dc id
@@ -102,21 +145,18 @@ public class MtpService {
         storage.save();
     }
 
+    public FileStorage getStorage() {
+        return storage;
+    }
+
     /**
      *
      * @return getCredentialsForDc current data center id
      */
     public int getCurrentDcID() {
-        return storage.getItem("dcId");
+        return storage.getItem("dcId") == null ? 1 :storage.getItem("dcId");
     }
 
-    /**
-     *
-     * @return getCredentialsForDc current data center address
-     */
-    public String getCurrentDcAddress(){
-        return Config.dcAddresses.get(getCurrentDcID());
-    }
 
     /**
      * send a mtp rpc request known as low level request that dose not require authentication
@@ -132,13 +172,13 @@ public class MtpService {
             console.log("invokeMtpCall:", method.method);
             //getting transport object from factory you can chose type of transport from @see com.jtel.Config
             //by changing transport field
-            Transport transport = TransportFactory.Create(getCurrentDcAddress(),false);
-            TlObject ret = transport.send(method);
+            int currentDc = getCurrentDcID();
+            TlObject ret = transport.send(currentDc, new UnencryptedMessage(method));
 
             console.log("rpcResult    :", ret.predicate + " (" + (System.currentTimeMillis() - time) / 1000f + "s" + ").");
             return ret;
         }catch (Exception e){
-            Logger.getInstance().error(e.getMessage());
+            console.error("mtp call:",e.hashCode(), e.getMessage());
             //// TODO: 6/10/16 add error handling to notify user for this exception
         }
         return new TlObject();
@@ -176,20 +216,42 @@ public class MtpService {
      */
     public TlObject invokeApiCall(TlMethod method){
         try {
-            checkDcBeforeMethodCall();
+            checkCurrentDc();
         }
         catch (AuthFailedException e){
            // handle
         }
+
+
         try {
-            Transport transport = TransportFactory.Create(getCurrentDcAddress(), true);
-            return transport.send(method);
+
+            int currentDc = getCurrentDcID();
+            AuthCredentials credentials = getCredentialsForDc(currentDc);
+            long session_id = storage.getItem("session_id");
+            return transport.send(currentDc, new EncryptedMessage(session_id,credentials,method));
         }
         catch (Exception e){
-            //handle
+            console.error("api call:",e.hashCode(), e.getMessage());
         }
         return new TlObject();
     }
+
+    public void initConnection (){
+        try {
+
+            if(!isApiInitialized()){
+                int currentDc = getCurrentDcID();
+                long session_id = storage.getItem("session_id");
+                TlObject nearestDc = transport.send(currentDc, new InitConnectionMessage(session_id,getCredentialsForDc(currentDc)));
+                setCurrentDcID(nearestDc.get("nearest_dc"));
+                setApiInitialized(true);
+            }
+        }
+        catch (Exception e){
+             console.error("init connection:",e.hashCode(), e.getMessage());
+        }
+    }
+
 
     /**
      * clear storage items
@@ -214,8 +276,7 @@ public class MtpService {
     public void authenticateForAll() throws AuthFailedException{
         int dc = getCurrentDcID();
         for (int i =1;i<6;i++){
-            AuthManager manager = new AuthManager();
-            manager.authenticate(i);
+            authManager.authenticate(i);
         }
         setCurrentDcID(dc);
     }
@@ -224,10 +285,10 @@ public class MtpService {
      * checks if client is not authenticated to a dc then authenticates
      * @throws AuthFailedException
      */
-    protected void checkDcBeforeMethodCall() throws AuthFailedException{
+    protected void checkCurrentDc() throws AuthFailedException{
         if (!isAuthenticatedOnDc(getCurrentDcID())){
-            AuthManager manager = new AuthManager();
-            manager.authenticate(getCurrentDcID());
+
+            authManager.authenticate(getCurrentDcID());
         }
     }
 

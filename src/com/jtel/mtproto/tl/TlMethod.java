@@ -17,7 +17,7 @@
 
 package com.jtel.mtproto.tl;
 
-import com.jtel.mtproto.services.TlSchemaManagerService;
+import com.jtel.mtproto.tl.schema.TlSchemaProvider;
 import com.sun.istack.internal.Nullable;
 import com.sun.org.apache.xerces.internal.impl.dv.util.HexBin;
 
@@ -47,7 +47,7 @@ public class TlMethod implements Tl {
     public String type;
 
     public TlMethod(String methodName) throws IOException{
-        TlSchemaManagerService schemaManagerService = TlSchemaManagerService.getInstance();
+        TlSchemaProvider schemaManagerService = TlSchemaProvider.getInstance();
         TlMethod method = schemaManagerService.getMethod(methodName);
         this.id     = method.id;
         this.method = method.method;

@@ -15,38 +15,33 @@
  *     along with JTel.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.jtel.mtproto.transport;
+package com.jtel.mtproto.tl.schema;
 
-import com.jtel.mtproto.Config;
-
-import java.io.IOException;
+import com.jtel.mtproto.ConfStorage;
 
 /**
  * This file is part of JTel
  * IntelliJ idea.
- * Date     : 6/9/16
- * Package : com.jtel.mtproto.transport
+ * Date     : 6/17/16
+ * Package : com.jtel.mtproto.tl.schema
  *
  * @author <a href="mailto:mohammad.mdz72@gmail.com">Mohammad Mohammad Zade</a>
  */
 
-public class TransportFactory {
+public final class TlSchemaFactory {
 
-    /**
-     * create new transport
-     * @param address data center address
-     * @return @see com.jtel.mtproto.transport.Transport
-     * @throws IOException
-     */
-    public static Transport Create(String address,boolean encrypted) throws IOException {
-        switch (Config.Transport){
-            case "http":
-                if (!encrypted){
-                    return new PlainHttpTransport(address);
-                }
-                return new EncryptedHttpTransport(address);
+    public static String defaultProvider =  ConfStorage.getInstance().getItem("tl-schema-provide");
 
+
+    public static TlSchemaProvider createDefault(){
+        return create(defaultProvider);
+    }
+
+    public static TlSchemaProvider create(String schema){
+        switch (schema){
+            case "json":
+            default:
+                return new JSONTlSchemaProvider();
         }
-        return null;
     }
 }

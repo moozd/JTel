@@ -18,7 +18,7 @@
 package com.jtel.mtproto.tl;
 
 import com.jtel.common.log.Logger;
-import com.jtel.mtproto.services.TlSchemaManagerService;
+import com.jtel.mtproto.tl.schema.TlSchemaProvider;
 import com.sun.org.apache.xerces.internal.impl.dv.util.HexBin;
 
 import java.io.ByteArrayOutputStream;
@@ -53,7 +53,7 @@ public class TlObject implements Tl {
     }
     public TlObject(String predicate) throws IOException{
 
-        TlSchemaManagerService schemaManagerService = TlSchemaManagerService.getInstance();
+        TlSchemaProvider schemaManagerService = TlSchemaProvider.getInstance();
         TlObject object = schemaManagerService.getConstructor(predicate);
         this.id        = object.id;
         this.predicate = object.predicate;
@@ -95,7 +95,7 @@ public class TlObject implements Tl {
     @Override
     public void deSerialize(InputStream is) throws IOException {
         int id = readInt(is);
-        TlObject object = TlSchemaManagerService.getInstance().getConstructor(id);
+        TlObject object = TlSchemaProvider.getInstance().getConstructor(id);
         if(object == null) console.error("not found",id);
         this.id        = object.id;
         this.predicate = object.predicate;

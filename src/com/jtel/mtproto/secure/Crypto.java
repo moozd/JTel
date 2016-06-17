@@ -141,7 +141,7 @@ public class Crypto {
         aes_iv = substr (sha1_a, 8, 12) + substr (sha1_b, 0, 8) + substr (sha1_c, 16, 4) + substr (sha1_d, 0, 8);
     */
 
-    public Map<String, byte[]> getAESKeyIV(byte[] messageKey, byte[] authKey, boolean toServer){
+    public static Map<String, byte[]> getAESKeyIV(byte[] messageKey, byte[] authKey, boolean toServer){
         int x = 8;
         if(toServer) x  = 0;
 
@@ -154,8 +154,8 @@ public class Crypto {
         byte[] aes_iv   = concat(subArray(sha1_a,8,12),subArray(sha1_b,0,8),subArray(sha1_c,16,4),subArray(sha1_d,0,8));
 
         Map<String,byte[]> ret = new HashMap<>();
-        ret.put("aes_key",aes_key);
-        ret.put("aes_iv", aes_iv);
+        ret.put("key",aes_key);
+        ret.put("iv", aes_iv);
         return ret;
     }
 

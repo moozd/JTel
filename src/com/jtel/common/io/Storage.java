@@ -36,6 +36,7 @@ package com.jtel.common.io;
 
 
 import com.jtel.mtproto.auth.AuthCredentials;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 
 import java.io.File;
 import java.io.Serializable;
@@ -54,60 +55,68 @@ import java.util.HashMap;
 public abstract class Storage implements Serializable{
 
     protected HashMap<String,Object> pairs;
-
-
-    protected void initialize() {
-        pairs = new HashMap<>();
-        File cache = new File(getPath());
-        if (cache.exists()){
-            load();
-        }
-        else {
-            initialItems();
-        }
-
-    }
-
-
-
+    protected HashMap<String,Boolean> locks;
 
     public Storage(){
-        initialize();
+        this.pairs = new HashMap<>();
+        this.locks = new HashMap<>();
     }
 
-    public boolean isCached(){
-        File file = new File(getPath());
-        return file.exists() ;
-    }
-
-    public boolean hasCache(String key){
+    public boolean hasKey(String key){
         return pairs.containsKey(key);
     }
 
     public void restore(Storage storage){
+        locks = (HashMap<String, Boolean>)storage.locks.clone();
         pairs = (HashMap<String, Object>) storage.pairs.clone();
+    }
+
+    public HashMap<String,Object> toHashMap(){
+        if ( this.pairs != null){
+            return (HashMap<String, Object>) this.pairs.clone();
+        }
+       return null;
     }
 
     public  void clear(){
         pairs.clear();
-        initialItems();
-        save();
     }
-
-    public abstract void initialItems();
 
     public <T> T getItem(String key){
         return (T)pairs.get(key);
     }
 
     public <T> void setItem(String key , T o){
-        pairs.put(key,o);
+        setItem(key,o,false);
     }
 
-    public abstract String getPath();
+    @Override
+    public String toString() {
+        String ret = "\""+getClass().getSimpleName()+"\"\n ";
+        for (HashMap.Entry<String,Object> dd : pairs.entrySet()) {
+            ret +=
+                    (locks.containsKey(dd.getKey()) && locks.get(dd.getKey()).equals(true) ? " [Readonly] " : " [Editable] ")
+                    +"\""+ dd.getKey() + "\": \"" + dd.getValue()+"\"" + " \n ";
+        }
+        return ret;
+    }
 
-    public abstract void save();
+    public <T> void setItem(String key , T o, boolean readOnly){
+        try {
+            if (locks.containsKey(key)) {
+                if (locks.get(key)) {
+                    throw new ReadOnlyPropertyException(key);
+                }
+            }
+            pairs.put(key, o);
+            locks.put(key, readOnly);
+        }catch (ReadOnlyPropertyException e){
+            throw new RuntimeException(e);
+        }
 
-    public abstract void load();
+
+    }
+
+
 
 }

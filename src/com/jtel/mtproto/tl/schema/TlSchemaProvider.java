@@ -1,15 +1,43 @@
-package com.jtel.mtproto.services;
+/*
+ * This file is part of JTel.
+ *
+ *     JTel is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     JTel is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with JTel.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.jtel.mtproto.Config;
+/*
+ * This file is part of JTel.
+ *
+ *     JTel is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     JTel is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with JTel.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+package com.jtel.mtproto.tl.schema;
+
 import com.jtel.mtproto.tl.TlMethod;
 import com.jtel.mtproto.tl.TlObject;
-import com.jtel.mtproto.tl.TlSchema;
 
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,32 +50,45 @@ import java.util.List;
  * @author <a href="mailto:mohammad.mdz72@gmail.com">Mohammad Mohammad Zade</a>
  */
 
-public final class TlSchemaManagerService {
-
-    private static TlSchemaManagerService instance;
-
-    public static TlSchemaManagerService getInstance() throws IOException {
-        if(instance == null) {
-            instance = new TlSchemaManagerService();
-        }
-        return instance;
-    }
+public abstract class TlSchemaProvider {
 
     private TlSchema mtpSchema;
     private TlSchema apiSchema;
 
-    private TlSchemaManagerService() throws IOException{
-        long time = System.currentTimeMillis();
-        try(Reader reader = new FileReader(Config.mtpSchema)){
-            Gson gson = new GsonBuilder().create();
-            mtpSchema = gson.fromJson(reader, TlSchema.class);
-        }
-        try(Reader reader = new FileReader(Config.apiSchema)){
-            Gson gson = new GsonBuilder().create();
-            apiSchema = gson.fromJson(reader, TlSchema.class);
-        }
+    private static TlSchemaProvider instance;
 
+    public static TlSchemaProvider getInstance() {
+        if (instance == null) {
+            instance = TlSchemaFactory.createDefault();
+        }
+        return instance ;
     }
+
+
+
+    protected abstract TlSchema loadMtpSchema();
+
+    protected abstract TlSchema loadApiSchema();
+
+
+    protected void initialize(){
+        if(apiSchema == null){
+            apiSchema = loadMtpSchema();
+        }
+        if (mtpSchema == null) {
+            mtpSchema = loadApiSchema();
+        }
+    }
+
+    public TlSchema getApiSchema() {
+        return apiSchema;
+    }
+
+    public TlSchema getMtpSchema() {
+
+        return mtpSchema;
+    }
+
 
     public TlObject getConstructor(String predicate, boolean mtp) {
         List<TlObject> constructors;

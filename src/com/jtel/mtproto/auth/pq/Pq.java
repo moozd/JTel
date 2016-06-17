@@ -1,10 +1,10 @@
-package com.jtel.mtproto.pq;
+package com.jtel.mtproto.auth.pq;
 
 /**
  * This file is part of JTel
  * IntelliJ idea.
  * Date     : 6/9/16
- * Package : com.jtel.mtproto.pq
+ * Package : com.jtel.mtproto.auth.pq
  *
  * @author <a href="mailto:mohammad.mdz72@gmail.com">Mohammad Mohammad Zade</a>
  */

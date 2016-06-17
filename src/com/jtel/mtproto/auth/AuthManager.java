@@ -34,15 +34,16 @@
 
 package com.jtel.mtproto.auth;
 
-import com.jtel.common.io.Storage;
+import com.jtel.common.io.FileStorage;
 import com.jtel.common.log.Logger;
-import com.jtel.mtproto.pq.Pq;
-import com.jtel.mtproto.pq.PqSolver;
+import com.jtel.mtproto.ConfStorage;
+import com.jtel.mtproto.auth.pq.Pq;
+import com.jtel.mtproto.auth.pq.PqSolver;
 import com.jtel.mtproto.secure.Crypto;
 import com.jtel.mtproto.secure.PublicKeyStorage;
 import com.jtel.mtproto.secure.Randoms;
-import com.jtel.mtproto.services.MtpService;
-import com.jtel.mtproto.services.TimeManagerService;
+import com.jtel.mtproto.MtpEngine;
+import com.jtel.mtproto.MtpTimeManager;
 import com.jtel.mtproto.tl.InvalidTlParamException;
 import com.jtel.mtproto.tl.TlMethod;
 import com.jtel.mtproto.tl.TlObject;
@@ -68,8 +69,8 @@ public final class AuthManager {
     /**
      * private constructor class is available throw getInstance()
      */
-    public AuthManager() {
-        initialize();
+    public AuthManager(FileStorage storage) {
+        this.storage = storage;
     }
 
     /**
@@ -77,19 +78,12 @@ public final class AuthManager {
      */
     private Logger console = Logger.getInstance();
 
+    private ConfStorage conf = ConfStorage.getInstance();
+
     /**
      * stores authenticated data centers auth_key and server_salt
      */
-    private Storage storage;
-
-
-    /**
-     * class initializer
-     */
-    private void initialize() {
-        storage = AuthStorage.getInstance();
-    }
-
+    private FileStorage storage;
 
 
     /**
@@ -97,7 +91,7 @@ public final class AuthManager {
      * @param dc data center id
      * @param auth auth_key and server_salt
      */
-    protected void save(int dc, AuthCredentials auth) {
+    protected void save(int dc,AuthCredentials auth) {
         storage.setItem("auth_state",true);
         storage.setItem("dcId",dc);
         storage.setItem("dcId_"+dc+"_auth", auth);
@@ -115,8 +109,22 @@ public final class AuthManager {
             authAttempt(dcid);
         }
         catch (Exception e){
-            throw new AuthFailedException();
+            e.printStackTrace();
+            throw new AuthFailedException(e.getMessage());
         }
+    }
+
+    /**
+     *
+     * @return file storage that has auth keys and server salts
+     */
+    public AuthCredentials getCredentials(int dcid) {
+
+        return storage.getItem("dcId_"+dcid+"_auth");
+    }
+
+    public FileStorage getStorage() {
+        return storage;
     }
 
     /**
@@ -128,7 +136,7 @@ public final class AuthManager {
     protected void authAttempt(int dcid) throws IOException,InvalidTlParamException{
 
         //configuring MTProto service and starting it
-        MtpService mtproto = MtpService.getInstance();
+        MtpEngine mtproto = MtpEngine.getInstance();
         mtproto.setCurrentDcID(dcid);
 
         //step 1 ,calling req_pq request
@@ -233,8 +241,8 @@ public final class AuthManager {
         byte[] g_a          = server_DH_inner_data.get("g_a");
         // use server time to calculate time offset server_time - local time
         //time offset will be used to generate message id
-        int    server_time  = server_DH_inner_data.get("server_time");
-        TimeManagerService.getInstance().setTimeDelta(System.currentTimeMillis() - server_time);
+        long    server_time  = System.currentTimeMillis() - (int)server_DH_inner_data.get("server_time");
+        MtpTimeManager.getInstance().setTimeDelta(System.currentTimeMillis() - server_time);
 
         //these numbers are really big so we must use BigInteger to do calculations on theme
         BigInteger bInt       = new BigInteger(b);
@@ -291,13 +299,16 @@ public final class AuthManager {
             //server_salt is xor of first eight byte of new_nonce and first eight byte of server_nonce
             byte[] server_salt = xor(subArray(new_nonce,0,8),subArray(server_nonce,0,8));
 
-            //printing hex table of server salt and auth_key
+            console.log("Done.");
+            if(conf.debug()) {
+                //printing hex table of server salt and auth_key
 
-            console.table(server_salt,"server_salt");
-            console.table(auth_key,"auth_key");
-
+                console.table(server_salt, "server_salt");
+                console.table(auth_key, "auth_key");
+            }
             //saving auth_key and server_salt for this data center id
-            save(dcid,new AuthCredentials(auth_key,server_salt,server_time,auth_key_id));
+
+            save(dcid,new AuthCredentials(dcid,auth_key,server_salt,server_time,auth_key_id));
         }
 
 

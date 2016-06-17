@@ -59,7 +59,7 @@ public class SystemLogger implements ILogger {
     @Override
     public void error(Object... os) {
         Object[] o =Arrays.copyOfRange(os,1,os.length);
-        System.out.println(createMessage(" ERROR ",os[0],o));
+        System.err.println(createMessage(" ERROR ",os[0],o));
     }
 
     @Override

@@ -32,38 +32,23 @@
  *     along with JTel.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.jtel.mtproto.transport;
+package com.jtel.mtproto.tl.schema;
 
-import com.jtel.mtproto.tl.InvalidTlParamException;
 import com.jtel.mtproto.tl.TlMethod;
 import com.jtel.mtproto.tl.TlObject;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.util.List;
 
 /**
  * This file is part of JTel
  * IntelliJ idea.
- * Date     : 6/11/16
- * Package : com.jtel.mtproto.transport
+ * Date     : 6/7/16
+ * Package : com.jtel.mtproto.tl
  *
  * @author <a href="mailto:mohammad.mdz72@gmail.com">Mohammad Mohammad Zade</a>
  */
 
-public class EncryptedHttpTransport extends PlainHttpTransport {
-    public EncryptedHttpTransport(String address) throws IOException {
-        super(address);
-    }
-
-    @Override
-    public TlObject send(TlMethod method) throws IOException, InvalidTlParamException {
-        InputStream is = connection.getInputStream();
-
-        return null;
-    }
-
-    @Override
-    public TlObject receive() throws IOException {
-        return null;
-    }
+public class TlSchema {
+    public List<TlObject> constructors;
+    public List<TlMethod> methods;
 }

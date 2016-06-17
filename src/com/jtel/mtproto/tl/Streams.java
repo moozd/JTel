@@ -19,8 +19,8 @@ package com.jtel.mtproto.tl;
 
 
 import com.jtel.common.log.Logger;
-import com.jtel.mtproto.Config;
-import com.jtel.mtproto.services.TlSchemaManagerService;
+import com.jtel.mtproto.ConfStorage;
+import com.jtel.mtproto.tl.schema.TlSchemaProvider;
 import com.sun.org.apache.xerces.internal.impl.dv.util.HexBin;
 
 
@@ -44,8 +44,9 @@ import java.util.List;
 
 public final class Streams {
 
+    private static ConfStorage  conf = ConfStorage.getInstance();
     private static Logger console = Logger.getInstance();
-    private final static boolean DEBUG = Config.Debug;
+    private final static boolean DEBUG = conf.debug();
     public static void writeIntBytes(OutputStream os, byte[] b,int len,String field) throws IOException {
 
         if(b.length %4 != 0) {
@@ -77,6 +78,13 @@ public final class Streams {
             writeInt(os, 0xbc799737,field+"[bool]");
         }
     }
+
+    public static void writeString(OutputStream os, String n,String field) throws IOException{
+        writeBytes(os,n.getBytes(),"");
+        if (DEBUG)    console.log(String.format("%s<%s>:%s ",field,"String",n));
+
+    }
+
     public static void writeBytes(OutputStream os , byte[] n,String field) throws IOException {
         int len =n.length;
         int pad =0;
@@ -97,7 +105,7 @@ public final class Streams {
             os.write((byte) 0);
             pad++;
         }
-        if (DEBUG)    console.log(String.format("%s<%s(padding=%s)>:%s ",field,"Bytes",pad,HexBin.encode(n)));
+        if (DEBUG && !field.equals(""))    console.log(String.format("%s<%s(padding=%s)>:%s ",field,"Bytes",pad,HexBin.encode(n)));
     }
     public static void writeParams(OutputStream os,  List<TlParam> params,String field ) throws IOException,InvalidTlParamException {
         for (TlParam param : params)
@@ -127,6 +135,11 @@ public final class Streams {
                     writeIntBytes(os,param.getValue(),((byte[])param.getValue()).length,param.name);
                     break;
                 case "string":
+                    if(! (param.getValue() instanceof String)){
+                        throw new InvalidTlParamException(param);
+                    }
+                    writeString(os,param.getValue(),param.name);
+                    break;
                 case "bytes":
                     if(! (param.getValue() instanceof byte[])){
                         throw new InvalidTlParamException(param);
@@ -143,7 +156,7 @@ public final class Streams {
                 default:
                     if(param.type.startsWith("Vector") || param.type.startsWith("vector")) {
                         String type = param.type.substring(param.type.indexOf("<")+1,param.type.indexOf(">"));
-                        TlObject vector = TlSchemaManagerService.getInstance().getConstructor("Vector");
+                        TlObject vector = TlSchemaProvider.getInstance().getConstructor("Vector");
                         if(! (param.getValue() instanceof List)){
                             throw new InvalidTlParamException(param);
                         }
@@ -155,7 +168,7 @@ public final class Streams {
                             os.write(object.serialize());
                         }
                     } else {
-                        TlObject s = param.getValue();
+                        Tl s = param.getValue();
                         os.write(s.serialize());
                     }
 

@@ -15,26 +15,20 @@
  *     along with JTel.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.jtel.mtproto.transport;
-
-import com.jtel.mtproto.tl.TlMessage;
-import com.jtel.mtproto.tl.InvalidTlParamException;
-import com.jtel.mtproto.tl.TlObject;
-import com.sun.istack.internal.Nullable;
-
-import java.io.IOException;
+package com.jtel.common.io;
 
 /**
  * This file is part of JTel
  * IntelliJ idea.
- * Date     : 6/6/16
- * Package : com.jtel.mtproto.services
+ * Date     : 6/17/16
+ * Package : com.jtel.common.io
  *
  * @author <a href="mailto:mohammad.mdz72@gmail.com">Mohammad Mohammad Zade</a>
  */
 
-public interface  Transport {
-   @Nullable
-   TlObject send(int dc , TlMessage message) throws IOException,InvalidTlParamException;
+public class ReadOnlyPropertyException extends Exception {
 
+    public ReadOnlyPropertyException(String property) {
+        super("Cannot change readonly property of Storage > \""+property+"\"");
+    }
 }

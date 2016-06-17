@@ -18,6 +18,8 @@
 package com.jtel.mtproto.auth;
 
 
+import com.sun.org.apache.xerces.internal.impl.dv.util.HexBin;
+
 import java.io.Serializable;
 
 /**
@@ -31,6 +33,7 @@ import java.io.Serializable;
 
 public class AuthCredentials implements Serializable {
 
+    private int    dcId;
     private byte[] authKey;
     private byte[] serverSalt;
     private long   serverTime;
@@ -38,11 +41,12 @@ public class AuthCredentials implements Serializable {
 
 
 
-    public AuthCredentials(byte[] authKey, byte[] serverSalt, long serverTime, byte[] authKeyId) {
+    public AuthCredentials(int dc, byte[] authKey, byte[] serverSalt, long serverTime, byte[] authKeyId) {
         this.authKey = authKey;
         this.serverSalt = serverSalt;
         this.serverTime = serverTime;
         this.authKeyId = authKeyId;
+        this.dcId =dc;
     }
 
     public AuthCredentials(byte[] auth_key, byte[] server_salt, long serverTime) {
@@ -51,11 +55,17 @@ public class AuthCredentials implements Serializable {
         this.serverTime =serverTime;
     }
 
+
+
     public AuthCredentials() {
         this.authKey = new byte[0];
         this.serverSalt = new byte[0];
         this.serverTime = -1;
         this.authKeyId = new byte[0];
+    }
+
+    public int getDcId() {
+        return dcId;
     }
 
     public byte[] getAuthKeyId() {
@@ -75,4 +85,13 @@ public class AuthCredentials implements Serializable {
         return serverSalt;
     }
 
+    @Override
+    public String toString() {
+        return String.format("( dc: %s , server-time: %s , auth-key: %s , server-salt: %s )"
+        ,getDcId(),getServerTime(),bytesToString(getAuthKey()),bytesToString(getServerSalt()));
+    }
+
+    private String bytesToString(byte[] b){
+        return String.format("[len:%s / %s... ]",b.length, HexBin.encode(b).substring(0,5));
+    }
 }

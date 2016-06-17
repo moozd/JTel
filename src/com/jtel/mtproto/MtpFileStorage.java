@@ -15,9 +15,28 @@
  *     along with JTel.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.jtel.mtproto.auth;
+/*
+ * This file is part of JTel.
+ *
+ *     JTel is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     JTel is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with JTel.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
+package com.jtel.mtproto;
+
+import com.jtel.common.io.FileStorage;
 import com.jtel.common.io.Storage;
+import com.jtel.mtproto.auth.AuthCredentials;
 
 import java.io.*;
 import java.nio.file.Path;
@@ -32,27 +51,19 @@ import java.nio.file.Paths;
  * @author <a href="mailto:mohammad.mdz72@gmail.com">Mohammad Mohammad Zade</a>
  */
 
-public class AuthStorage extends Storage implements Serializable {
-
-    private static AuthStorage instance;
+public class MtpFileStorage extends FileStorage implements Serializable {
 
 
-    public static AuthStorage getInstance() {
-        if (instance == null) {
-            instance = new AuthStorage();
-        }
-        return instance;
-    }
 
-
-    private AuthStorage() {
-        initialize();
+    public MtpFileStorage() {
+        super();
     }
 
     @Override
     public void initialItems() {
         setItem("auth_state",false);
         setItem("dcId", 1);
+        setItem("session_id", MtpTimeManager.getInstance().getSessionId());
         setItem("dcId_1_auth", new AuthCredentials());
         setItem("dcId_2_auth", new AuthCredentials());
         setItem("dcId_3_auth", new AuthCredentials());
@@ -95,4 +106,6 @@ public class AuthStorage extends Storage implements Serializable {
             //nothing
         }
     }
+
+
 }
