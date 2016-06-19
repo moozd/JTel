@@ -34,7 +34,6 @@
 
 package com.jtel.mtproto.auth;
 
-import com.jtel.common.io.FileStorage;
 import com.jtel.common.log.Logger;
 import com.jtel.mtproto.ConfStorage;
 import com.jtel.mtproto.auth.pq.Pq;
@@ -69,8 +68,8 @@ public final class AuthManager {
     /**
      * private constructor class is available throw getInstance()
      */
-    public AuthManager(FileStorage storage) {
-        this.storage = storage;
+    public AuthManager() {
+
     }
 
     /**
@@ -83,20 +82,8 @@ public final class AuthManager {
     /**
      * stores authenticated data centers auth_key and server_salt
      */
-    private FileStorage storage;
 
 
-    /**
-     * save authenticated state for data center
-     * @param dc data center id
-     * @param auth auth_key and server_salt
-     */
-    protected void save(int dc,AuthCredentials auth) {
-        storage.setItem("auth_state",true);
-        storage.setItem("dcId",dc);
-        storage.setItem("dcId_"+dc+"_auth", auth);
-        storage.save();
-    }
 
     /**
      * authenticate to given data center
@@ -104,9 +91,9 @@ public final class AuthManager {
      * @throws AuthFailedException if network fails or if invalid parameter is supplied
      */
 
-    public void authenticate(int dcid) throws AuthFailedException{
+    public AuthCredentials authenticate(int dcid) throws AuthFailedException{
         try {
-            authAttempt(dcid);
+            return authAttempt(dcid);
         }
         catch (Exception e){
             e.printStackTrace();
@@ -114,18 +101,6 @@ public final class AuthManager {
         }
     }
 
-    /**
-     *
-     * @return file storage that has auth keys and server salts
-     */
-    public AuthCredentials getCredentials(int dcid) {
-
-        return storage.getItem("dcId_"+dcid+"_auth");
-    }
-
-    public FileStorage getStorage() {
-        return storage;
-    }
 
     /**
      * authenticate to given data center
@@ -133,11 +108,11 @@ public final class AuthManager {
      * @throws IOException if network fails
      * @throws InvalidTlParamException if invalid parameter is supplied
      */
-    protected void authAttempt(int dcid) throws IOException,InvalidTlParamException{
+    protected AuthCredentials authAttempt(int dcid) throws IOException,InvalidTlParamException{
 
         //configuring MTProto service and starting it
         MtpEngine mtproto = MtpEngine.getInstance();
-        mtproto.setCurrentDcID(dcid);
+        mtproto.setDc(dcid);
 
         //step 1 ,calling req_pq request
         TlObject resPq = mtproto.invokeMtpCall
@@ -159,7 +134,7 @@ public final class AuthManager {
         //creating 256 bit random number
         byte[] new_nonce = Randoms.nextRandomBytes(32);
 
-        //creating p_q_inner_data.remember we wont send this object yet so
+        //creating p_q_inner_data.remember we wont sendSync this object yet so
         //we should create it by using TlObject constructor
         TlObject p_q_inner_data = new TlObject("p_q_inner_data")
                 .put("pq"          ,pq.pq)          //pq bytes from first step
@@ -207,8 +182,8 @@ public final class AuthManager {
 
         if(Server_Dh_Params.predicate.equals("server_DH_params_fail")){
             console.error("dh key exchange failed","retrying...");
-            authAttempt(dcid);
-            return;
+            return authAttempt(dcid);
+
         }
 
         //server sends an encrypted message this time we should decrypt it using
@@ -233,7 +208,7 @@ public final class AuthManager {
         server_DH_inner_data.deSerialize(new ByteArrayInputStream(answer));
 
         //these are parameters we can get from this object
-        //also we need to create new random number as  256
+        //also we need to create new random number     256
         //bit to continue the auth_key calculation
         int    g            = server_DH_inner_data.get("g");
         byte[] b            = Randoms.nextRandomBytes(256);
@@ -245,12 +220,12 @@ public final class AuthManager {
         MtpTimeManager.getInstance().setTimeDelta(System.currentTimeMillis() - server_time);
 
         //these numbers are really big so we must use BigInteger to do calculations on theme
-        BigInteger bInt       = new BigInteger(b);
-        BigInteger dhPrimeInt = new BigInteger(dh_prime).abs();
-        BigInteger gaInt      = new BigInteger(g_a);
+        BigInteger bInt       = new BigInteger(1,b);
+        BigInteger dhPrimeInt = new BigInteger(1,dh_prime);
+        BigInteger gaInt      = new BigInteger(1,g_a);
 
         //g_b = g^b % dh_prime
-        byte[] g_b            = new BigInteger(""+g).modPow(bInt,dhPrimeInt).toByteArray();
+        byte[] g_b            = fromBigInt(new BigInteger(""+g).modPow(bInt,dhPrimeInt));
 
         //create client_DH_inner_data
         TlObject client_DH_inner_data = new TlObject("client_DH_inner_data")
@@ -277,7 +252,7 @@ public final class AuthManager {
         //encrypt generated data_with_hash using aes.ige by tmp_key and tmp_iv from step 2
         AES256IGEEncrypt(data_with_sha_pa,encrypted_data,tmp_iv,tmp_key);
 
-        //step 3 send set_client_DH_params
+        //step 3 sendSync set_client_DH_params
         TlObject set_client_DH_params=  mtproto.invokeMtpCall(
                     new TlMethod("set_client_DH_params")
                             .put("nonce",nonce) //nonce 128 bit random number from step 1
@@ -285,33 +260,51 @@ public final class AuthManager {
                             .put("encrypted_data",encrypted_data) //client_DH_inner_data that we encrypt using aes.ige
                 );
 
+        //creating auth_key -> (g^b) % dh_prime
+        byte[] auth_key = fromBigInt(gaInt.modPow(bInt,dhPrimeInt));
+        byte[] auth_key_sha = Crypto.SHA1(auth_key);
+        byte[] auth_key_sha_aux = subArray(auth_key_sha,0,8);
+        byte[] auth_key_id =subArray(auth_key_sha,auth_key_sha.length-8,8);
+
+        byte[] new_nonce_hash_1 = subArray(SHA1(concat(new_nonce,new byte[]{1},auth_key_sha_aux)),4,16);
+        byte[] new_nonce_hash_2 = subArray(SHA1(concat(new_nonce,new byte[]{2},auth_key_sha_aux)),4,16);
+        byte[] new_nonce_hash_3 = subArray(SHA1(concat(new_nonce,new byte[]{3},auth_key_sha_aux)),4,16);
 
         //if server returns dh_gen_ok object then dh key exchange is done successfully
-        if (set_client_DH_params.predicate.equals("dh_gen_ok")) {
+        switch(set_client_DH_params.predicate) {
+            case "dh_gen_ok":
 
-            //creating auth_key -> (g^b) % dh_prime
-            byte[] auth_key = gaInt.modPow(bInt,dhPrimeInt).toByteArray();
-            byte[] auth_key_sha = Crypto.SHA1(auth_key);
-            byte[] auth_key_sha_aux = subArray(auth_key_sha,0,8);
-            byte[] auth_key_id =subArray(auth_key_sha,auth_key_sha.length-8,8);
+                if(!bytesCmp(new_nonce_hash_1,set_client_DH_params.get("new_nonce_hash1"))){
+                    console.warn("new_nonce_hash1" , "failed");
+                    console.table(new_nonce_hash_1,"client");
+                    console.table(set_client_DH_params.get("new_nonce_hash1"),"server");
+                    return new AuthCredentials();
+                }
 
+                //server_salt is bytesXor of first eight byte of new_nonce and first eight byte of server_nonce
+                byte[] server_salt = bytesXor(subArray(new_nonce,0,8),subArray(server_nonce,0,8));
 
-            //server_salt is xor of first eight byte of new_nonce and first eight byte of server_nonce
-            byte[] server_salt = xor(subArray(new_nonce,0,8),subArray(server_nonce,0,8));
-
-            console.log("Done.");
-            if(conf.debug()) {
-                //printing hex table of server salt and auth_key
-
-                console.table(server_salt, "server_salt");
-                console.table(auth_key, "auth_key");
-            }
-            //saving auth_key and server_salt for this data center id
-
-            save(dcid,new AuthCredentials(dcid,auth_key,server_salt,server_time,auth_key_id));
+                console.log("Done.");
+                if(conf.debug()) {
+                    //printing hex table of server salt and auth_key
+                    console.table(server_salt, "server_salt");
+                    console.table(auth_key, "auth_key");
+                }
+                //saving auth_key and server_salt for this data center id
+               return  new AuthCredentials(dcid,auth_key,server_salt,server_time,auth_key_id);
+            case "dh_gen_retry":
+                if(!bytesCmp(new_nonce_hash_2,set_client_DH_params.get("new_nonce_hash2"))){
+                    console.warn("new_nonce_hash2" , "failed");
+                }
+            break;
+            case "dh_gen_failed" :
+                if(!bytesCmp(new_nonce_hash_3,set_client_DH_params.get("new_nonce_hash3"))){
+                    console.warn("new_nonce_hash3" , "failed");
+                }
+            break;
         }
 
-
+        return new AuthCredentials();
     }
 
 

@@ -20,7 +20,10 @@ package com.jtel.common.log;
 
 import com.sun.org.apache.xerces.internal.impl.dv.util.HexBin;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
 
 
 /**
@@ -39,9 +42,10 @@ public class SystemLogger implements ILogger {
         for (Object l : o){
             t += String.format(" %s ", l );
         }
-        return String.format("[%s] %s %s " ,superTag,tag,t);
+        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+        Date date = new Date();
+        return String.format("[%s] %s  - %s %s " ,superTag,dateFormat.format(date),tag,t);
     }
-
     @Override
     public void log(Object... os) {
         Object[] o =Arrays.copyOfRange(os,1,os.length);
@@ -52,7 +56,7 @@ public class SystemLogger implements ILogger {
     @Override
     public void warn(Object... os) {
         Object[] o =Arrays.copyOfRange(os,1,os.length);
-        System.out.println(createMessage("WARNING",os[0],o));
+        System.err.println(createMessage("WARNING",os[0],o));
     }
 
 

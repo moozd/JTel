@@ -36,7 +36,7 @@ public class Pq {
      * constructor accepts one parameter, to store p and q numbers
      * we will do the math elsewhere.
      * @param pq  one of the parameters of the req_pq method from tl schema is pq number in bytes
-     *            . do not generate random numbers to pass as pq number, you must getCredentialsForDc it from ser
+     *            . do not generate random numbers to pass as pq number, you must getAuth it from ser
      *            ver throw req_pq method.
      */
     public Pq(byte[] pq){

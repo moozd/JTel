@@ -1,5 +1,6 @@
 package com.jtel.mtproto.secure;
 
+import com.jtel.common.log.Logger;
 import com.jtel.mtproto.secure.aes.AESFastEngine;
 import com.jtel.mtproto.secure.aes.KeyParameter;
 import com.jtel.mtproto.tl.Streams;
@@ -8,6 +9,9 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigInteger;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
@@ -144,7 +148,7 @@ public class Crypto {
     public static Map<String, byte[]> getAESKeyIV(byte[] messageKey, byte[] authKey, boolean toServer){
         int x = 8;
         if(toServer) x  = 0;
-
+     //   Logger.getInstance().log("Creating key for",(toServer)?"server":"client","x is", x);
         byte[] sha1_a   = SHA1(concat(messageKey,subArray(authKey,x,32)));
         byte[] sha1_b   = SHA1(concat(subArray(authKey, 32+x, 16), messageKey, subArray(authKey, 48+x,16)));
         byte[] sha1_c   = SHA1(concat(subArray(authKey, 64+x, 32),messageKey));
@@ -182,16 +186,50 @@ public class Crypto {
         return buff;
     }
     public static byte[] subArray(byte[]src,int start){
-
+        if(start < 0){
+            return subArray(src,src.length+start,-1*start);
+        }
         return subArray(src,start,src.length-start);
     }
 
-    public static byte[] xor(byte[]a, byte[]b){
+    public static byte[] bytesXor(byte[]a, byte[]b){
         byte[] buff = new byte[a.length];
         for(int i=0; i<buff.length;i++){
-            buff[i]=(byte)((int) a[i] ^(int) b[i]);
+            buff[i]=(byte)(a[i] ^ b[i]);
         }
         return buff;
+    }
+
+    public static boolean bytesCmp(byte[] oi, byte[] oj){
+        if(oi.length - oj.length != 0 ) return false;
+        for (int i = 0;i<oi.length;i++){
+            if(oi[i] != oj[i]) return false;
+        }
+        return true;
+    }
+
+
+    public static byte[] fromBigInt(BigInteger val) {
+        byte[] res = val.toByteArray();
+        if (res[0] == 0) {
+            byte[] res2 = new byte[res.length - 1];
+            System.arraycopy(res, 1, res2, 0, res2.length);
+            return res2;
+        } else {
+            return res;
+        }
+
+    }
+
+    public static byte[] toByteArray(InputStream in) throws IOException{
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        int next = in.read();
+        while (next > -1) {
+            bos.write(next);
+            next = in.read();
+        }
+        bos.flush();
+       return bos.toByteArray();
     }
 
 

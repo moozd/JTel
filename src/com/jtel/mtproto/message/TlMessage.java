@@ -32,10 +32,29 @@
  *     along with JTel.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.jtel.mtproto.tl;
+/*
+ * This file is part of JTel.
+ *
+ *     JTel is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     JTel is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with JTel.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
+package com.jtel.mtproto.message;
+
+import com.jtel.mtproto.RpcResponse;
 import com.jtel.mtproto.auth.AuthCredentials;
 import com.jtel.mtproto.tl.InvalidTlParamException;
+import com.jtel.mtproto.tl.Tl;
 import com.jtel.mtproto.tl.TlMethod;
 import com.jtel.mtproto.tl.TlObject;
 
@@ -56,12 +75,13 @@ public abstract class TlMessage implements Tl {
     private AuthCredentials credentials;
     private TlMethod method;
 
-    private TlObject response;
+    private RpcResponse response;
 
     public TlMessage(AuthCredentials credentials, TlMethod method){
         this.credentials =credentials;
         this.method = method;
     }
+
 
     public AuthCredentials getCredentials() {
         return credentials;
@@ -72,15 +92,15 @@ public abstract class TlMessage implements Tl {
     }
 
 
-    public TlObject getResponse() {
+    public RpcResponse getRpcResponse() {
         return response;
     }
 
-    public void saveResponse(TlObject response) {
+    protected void saveResponse(RpcResponse response) {
         this.response = response;
     }
 
-    protected TlMethod getMethod() {
+    public TlMethod getMethod() {
         return method;
     }
 

@@ -15,11 +15,29 @@
  *     along with JTel.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.jtel.mtproto.tl;
+/*
+ * This file is part of JTel.
+ *
+ *     JTel is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     JTel is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with JTel.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+package com.jtel.mtproto.message;
 
 import com.jtel.common.log.Logger;
 import com.jtel.mtproto.ConfStorage;
 import com.jtel.mtproto.auth.AuthCredentials;
+import com.jtel.mtproto.tl.TlMethod;
 
 
 /**
@@ -35,7 +53,7 @@ public class InitConnectionMessage extends EncryptedMessage {
 
     private ConfStorage conf = ConfStorage.getInstance();
 
-    public InitConnectionMessage(long session_id,AuthCredentials credentials) {
+    public InitConnectionMessage(byte[] session_id,AuthCredentials credentials) {
         super(session_id,credentials, null);
         try {
             setMethod(new TlMethod("help.getConfig"));
@@ -52,12 +70,14 @@ public class InitConnectionMessage extends EncryptedMessage {
             invokeWithLayer.put("layer", conf.getItem("schema-layer"));
             TlMethod initConnection = new TlMethod("initConnection");
             initConnection.put("api_id", conf.getItem("api-id"));
-            initConnection.put("device_model","unknown");
-            initConnection.put("system_version","0.0.3");
+            initConnection.put("device_model","Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/45.0.2454.101 Chrome/45.0.2454.101 Safari/537.36");
+            initConnection.put("system_version","Linux x86_64");
             initConnection.put("app_version","0.0.3");
-            initConnection.put("lang_code","en");
+            initConnection.put("lang_code","en-US");
             initConnection.put("query",getMethod());
             invokeWithLayer.put("query", initConnection);
+
+           //Logger.getInstance().table(invokeWithLayer.serialize(), "init connection");
 
             return invokeWithLayer.serialize();
 
@@ -65,7 +85,7 @@ public class InitConnectionMessage extends EncryptedMessage {
         catch (Exception e){
             //empty
             e.printStackTrace();
-            Logger.getInstance().error("InitConnection",e.getMessage());
+            //Logger.getInstance().error("InitConnection",e.getMessage());
         }
 
         return new byte[0];

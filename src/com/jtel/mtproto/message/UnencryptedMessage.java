@@ -32,11 +32,32 @@
  *     along with JTel.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.jtel.mtproto.tl;
+/*
+ * This file is part of JTel.
+ *
+ *     JTel is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     JTel is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with JTel.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+package com.jtel.mtproto.message;
 
 import com.jtel.common.log.Logger;
 import com.jtel.mtproto.ConfStorage;
 import com.jtel.mtproto.MtpTimeManager;
+import com.jtel.mtproto.RpcResponse;
+import com.jtel.mtproto.tl.InvalidTlParamException;
+import com.jtel.mtproto.tl.TlMethod;
+import com.jtel.mtproto.tl.TlObject;
 
 
 import java.io.ByteArrayInputStream;
@@ -104,7 +125,7 @@ public class UnencryptedMessage extends TlMessage {
             console.table(responseBytes,responseObject.predicate);
         }
 
-        saveResponse(responseObject);
+        saveResponse(new RpcResponse(message_id,responseBytes,responseObject));
     }
 
 

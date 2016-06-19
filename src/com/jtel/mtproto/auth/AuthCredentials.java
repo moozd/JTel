@@ -92,6 +92,6 @@ public class AuthCredentials implements Serializable {
     }
 
     private String bytesToString(byte[] b){
-        return String.format("[len:%s / %s... ]",b.length, HexBin.encode(b).substring(0,5));
+        return String.format("[len:%s / %s... ]",b.length, HexBin.encode(b).substring(0,(b.length >10)? 5:b.length));
     }
 }

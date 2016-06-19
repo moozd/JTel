@@ -17,11 +17,11 @@
 
 package com.jtel.mtproto.transport;
 
+import com.jtel.common.log.Logger;
 import com.jtel.mtproto.ConfStorage;
-import com.jtel.mtproto.tl.TlMessage;
+import com.jtel.mtproto.secure.Crypto;
+import com.jtel.mtproto.message.TlMessage;
 import com.jtel.mtproto.tl.InvalidTlParamException;
-import com.jtel.mtproto.tl.TlObject;
-import com.sun.istack.internal.Nullable;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -38,7 +38,7 @@ import java.net.URL;
  * @author <a href="mailto:mohammad.mdz72@gmail.com">Mohammad Mohammad Zade</a>
  */
 
-public class HttpTransport implements Transport {
+public class HttpTransport extends Transport {
 
     protected HttpURLConnection connection;
     private ConfStorage conf;
@@ -47,7 +47,16 @@ public class HttpTransport implements Transport {
         conf = ConfStorage.getInstance();
     }
 
+    @Override
+    protected byte[] onSend(byte[] message) throws IOException,InvalidTlParamException {
+        connection.getOutputStream().write(message);
+        connection.getOutputStream().flush();
+        connection.getOutputStream().close();
+        errorCode = connection.getResponseCode();
+        return Crypto.toByteArray(connection.getInputStream());
+    }
 
+    @Override
     protected void createConnection(int dc) throws IOException{
         URL url =new URL("http://"+ conf.getDc(dc)+"/apiw1");
         System.setProperty("http.keepAlive", "true");
@@ -57,29 +66,5 @@ public class HttpTransport implements Transport {
         connection.setRequestMethod("POST");
     }
 
-    @Override
-    @Nullable
-    public TlObject send(int dc , TlMessage message) throws IOException,InvalidTlParamException {
-        createConnection(dc);
-        connection.getOutputStream().write(message.serialize()
-        );
-        connection.getOutputStream().flush();
-        connection.getOutputStream().close();
-        message.deSerialize(connection.getInputStream());
-        return  message.getResponse();
 
-    }
-
-    public int getCode(){
-        try {
-            return connection.getResponseCode();
-        }catch (Exception e){
-            return 0;
-        }
-    }
-
-
-    /*// public Socket getSocket() {
-        return socket;
-    }*/
 }

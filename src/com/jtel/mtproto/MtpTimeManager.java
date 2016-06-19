@@ -34,6 +34,8 @@
 
 package com.jtel.mtproto;
 
+import com.jtel.mtproto.secure.Randoms;
+
 import java.util.Random;
 
 /**
@@ -58,7 +60,7 @@ public final class MtpTimeManager {
 
     private long timeDelta;
     private int  seqNo;
-    private long sessionid = new Random().nextLong();
+    private byte[] sessionid = Randoms.nextRandomBytes(8);
 
     private MtpTimeManager() {
         seqNo =0;
@@ -83,7 +85,7 @@ public final class MtpTimeManager {
         return  ((getLocalTime()+timeDelta)/1000) << 32 | a ;
     }
 
-    public long getSessionId(){
+    public byte[] getSessionId(){
         return sessionid;
     }
 

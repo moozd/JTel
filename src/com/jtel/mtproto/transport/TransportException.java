@@ -15,25 +15,29 @@
  *     along with JTel.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.jtel.mtproto.secure;
-
-import java.util.Random;
+package com.jtel.mtproto.transport;
 
 /**
  * This file is part of JTel
  * IntelliJ idea.
- * Date     : 6/9/16
- * Package : com.jtel.mtproto.secure
+ * Date     : 6/19/16
+ * Package : com.jtel.mtproto.transport
  *
  * @author <a href="mailto:mohammad.mdz72@gmail.com">Mohammad Mohammad Zade</a>
  */
 
-public class Randoms {
-    static Random rand = new Random();
-    public static byte[] nextRandomBytes(int byteSize){
-        byte[] buff = new byte[byteSize];
-        rand.nextBytes(buff);
-        return buff;
+public class TransportException extends Exception {
+
+    int code;
+    public TransportException() {
     }
 
+    public TransportException(int code,String message) {
+        super(message);
+        this.code = code;
+    }
+
+    public int getCode() {
+        return code;
+    }
 }

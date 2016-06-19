@@ -17,11 +17,14 @@
 
 package com.jtel.mtproto.transport;
 
-import com.jtel.mtproto.tl.TlMessage;
+import com.jtel.common.log.Logger;
+import com.jtel.mtproto.RpcResponse;
+import com.jtel.mtproto.message.TlMessage;
 import com.jtel.mtproto.tl.InvalidTlParamException;
 import com.jtel.mtproto.tl.TlObject;
 import com.sun.istack.internal.Nullable;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
 /**
@@ -33,8 +36,53 @@ import java.io.IOException;
  * @author <a href="mailto:mohammad.mdz72@gmail.com">Mohammad Mohammad Zade</a>
  */
 
-public interface  Transport {
+public abstract class   Transport {
+
+   protected boolean errorFlag;
+   protected String  errorMessage;
+   protected int     errorCode;
+   protected byte[] responseAsBytes;
+   Logger console = Logger.getInstance();
+   protected  abstract void createConnection(int dcId) throws IOException;
    @Nullable
-   TlObject send(int dc , TlMessage message) throws IOException,InvalidTlParamException;
+
+   public byte[] send(int dc , byte[] message) throws IOException,InvalidTlParamException,TransportException {
+
+      errorFlag = false;
+      createConnection(dc);
+      setResponseAsBytes(onSend(message));
+      if (getErrorCode() != 200){
+         errorFlag =true;
+         errorMessage =  new String(getResponseAsBytes(),"UTF-8");
+         throw new TransportException(getErrorCode(),getErrorMessage());
+      }
+
+      return getResponseAsBytes();
+   }
+
+
+
+   protected void setResponseAsBytes(byte[] responseAsBytes) {
+      this.responseAsBytes = responseAsBytes;
+   }
+
+   public byte[] getResponseAsBytes() {
+      return responseAsBytes;
+   }
+
+   public boolean isAnErrorOccurred() {
+      return errorFlag;
+
+   }
+
+   public int getErrorCode() {
+      return errorCode;
+   }
+
+   public String getErrorMessage() {
+      return errorMessage;
+   }
+
+   protected abstract byte[] onSend(byte[] message) throws IOException,InvalidTlParamException;
 
 }
