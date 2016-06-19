@@ -1,6 +1,8 @@
 package com.jtel.mtproto.secure;
 
 import com.jtel.common.log.Logger;
+import com.jtel.mtproto.MtpEngine;
+import com.jtel.mtproto.auth.AuthCredentials;
 import com.jtel.mtproto.secure.aes.AESFastEngine;
 import com.jtel.mtproto.secure.aes.KeyParameter;
 import com.jtel.mtproto.tl.Streams;
@@ -29,7 +31,7 @@ import java.util.Map;
  *
  * @author <a href="mailto:mohammad.mdz72@gmail.com">Mohammad Mohammad Zade</a>
  */
-public class Crypto {
+public class Util {
 
 
     public static byte[] SHA1(byte[] src) {
@@ -230,6 +232,17 @@ public class Crypto {
         }
         bos.flush();
        return bos.toByteArray();
+    }
+
+    public  static void printDc(int dc){
+        MtpEngine mtpService = MtpEngine.getInstance();
+        AuthCredentials credentials = mtpService.getAuth(dc);
+        Logger.getInstance().log("dc "+dc+" credentials");
+        Logger.getInstance().log("server_time",credentials.getServerTime());
+        Logger.getInstance().table(credentials.getAuthKeyId() ,"auth_key_id");
+        Logger.getInstance().table(credentials.getServerSalt(),"server_salt");
+        Logger.getInstance().table(credentials.getAuthKey()   ,"auth_key");
+        System.out.println();
     }
 
 

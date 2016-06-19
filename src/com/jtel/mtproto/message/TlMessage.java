@@ -51,15 +51,11 @@
 
 package com.jtel.mtproto.message;
 
-import com.jtel.mtproto.RpcResponse;
-import com.jtel.mtproto.auth.AuthCredentials;
 import com.jtel.mtproto.tl.InvalidTlParamException;
 import com.jtel.mtproto.tl.Tl;
 import com.jtel.mtproto.tl.TlMethod;
-import com.jtel.mtproto.tl.TlObject;
 
 import java.io.IOException;
-import java.io.InputStream;
 
 /**
  * This file is part of JTel
@@ -72,24 +68,30 @@ import java.io.InputStream;
 
 public abstract class TlMessage implements Tl {
 
-    private AuthCredentials credentials;
     private TlMethod method;
 
+    private RpcHeaders header;
     private RpcResponse response;
 
-    public TlMessage(AuthCredentials credentials, TlMethod method){
-        this.credentials =credentials;
+
+    public TlMessage(TlMethod method, RpcHeaders header) {
         this.method = method;
+        this.header = header;
     }
 
-
-    public AuthCredentials getCredentials() {
-        return credentials;
-    }
 
     public byte[] toByteArray() throws IOException, InvalidTlParamException {
         return method.serialize();
     }
+
+    public RpcHeaders getRpcHeaders() {
+        return header;
+    }
+
+    public void setRpcHeader(RpcHeaders header) {
+        this.header = header;
+    }
+
 
 
     public RpcResponse getRpcResponse() {
@@ -108,9 +110,6 @@ public abstract class TlMessage implements Tl {
         this.method = method;
     }
 
-    public TlMessage(AuthCredentials credentials) {
-        this.credentials = credentials;
-    }
 
 
 }

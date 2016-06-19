@@ -34,9 +34,7 @@
 
 package com.jtel.mtproto.message;
 
-import com.jtel.common.log.Logger;
 import com.jtel.mtproto.ConfStorage;
-import com.jtel.mtproto.auth.AuthCredentials;
 import com.jtel.mtproto.tl.TlMethod;
 
 
@@ -53,8 +51,8 @@ public class InitConnectionMessage extends EncryptedMessage {
 
     private ConfStorage conf = ConfStorage.getInstance();
 
-    public InitConnectionMessage(byte[] session_id,AuthCredentials credentials) {
-        super(session_id,credentials, null);
+    public InitConnectionMessage(RpcHeaders headers) {
+        super(null,headers);
         try {
             setMethod(new TlMethod("help.getConfig"));
         }catch (Exception e){

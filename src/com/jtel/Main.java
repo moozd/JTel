@@ -18,10 +18,10 @@
 package com.jtel;
 
 import com.jtel.common.log.Logger;
-import com.jtel.mtproto.ConfStorage;
-import com.jtel.mtproto.auth.AuthCredentials;
 import com.jtel.mtproto.MtpEngine;
 import com.jtel.mtproto.MtpFileStorage;
+import com.jtel.mtproto.secure.Util;
+import com.jtel.mtproto.tl.TlMethod;
 import com.jtel.mtproto.transport.HttpTransport;
 
 public class Main {
@@ -29,31 +29,25 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
 
-        ConfStorage.getInstance().setDebugging(false);
+        //ConfStorage.getInstance().setDebugging(false);
 
         MtpEngine engine = MtpEngine.getInstance();
-        engine.setVerbose(true);
+
+        engine.setVerboseEnabled(true);
+        engine.setVerboseHexTablesEnabled(false);
+
         engine.setStorage(new MtpFileStorage());
         engine.setTransport(new HttpTransport());
 
-
-        if(!engine.isReady()){
+        //engine.authenticate(2);
+        //engine.reset();
+        if(!engine.isNetworkReady()){
             engine.authenticate();
         }
 
-        engine.initConnection();
+        engine.invokeApiCall(new TlMethod("auth.checkPhone").put("phone_number","989118836748"));
 
     }
 
-    public  static void print(int dc){
-        MtpEngine mtpService = MtpEngine.getInstance();
-        AuthCredentials credentials = mtpService.getAuth(dc);
-        console.log("dc "+dc+" credentials");
-/*        console.log("server_time",credentials.getServerTime());
-        console.table(credentials.getAuthKeyId() ,"auth_key_id");*/
-        console.table(credentials.getServerSalt(),"server_salt");
-    /*    console.table(credentials.getAuthKey()   ,"auth_key");*/
-        System.out.println();
-    }
 
 }

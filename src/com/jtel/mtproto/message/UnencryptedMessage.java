@@ -53,8 +53,6 @@ package com.jtel.mtproto.message;
 
 import com.jtel.common.log.Logger;
 import com.jtel.mtproto.ConfStorage;
-import com.jtel.mtproto.MtpTimeManager;
-import com.jtel.mtproto.RpcResponse;
 import com.jtel.mtproto.tl.InvalidTlParamException;
 import com.jtel.mtproto.tl.TlMethod;
 import com.jtel.mtproto.tl.TlObject;
@@ -79,8 +77,8 @@ import static com.jtel.mtproto.tl.Streams.*;
 public class UnencryptedMessage extends TlMessage {
 
 
-    public UnencryptedMessage(TlMethod method){
-        super(null,method);
+    public UnencryptedMessage(TlMethod method, RpcHeaders header){
+        super(method,header);
     }
     private Logger console = Logger.getInstance();
     private ConfStorage conf = ConfStorage.getInstance();
@@ -91,7 +89,7 @@ public class UnencryptedMessage extends TlMessage {
         byte[] message = toByteArray();
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         writeLong(os, 0L,"AuthStorage Key");
-        writeLong(os,( MtpTimeManager.getInstance().generateMessageId()),"Message ID");
+        writeLong(os,( getRpcHeaders().getMessageId()),"Message ID");
         writeInt(os,message.length,"Message length");
         os.write(message);
         if (conf.debug()){
@@ -125,7 +123,12 @@ public class UnencryptedMessage extends TlMessage {
             console.table(responseBytes,responseObject.predicate);
         }
 
-        saveResponse(new RpcResponse(message_id,responseBytes,responseObject));
+        RpcResponse rpcResponse = new RpcResponse();
+        rpcResponse.setAuthKeyId(new byte[8]);
+        rpcResponse.setMessageId(message_id);
+        rpcResponse.setMessageBytes(responseBytes);
+        rpcResponse.setObject(responseObject);
+        saveResponse(rpcResponse);
     }
 
 

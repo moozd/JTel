@@ -35,7 +35,11 @@
 package com.jtel.mtproto;
 
 import com.jtel.mtproto.secure.Randoms;
+import com.jtel.mtproto.secure.Util;
 
+import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Random;
 
 /**
@@ -81,8 +85,10 @@ public final class MtpTimeManager {
     public long generateMessageId() {
 
     int a=        new Random().nextInt(0x0FFFFFFF);
-
-        return  ((getLocalTime()+timeDelta)/1000) << 32 | a ;
+        BigInteger t = new BigInteger(getLocalTime()+timeDelta+"");
+        BigInteger tt = t.multiply(new BigInteger(2+"")).pow(32);
+        long number = ByteBuffer.wrap(Util.fromBigInt(tt)).order(ByteOrder.LITTLE_ENDIAN).getLong();
+        return  number ;
     }
 
     public byte[] getSessionId(){

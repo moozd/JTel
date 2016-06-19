@@ -85,6 +85,26 @@ public class AuthCredentials implements Serializable {
         return serverSalt;
     }
 
+    public void setServerSalt(byte[] serverSalt) {
+        this.serverSalt = serverSalt;
+    }
+
+    public void setAuthKey(byte[] authKey) {
+        this.authKey = authKey;
+    }
+
+    public void setDcId(int dcId) {
+        this.dcId = dcId;
+    }
+
+    public void setServerTime(long serverTime) {
+        this.serverTime = serverTime;
+    }
+
+    public void setAuthKeyId(byte[] authKeyId) {
+        this.authKeyId = authKeyId;
+    }
+
     @Override
     public String toString() {
         return String.format("( dc: %s , server-time: %s , auth-key: %s , server-salt: %s )"

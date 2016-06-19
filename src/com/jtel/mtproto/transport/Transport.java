@@ -18,13 +18,9 @@
 package com.jtel.mtproto.transport;
 
 import com.jtel.common.log.Logger;
-import com.jtel.mtproto.RpcResponse;
-import com.jtel.mtproto.message.TlMessage;
 import com.jtel.mtproto.tl.InvalidTlParamException;
-import com.jtel.mtproto.tl.TlObject;
 import com.sun.istack.internal.Nullable;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
 /**

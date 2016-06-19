@@ -38,7 +38,7 @@ import com.jtel.common.log.Logger;
 import com.jtel.mtproto.ConfStorage;
 import com.jtel.mtproto.auth.pq.Pq;
 import com.jtel.mtproto.auth.pq.PqSolver;
-import com.jtel.mtproto.secure.Crypto;
+import com.jtel.mtproto.secure.Util;
 import com.jtel.mtproto.secure.PublicKeyStorage;
 import com.jtel.mtproto.secure.Randoms;
 import com.jtel.mtproto.MtpEngine;
@@ -47,7 +47,7 @@ import com.jtel.mtproto.tl.InvalidTlParamException;
 import com.jtel.mtproto.tl.TlMethod;
 import com.jtel.mtproto.tl.TlObject;
 
-import static com.jtel.mtproto.secure.Crypto.*;
+import static com.jtel.mtproto.secure.Util.*;
 
 import java.io.*;
 import java.math.BigInteger;
@@ -150,9 +150,9 @@ public final class AuthManager {
         //at the end we should add padding to to this new array
         //after that result array will be exactly 256 bytes.
         byte[] pqInner = p_q_inner_data.serialize();
-        byte[] hash = Crypto.SHA1(pqInner);
+        byte[] hash = Util.SHA1(pqInner);
         byte[] padd = Randoms.nextRandomBytes(255 - hash.length- pqInner.length);
-        byte[] data_with_hash = Crypto.concat(hash,pqInner,padd);
+        byte[] data_with_hash = Util.concat(hash,pqInner,padd);
 
         //after registering api_id on Telegram server they will give you a public key
         //they have limited count of public keys that are available at any Telegram
@@ -161,7 +161,7 @@ public final class AuthManager {
         //public key you must iterate list of keys that telegram gave you to match
         //fingerprints (the one server gave you and one your public key has) then you
         //can encrypt p_q_inner data by using RSA  and public key
-        byte[] encrypted_data = Crypto.RSA(data_with_hash, PublicKeyStorage.modulus, PublicKeyStorage.exponent);
+        byte[] encrypted_data = Util.RSA(data_with_hash, PublicKeyStorage.modulus, PublicKeyStorage.exponent);
 
         //step 2 starts from here , starting dh key exchange
         //by invoking req_DH_params method
@@ -191,12 +191,12 @@ public final class AuthManager {
         byte[] encrypted_answer = Server_Dh_Params.get("encrypted_answer");
 
         //to decrypt aes.ige we should generate a key and iv.
-        byte[] tmp_key = concat(Crypto.SHA1(concat(new_nonce,server_nonce)), subArray(Crypto.SHA1(concat(server_nonce,new_nonce)),0,12));
-        byte[] tmp_iv  = concat(subArray(Crypto.SHA1(concat(server_nonce,new_nonce)),12),Crypto.SHA1(concat(new_nonce,new_nonce)),subArray(new_nonce,0,4));
+        byte[] tmp_key = concat(Util.SHA1(concat(new_nonce,server_nonce)), subArray(Util.SHA1(concat(server_nonce,new_nonce)),0,12));
+        byte[] tmp_iv  = concat(subArray(Util.SHA1(concat(server_nonce,new_nonce)),12), Util.SHA1(concat(new_nonce,new_nonce)),subArray(new_nonce,0,4));
         byte[] answer_with_hash = new byte[encrypted_answer.length];
 
         //decrypting...
-        Crypto.AES256IGEDecrypt(encrypted_answer,answer_with_hash,tmp_iv,tmp_key);
+        Util.AES256IGEDecrypt(encrypted_answer,answer_with_hash,tmp_iv,tmp_key);
 
         //first 20 bytes of encrypted answer is answer hash and the rest of it
         //is answer itself
@@ -216,8 +216,10 @@ public final class AuthManager {
         byte[] g_a          = server_DH_inner_data.get("g_a");
         // use server time to calculate time offset server_time - local time
         //time offset will be used to generate message id
-        long    server_time  = System.currentTimeMillis() - (int)server_DH_inner_data.get("server_time");
-        MtpTimeManager.getInstance().setTimeDelta(System.currentTimeMillis() - server_time);
+        long    server_time  = System.currentTimeMillis()/1000 - (int)server_DH_inner_data.get("server_time");
+        console.log("server time",server_DH_inner_data.get("server_time"));
+        console.log("local  time",System.currentTimeMillis()/1000);
+        MtpTimeManager.getInstance().setTimeDelta(server_time);
 
         //these numbers are really big so we must use BigInteger to do calculations on theme
         BigInteger bInt       = new BigInteger(1,b);
@@ -236,7 +238,7 @@ public final class AuthManager {
 
         //serialize this object and create sha1(data)+data+padding
         byte[] clientInnerData = client_DH_inner_data.serialize();
-        byte[] data_with_sha   = concat(Crypto.SHA1(clientInnerData),clientInnerData);
+        byte[] data_with_sha   = concat(Util.SHA1(clientInnerData),clientInnerData);
 
         //creating padding bytes length,padding bytes are random
         int pad =data_with_sha.length;
@@ -262,7 +264,7 @@ public final class AuthManager {
 
         //creating auth_key -> (g^b) % dh_prime
         byte[] auth_key = fromBigInt(gaInt.modPow(bInt,dhPrimeInt));
-        byte[] auth_key_sha = Crypto.SHA1(auth_key);
+        byte[] auth_key_sha = Util.SHA1(auth_key);
         byte[] auth_key_sha_aux = subArray(auth_key_sha,0,8);
         byte[] auth_key_id =subArray(auth_key_sha,auth_key_sha.length-8,8);
 
