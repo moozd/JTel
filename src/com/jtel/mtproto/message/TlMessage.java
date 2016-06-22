@@ -79,6 +79,19 @@ public abstract class TlMessage implements Tl {
         this.header = header;
     }
 
+    public TlMessage() {
+    }
+
+
+    protected void setResponse(RpcResponse response) {
+        this.response = response;
+    }
+
+    protected void setHeader(RpcHeaders header) {
+        this.header = header;
+    }
+
+
 
     public byte[] toByteArray() throws IOException, InvalidTlParamException {
         return method.serialize();
@@ -110,6 +123,8 @@ public abstract class TlMessage implements Tl {
         this.method = method;
     }
 
-
-
+    @Override
+    protected Object clone() throws CloneNotSupportedException {
+        return super.clone();
+    }
 }

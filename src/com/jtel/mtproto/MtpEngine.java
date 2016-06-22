@@ -27,6 +27,8 @@ import com.jtel.mtproto.auth.AuthManager;
 
 import com.jtel.mtproto.message.*;
 
+import com.jtel.mtproto.secure.Randoms;
+import com.jtel.mtproto.secure.TimeManager;
 import com.jtel.mtproto.tl.*;
 
 import com.jtel.mtproto.transport.Transport;
@@ -34,6 +36,12 @@ import com.jtel.mtproto.transport.TransportException;
 
 
 import java.io.ByteArrayInputStream;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Random;
+import java.util.TimeZone;
 
 
 /**
@@ -75,66 +83,175 @@ public class MtpEngine {
     /**
      * logger object to log operations for debugging
      */
-    private Logger console = Logger.getInstance();
+    private Logger      console;
 
-
-    ;
-
-    private boolean isApiInitialized;
-
+    /**
+     * file layer to store state of application
+     * @see com.jtel.common.io.FileStorage
+     */
     private FileStorage storage;
+    
+    /**
+     *authenticates client for each dc
+     * @see com.jtel.mtproto.auth.AuthManager 
+     */
     private AuthManager authManager;
-    private Transport transport;
-    private boolean verbose;
-    private boolean verboseTables;
+
+    /**
+     * network layer ,controls the data transfer
+     * @see com.jtel.mtproto.transport.Transport
+     */
+    private Transport   transport;
+
+    /**
+     * if initConnection method is called this should be true
+     */
+    private boolean     isApiInitialized;
+
+    /**
+     * a flag for showing or not showing method name while executing theme
+     */
+    private boolean     verbose;
+
+    /**
+     * a flag for showing or not showing hex table of current request
+     */
+    private boolean     verboseTables;
 
 
     /**
      * private constructor you cannot create instance of this class using new you must cull getInstance()
      */
     private MtpEngine(){
-        this.isApiInitialized = false;
-        this.verbose = false;
-        this.verboseTables = false;
+        this.console        = Logger.getInstance();
+        setApiInitialized(false);
+        setVerboseEnabled(true);
+        setVerboseHexTablesEnabled(false);
     }
-
-    public void setStorage(FileStorage storage) {
-        this.storage = storage;
-        this.authManager = new AuthManager();
-    }
-
-    public void setVerboseEnabled(boolean verbose) {
-        this.verbose = verbose;
-    }
-
-    public void setVerboseHexTablesEnabled(boolean verboseTables) {
-        this.verboseTables = verboseTables;
-    }
-
-    protected boolean isVerboseTables() {
-        return verboseTables & verbose;
-    }
-
-    protected boolean isVerbose() {
-        return verbose;
-    }
-
-    public void setTransport(Transport transport) {
-        this.transport = transport;
-    }
-
+    
 
     /**
-     * is user authenticated to telegram service?
-     * @return true if storage object auth_state is true
-     *         this means client has completed the authentication
+     * checks if client is not authenticated to a dc then authenticates
+     * @throws AuthFailedException
      */
-    protected boolean isAuthenticatedOnDc(int dc){
-         return storage.hasKey("dcId_"+dc+"_auth");
+    protected void checkCurrentDc() throws AuthFailedException{
+        if (!isAuthenticatedOnDc(getDc())){
+            saveAuth(getDc(),authManager.authenticate(getDc()));
+        }
     }
 
-    public  boolean isNetworkReady(){
-        return storage.getItem("auth_state") == null ? false : storage.getItem("auth_state") ;
+    /**
+     * save auth data for a dc
+     * @param dc dc number
+     * @param auth auth data to be saved
+     *             @see com.jtel.mtproto.auth.AuthCredentials
+     */
+    protected void saveAuth(int dc, AuthCredentials auth) {
+        storage.setItem("auth_state",true);
+        storage.setItem("dcId",dc);
+        storage.setItem("dcId_"+dc+"_auth", auth);
+        storage.save();
+    }
+
+    /**
+     * sending messages starts from here Encrypted or Unencrypted
+     * @param message message to send to telegram server (RPC)
+     *                @see com.jtel.mtproto.message.TlMessage
+     * @return RPC result after deserialization 
+     *         @see com.jtel.mtproto.tl.TlObject 
+     */
+    protected RpcResponse sendMessage(TlMessage message){
+        RpcResponse rpcResponse = null;
+        try {
+            byte[] msg = message.serialize();
+            int currentDc = getDc();
+            byte[] response = transport.send(currentDc, msg);
+            //console.table(response,"msg");
+            message.deSerialize(new ByteArrayInputStream(response));
+            rpcResponse = message.getRpcResponse();
+
+            if(isVerbose()){
+                console.log("[request]", message.getMethod().method);
+                if(isVerboseTables()) console.table(msg,"#");
+                console.log("[result ]",rpcResponse.getObject().predicate);
+                if(isVerboseTables()) console.table(transport.getResponseAsBytes(),"#");
+
+            }
+
+        }
+        catch (TransportException e){
+            console.error("Transport error :",e.getCode(), e.getMessage());
+        }
+        catch (InvalidTlParamException e){
+            console.error("InvalidTlParam error :",e.getMessage());
+        }
+        catch (Exception e){
+            console.error("Unknown error :", e.getMessage());
+        }
+
+
+       rpcResponse = handleMessage(message);
+
+        return rpcResponse;
+    }
+
+    /**
+     * creates rpc headers for unencrypted message
+     * @param dc to get auth data if it exists
+     * @return Rpc header object that contains everything that
+     * a message needs.
+     * @see com.jtel.mtproto.message.RpcHeaders
+     */
+    protected RpcHeaders getMtpMessageHeaders(int dc){
+        RpcHeaders headers = new RpcHeaders();
+
+        AuthCredentials credentials = getAuth(dc);
+        TimeManager.getInstance().setTimeDelta(credentials.getServerTime());
+        headers.setAuthKey(credentials.getAuthKey());
+
+        headers.setAuthKeyId(new byte[]{0,0,0,0,0,0,0,0});
+        headers.setMessageId(TimeManager.getInstance().generateMessageId());
+        return headers;
+    }
+
+    /**
+     * creates rpc headers for encrypted messages
+     * @param dc to get auth data and server time registered to this dc
+     * @return rpc header object that contains everything that
+     * a message serialization needs
+     * @see com.jtel.mtproto.message.RpcHeaders
+     */
+    protected RpcHeaders getApiMessageHeaders(int dc){
+        RpcHeaders headers = new RpcHeaders();
+
+        AuthCredentials credentials = getAuth(dc);
+        TimeManager.getInstance().setTimeDelta(credentials.getServerTime());
+        headers.setAuthKey(credentials.getAuthKey());
+
+        headers.setAuthKeyId(credentials.getAuthKeyId());
+        headers.setServerSalt(credentials.getServerSalt());
+        headers.setSessionId(storage.getItem("session_id"));
+        headers.setSequenceId(TimeManager.getInstance().generateSeqNo());
+        headers.setMessageId(TimeManager.getInstance().generateMessageId());
+
+        return headers;
+    }
+
+    /**
+     * init connection is a special method of telegram api it start with
+     * invokeWithLayer method that determines layer number and initConnection
+     * method that sends api id user agent and some other stuffs to servers
+     */
+    public void initConnection (){
+
+        console.log("initializing connection");
+        int currentDc = getDc();
+        TlMessage method = new InitConnectionMessage(getApiMessageHeaders(currentDc));
+        TlObject nearestDc =sendMessage(method).getObject();
+        nearestDc.params.forEach(a-> console.log(a));
+        if(!nearestDc.type.equals(method.getMethod().type) ) return;
+        setDc(nearestDc.get("nearest_dc"));
+        setApiInitialized(true);
     }
 
     /**
@@ -146,9 +263,83 @@ public class MtpEngine {
     }
 
 
+    /**
+     * determines if api is initialized (initConnection called or not)
+     * @param apiInitialized initConnection called or not
+     */
     protected void setApiInitialized(boolean apiInitialized) {
         isApiInitialized = apiInitialized;
     }
+
+
+    /**
+     * is user authenticated to telegram service?
+     * @return true if storage object auth_state is true
+     *         this means client has completed the authentication
+     */
+    protected boolean isAuthenticatedOnDc(int dc){
+        return storage.hasKey("dcId_"+dc+"_auth");
+    }
+
+    /**
+     * to print request and response as hex table
+     * @return if true print
+     */
+    protected boolean isVerboseTables() {
+        return verboseTables & verbose;
+    }
+
+    /**
+     * to print request and response of methods to screen
+     * @return if true print , true by default
+     */
+    protected boolean isVerbose() {
+        return verbose;
+    }
+
+
+    /**
+     * setter
+     * @param storage storage object
+     */
+    public void setStorage(FileStorage storage) {
+        this.storage = storage;
+        this.authManager = new AuthManager();
+    }
+
+    /**
+     * setter
+     * @param verbose if true show verbose messages
+     */
+    public void setVerboseEnabled(boolean verbose) {
+        this.verbose = verbose;
+    }
+
+    /**
+     * setter
+     * @param verboseTables if true show returned bytes as hex table
+     */
+    public void setVerboseHexTablesEnabled(boolean verboseTables) {
+        this.verboseTables = verboseTables;
+    }
+
+
+    /**
+     * setter
+     * @param transport transport object to send messages over network
+     */
+    public void setTransport(Transport transport) {
+        this.transport = transport;
+    }
+
+    /**
+     * getter
+     * @return true if client did authentication before
+     */
+    public  boolean isNetworkReady(){
+        return storage.getItem("auth_state") == null ? false : storage.getItem("auth_state") ;
+    }
+    
 
     /**
      * change current dc id
@@ -160,6 +351,11 @@ public class MtpEngine {
         storage.save();
     }
 
+
+    /**
+     * getter
+     * @return get storage object
+      */
     public FileStorage getStorage() {
         return storage;
     }
@@ -183,7 +379,7 @@ public class MtpEngine {
 
             //getting transport object from factory you can chose type of transport from @see com.jtel.Config
             //by changing transport field
-            return sendMessage(new UnencryptedMessage(method, getMtpMessageHeaders(getDc())));
+            return sendMessage(new UnencryptedMessage(method, getMtpMessageHeaders(getDc()))).getObject();
     }
 
     /**
@@ -227,19 +423,11 @@ public class MtpEngine {
             initConnection();
         }
         int currentDc = getDc();
-        return sendMessage(new EncryptedMessage(method, getApiMessageHeaders(currentDc)));
+        return sendMessage(new EncryptedMessage(method, getApiMessageHeaders(currentDc))).getObject();
 
     }
 
-    protected void initConnection (){
 
-        int currentDc = getDc();
-        TlMessage method = new InitConnectionMessage(getApiMessageHeaders(currentDc));
-        TlObject nearestDc =sendMessage(method);
-        if(!nearestDc.type.equals(method.getMethod().type) ) return;
-        setDc(nearestDc.get("nearest_dc"));
-        setApiInitialized(true);
-    }
 
 
 
@@ -251,6 +439,34 @@ public class MtpEngine {
     }
 
     /**
+     * prepare client to start authenticate 
+     * @param storage storage file
+     * @param transport transport object
+     * @throws AuthFailedException
+     */
+    public void prepare(FileStorage storage,Transport transport) throws AuthFailedException{
+        prepare(storage,transport,false);
+    }
+
+    /**
+     * 
+     * @param storage storage object
+     * @param transport transport object
+     * @param reset rest if (true) storage will be removed
+     * @throws AuthFailedException
+     */
+    public void prepare(FileStorage storage,Transport transport,boolean reset) throws AuthFailedException{
+        setStorage(storage);
+        setTransport(transport);
+        if(reset){
+            reset();
+        }
+        if(!isNetworkReady()){
+           authenticate();
+        }
+    }
+
+    /**
      * getAuth AuthStorage object by data center id
      * @param dc data center id
      * @return auth_key and server_salt
@@ -259,12 +475,7 @@ public class MtpEngine {
         return storage.getItem("dcId_"+dc+"_auth");
     }
 
-    protected void saveAuth(int dc, AuthCredentials auth) {
-        storage.setItem("auth_state",true);
-        storage.setItem("dcId",dc);
-        storage.setItem("dcId_"+dc+"_auth", auth);
-        storage.save();
-    }
+
 
     /**
      * authenticates all dc ides and stores their values
@@ -284,88 +495,33 @@ public class MtpEngine {
         saveAuth(dc,authManager.authenticate(dc));
     }
 
-    /**
-     * checks if client is not authenticated to a dc then authenticates
-     * @throws AuthFailedException
-     */
-    protected void checkCurrentDc() throws AuthFailedException{
-        if (!isAuthenticatedOnDc(getDc())){
-           saveAuth(getDc(),authManager.authenticate(getDc()));
-        }
-    }
+   public RpcResponse handleMessage(TlMessage message){
+       RpcResponse response = message.getRpcResponse();
+       switch (response.getObject().predicate){
+           case "bad_server_salt":
+               console.log(response.getObject().predicate, "changing server salt to new one.");
+               int dc = getDc();
+               AuthCredentials credentials = getAuth(dc);
+               credentials.setServerSalt(ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN).putLong(response.getObject().get("new_server_salt")).array());
+               saveAuth(dc,credentials);
+               message.getRpcHeaders().setServerSalt(credentials.getServerSalt());
+               response = sendMessage(message);
+               break;
+           case "bad_msg_notification":
+               console.log(response.getObject(), "fixing message ides.");
+               Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+               long utctime = cal.getTimeInMillis();
+               //TimeManager.getInstance().setTimeDelta(((long)message.getRpcResponse().getObject().get("bad_msg_id") >> 32) -utctime);
+             //   message.getRpcHeaders().setMessageId(TimeManager.getInstance().generateMessageId());
+              // message.getRpcHeaders().setSequenceId(TimeManager.getInstance().generateSeqNo());
+              // response = sendMessage(message);
+               break;
 
-    protected TlObject sendMessage(TlMessage message){
-        RpcResponse rpcResponse = null;
-        try {
-            byte[] msg = message.serialize();
-            int currentDc = getDc();
-            byte[] response = transport.send(currentDc, msg);
-            message.deSerialize(new ByteArrayInputStream(response));
-            rpcResponse = message.getRpcResponse();
+       }
 
-            if(isVerbose()){
-                console.log("rpc-request", message.getMethod().method , message.getMethod().params);
-                if(isVerboseTables()) console.table(msg,"#");
-                console.log("rpc-result ",rpcResponse.getObject().predicate , rpcResponse.getObject().params);
-                if(isVerboseTables()) console.table(transport.getResponseAsBytes(),"#");
+      return response;
+   }
 
-            }
-
-        }
-        catch (TransportException e){
-            console.error("Transport error :",e.getCode(), e.getMessage());
-        }
-        catch (InvalidTlParamException e){
-            console.error("InvalidTlParam error :",e.getMessage());
-        }
-        catch (Exception e){
-            console.error("Unknown error :", e.getMessage());
-        }
-
-        if(rpcResponse == null){
-            return new TlObject();
-        }
-
-        switch (rpcResponse.getObject().predicate){
-            case "bad_server_salt":
-                break;
-            case "bad_msg_notification":
-                console.log("fixing", "bad_msg_notification");
-
-                break;
-
-        }
-
-        return rpcResponse.getObject();
-    }
-
-    public RpcHeaders getMtpMessageHeaders(int dc){
-        RpcHeaders headers = new RpcHeaders();
-
-        AuthCredentials credentials = getAuth(dc);
-        MtpTimeManager.getInstance().setTimeDelta(credentials.getServerTime());
-        headers.setAuthKey(credentials.getAuthKey());
-
-        headers.setAuthKeyId(new byte[]{0,0,0,0,0,0,0,0});
-        headers.setMessageId(MtpTimeManager.getInstance().generateMessageId());
-        return headers;
-    }
-
-    public RpcHeaders getApiMessageHeaders(int dc){
-        RpcHeaders headers = new RpcHeaders();
-
-        AuthCredentials credentials = getAuth(dc);
-        MtpTimeManager.getInstance().setTimeDelta(credentials.getServerTime());
-        headers.setAuthKey(credentials.getAuthKey());
-
-        headers.setAuthKeyId(credentials.getAuthKeyId());
-        headers.setServerSalt(credentials.getServerSalt());
-        headers.setSessionId(storage.getItem("session_id"));
-        headers.setSequenceId(MtpTimeManager.getInstance().generateSeqNo());
-        headers.setMessageId(MtpTimeManager.getInstance().generateMessageId());
-
-        return headers;
-    }
 
 
 }

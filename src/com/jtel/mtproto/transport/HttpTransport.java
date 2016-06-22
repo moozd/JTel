@@ -17,7 +17,7 @@
 
 package com.jtel.mtproto.transport;
 
-import com.jtel.mtproto.ConfStorage;
+import com.jtel.mtproto.storage.ConfStorage;
 import com.jtel.mtproto.secure.Util;
 import com.jtel.mtproto.tl.InvalidTlParamException;
 

@@ -234,9 +234,9 @@ public class Util {
        return bos.toByteArray();
     }
 
-    public  static void printDc(int dc){
-        MtpEngine mtpService = MtpEngine.getInstance();
-        AuthCredentials credentials = mtpService.getAuth(dc);
+    public  static void printDc(MtpEngine engine,int dc){
+
+        AuthCredentials credentials = engine.getAuth(dc);
         Logger.getInstance().log("dc "+dc+" credentials");
         Logger.getInstance().log("server_time",credentials.getServerTime());
         Logger.getInstance().table(credentials.getAuthKeyId() ,"auth_key_id");

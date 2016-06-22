@@ -1,7 +1,7 @@
 package com.jtel.mtproto.auth.pq;
 
 import com.jtel.common.log.Logger;
-import com.jtel.mtproto.ConfStorage;
+import com.jtel.mtproto.storage.ConfStorage;
 import com.sun.org.apache.xerces.internal.impl.dv.util.HexBin;
 
 import java.math.BigInteger;

@@ -15,33 +15,33 @@
  *     along with JTel.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.jtel.mtproto.tl.schema;
+package com.jtel.mtproto.message;
 
-import com.jtel.mtproto.storage.ConfStorage;
+import com.jtel.mtproto.tl.InvalidTlParamException;
+
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * This file is part of JTel
  * IntelliJ idea.
- * Date     : 6/17/16
- * Package : com.jtel.mtproto.tl.schema
+ * Date     : 6/21/16
+ * Package : com.jtel.mtproto.message
  *
  * @author <a href="mailto:mohammad.mdz72@gmail.com">Mohammad Mohammad Zade</a>
  */
 
-public final class TlSchemaFactory {
-
-    public static String defaultProvider =  ConfStorage.getInstance().getItem("tl-schema-provide");
-
-
-    public static TlSchemaProvider createDefault(){
-        return create(defaultProvider);
+public class NullMessage extends TlMessage {
+    @Override
+    public byte[] serialize() throws IOException, InvalidTlParamException {
+        return new byte[0];
     }
 
-    public static TlSchemaProvider create(String schema){
-        switch (schema){
-            case "json":
-            default:
-                return new JSONTlSchemaProvider();
-        }
+    @Override
+    public void deSerialize(InputStream is) throws IOException {
+
+    }
+
+    public NullMessage() {
     }
 }

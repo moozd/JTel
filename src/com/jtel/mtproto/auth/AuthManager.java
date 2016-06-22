@@ -35,14 +35,14 @@
 package com.jtel.mtproto.auth;
 
 import com.jtel.common.log.Logger;
-import com.jtel.mtproto.ConfStorage;
+import com.jtel.mtproto.storage.ConfStorage;
 import com.jtel.mtproto.auth.pq.Pq;
 import com.jtel.mtproto.auth.pq.PqSolver;
 import com.jtel.mtproto.secure.Util;
 import com.jtel.mtproto.secure.PublicKeyStorage;
 import com.jtel.mtproto.secure.Randoms;
 import com.jtel.mtproto.MtpEngine;
-import com.jtel.mtproto.MtpTimeManager;
+import com.jtel.mtproto.secure.TimeManager;
 import com.jtel.mtproto.tl.InvalidTlParamException;
 import com.jtel.mtproto.tl.TlMethod;
 import com.jtel.mtproto.tl.TlObject;
@@ -51,7 +51,8 @@ import static com.jtel.mtproto.secure.Util.*;
 
 import java.io.*;
 import java.math.BigInteger;
-import java.util.List;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 /**
  * This file is part of JTel
@@ -128,6 +129,7 @@ public final class AuthManager {
         Pq          pq                      =  new Pq(resPq.get("pq"));
         List<Long>  public_key_fingerprints =  resPq.get("server_public_key_fingerprints");
 
+        long start = System.nanoTime();
         //solving pq number using prim factoring , pq = p*q where p < q
         pq =  PqSolver.Solve(pq);
 
@@ -195,13 +197,16 @@ public final class AuthManager {
         byte[] tmp_iv  = concat(subArray(Util.SHA1(concat(server_nonce,new_nonce)),12), Util.SHA1(concat(new_nonce,new_nonce)),subArray(new_nonce,0,4));
         byte[] answer_with_hash = new byte[encrypted_answer.length];
 
+        TimeManager timeManager = TimeManager.getInstance();
         //decrypting...
         Util.AES256IGEDecrypt(encrypted_answer,answer_with_hash,tmp_iv,tmp_key);
+        long time = (timeManager.getUTCTime());
 
         //first 20 bytes of encrypted answer is answer hash and the rest of it
         //is answer itself
         byte[] answer_hash = subArray(answer_with_hash,0,20);
         byte[] answer      = subArray(answer_with_hash,20);
+
 
         //deserialize the answer
         TlObject server_DH_inner_data = new TlObject();
@@ -216,10 +221,16 @@ public final class AuthManager {
         byte[] g_a          = server_DH_inner_data.get("g_a");
         // use server time to calculate time offset server_time - local time
         //time offset will be used to generate message id
-        long    server_time  = System.currentTimeMillis()/1000 - (int)server_DH_inner_data.get("server_time");
-        console.log("server time",server_DH_inner_data.get("server_time"));
-        console.log("local  time",System.currentTimeMillis()/1000);
-        MtpTimeManager.getInstance().setTimeDelta(server_time);
+
+
+        long    server_time  =(int)server_DH_inner_data.get("server_time")  - time/1000;
+
+        console.log("lt",time);
+        console.log("st",server_DH_inner_data.get("server_time"));
+        console.log("dt",server_time);
+        timeManager.setTimeDelta(server_time);
+
+
 
         //these numbers are really big so we must use BigInteger to do calculations on theme
         BigInteger bInt       = new BigInteger(1,b);

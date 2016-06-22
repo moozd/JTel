@@ -19,7 +19,7 @@ package com.jtel.mtproto.tl;
 
 
 import com.jtel.common.log.Logger;
-import com.jtel.mtproto.ConfStorage;
+import com.jtel.mtproto.storage.ConfStorage;
 import com.jtel.mtproto.tl.schema.TlSchemaProvider;
 import com.sun.org.apache.xerces.internal.impl.dv.util.HexBin;
 
@@ -247,6 +247,7 @@ public final class Streams {
        return params;
     }
     public static TlParam readParam(InputStream is , TlParam param) throws IOException {
+      //  console.log(param.type);
         switch (param.type) {
             case "#":
             case "int":
@@ -277,14 +278,20 @@ public final class Streams {
                 if (param.type.startsWith("Vector") || param.type.startsWith("vector")) {
 
                     String condType = param.type.substring(param.type.indexOf("<") + 1, param.type.indexOf(">"));
-                    int cons= readInt(is);
+                    if(param.type.startsWith("V")) readInt(is);
                     int len = readInt(is);
+
                     List<TlParam> t = new ArrayList<>(len);
                     for (int i = 0; i < len; i++) {
-                        TlParam item = readParam(is,new TlParam(condType));
+                        TlParam item = readParam(is, new TlParam(condType));
                         t.add(item.getValue());
                     }
                     param.setValue(t);
+                } else if(param.type.startsWith("%")) {
+
+                    TlObject o = new TlObject();
+                    o.deserializeBare(is,param.type);
+                    param.setValue(o);
                 } else {
                     TlObject o = new TlObject();
                     o.deSerialize(is);

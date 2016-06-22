@@ -117,7 +117,7 @@ public class EncryptedMessage extends TlMessage {
             pad++;
             plain_text.write((byte) 0);
         }
-        console.table(plain_text.toByteArray(),"send");
+      //  console.table(plain_text.toByteArray(),"send");
         byte[] encrypted_data = new byte[pad];
         Map<String,byte[]> keys = Util.getAESKeyIV(msg_key,rpcHeaders.getAuthKey(), true);
         Util.AES256IGEEncrypt(plain_text.toByteArray(),encrypted_data, keys.get("iv"),keys.get("key"));
@@ -157,6 +157,7 @@ public class EncryptedMessage extends TlMessage {
 
         msgInputStream.read(innerMessage);
         TlObject object = new TlObject();
+       // console.table(innerMessage,getMethod().type);
         object.deSerialize(new ByteArrayInputStream(innerMessage));
 
         RpcResponse rpcResponse = new RpcResponse();
@@ -169,5 +170,18 @@ public class EncryptedMessage extends TlMessage {
         rpcResponse.setObject(object);
 
         saveResponse(rpcResponse);
+    }
+
+    public EncryptedMessage() {;
+    }
+
+    @Override
+    protected Object clone() throws CloneNotSupportedException {
+        super.clone();
+        TlMessage message = new EncryptedMessage();
+        message.setMethod(this.getMethod());
+        message.setHeader(this.getRpcHeaders());
+        message.setResponse(this.getRpcResponse());
+        return message;
     }
 }

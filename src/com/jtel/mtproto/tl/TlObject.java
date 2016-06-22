@@ -27,6 +27,7 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static com.jtel.mtproto.tl.Streams.*;
 /**
@@ -90,18 +91,35 @@ public class TlObject implements Tl {
     }
 
 
-
-
-    @Override
-    public void deSerialize(InputStream is) throws IOException {
-        int id = readInt(is);
-        TlObject object = TlSchemaProvider.getInstance().getConstructor(id);
-        if(object == null) console.error("not found",id);
+    public void deserializeBare(InputStream is, String type) throws IOException{
+        TlObject object = TlSchemaProvider.getInstance().getFirstDefination(type.substring(1));
+        if(object == null){
+            console.error("not found",type);
+            return;
+        }
+      //  console.log(object.predicate);
         this.id        = object.id;
         this.predicate = object.predicate;
         this.type      = object.type;
         this.params = readParams(is, object.params);
     }
+
+    @Override
+    public void deSerialize(InputStream is) throws IOException {
+        int id = readInt(is);
+        TlObject object = TlSchemaProvider.getInstance().getConstructor(id);
+        if(object == null){
+            console.error("not found",id);
+            return;
+        }
+       // console.log(object.predicate);
+        this.id        = object.id;
+        this.predicate = object.predicate;
+        this.type      = object.type;
+        this.params = readParams(is, object.params);
+    }
+
+
 
     @Override
     public String toString() {

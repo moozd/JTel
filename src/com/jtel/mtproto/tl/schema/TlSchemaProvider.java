@@ -149,6 +149,22 @@ public abstract class TlSchemaProvider {
         return definitions;
     }
 
+    public TlObject getFirstDefination(String type){
+        return apiSchema.constructors
+                .stream()
+                .filter(a -> a.type.equals(type))
+                .findFirst()
+                .orElse(
+                        mtpSchema.constructors
+                                .stream()
+                                .filter(b-> b.type.equals(type))
+                                .findFirst()
+                                .orElse(null)
+                );
+
+
+    }
+
     public TlMethod getMethod(String method){
         for (TlMethod o : mtpSchema.methods) {
             if (o.method.equals(method)) {

@@ -52,7 +52,7 @@
 package com.jtel.mtproto.message;
 
 import com.jtel.common.log.Logger;
-import com.jtel.mtproto.ConfStorage;
+import com.jtel.mtproto.storage.ConfStorage;
 import com.jtel.mtproto.tl.InvalidTlParamException;
 import com.jtel.mtproto.tl.TlMethod;
 import com.jtel.mtproto.tl.TlObject;
@@ -76,6 +76,8 @@ import static com.jtel.mtproto.tl.Streams.*;
 
 public class UnencryptedMessage extends TlMessage {
 
+    public UnencryptedMessage() {
+    }
 
     public UnencryptedMessage(TlMethod method, RpcHeaders header){
         super(method,header);
@@ -113,6 +115,7 @@ public class UnencryptedMessage extends TlMessage {
 
         byte[] responseBytes = new byte[message_len];
         is.read(responseBytes);
+        console.table(responseBytes,getMethod().type);
         ByteArrayInputStream bis = new ByteArrayInputStream(responseBytes);
         TlObject responseObject = new TlObject();
         responseObject.deSerialize(bis);
@@ -131,5 +134,13 @@ public class UnencryptedMessage extends TlMessage {
         saveResponse(rpcResponse);
     }
 
-
+    @Override
+    protected Object clone() throws CloneNotSupportedException {
+        super.clone();
+        TlMessage message = new UnencryptedMessage();
+        message.setMethod(this.getMethod());
+        message.setHeader(this.getRpcHeaders());
+        message.setResponse(this.getRpcResponse());
+        return message;
+    }
 }

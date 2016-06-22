@@ -34,7 +34,7 @@
 
 package com.jtel.mtproto.message;
 
-import com.jtel.mtproto.ConfStorage;
+import com.jtel.mtproto.storage.ConfStorage;
 import com.jtel.mtproto.tl.TlMethod;
 
 

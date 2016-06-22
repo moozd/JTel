@@ -32,15 +32,35 @@
  *     along with JTel.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.jtel.mtproto;
+/*
+ * This file is part of JTel.
+ *
+ *     JTel is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     JTel is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with JTel.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
-import com.jtel.mtproto.secure.Randoms;
-import com.jtel.mtproto.secure.Util;
+package com.jtel.mtproto.secure;
+
+import com.jtel.common.log.Logger;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Random;
+import java.util.TimeZone;
 
 /**
  * This file is part of JTel
@@ -51,13 +71,13 @@ import java.util.Random;
  * @author <a href="mailto:mohammad.mdz72@gmail.com">Mohammad Mohammad Zade</a>
  */
 
-public final class MtpTimeManager {
+public final class TimeManager {
 
-    private static MtpTimeManager instance;
-
-    public synchronized static MtpTimeManager getInstance() {
+    private static TimeManager instance;
+    private static long lastMessageID =0;
+    public synchronized static TimeManager getInstance() {
         if (instance == null) {
-            instance = new MtpTimeManager();
+            instance = new TimeManager();
         }
         return instance;
     }
@@ -66,11 +86,13 @@ public final class MtpTimeManager {
     private int  seqNo;
     private byte[] sessionid = Randoms.nextRandomBytes(8);
 
-    private MtpTimeManager() {
+    private TimeManager() {
         seqNo =0;
     }
     public int generateSeqNo(){
-        return seqNo++;
+      //  int res = seqNo *2+1;
+      //  seqNo++;
+        return seqNo++ * 2 + 1 ;
     }
 
     public long getLocalTime() {
@@ -82,13 +104,43 @@ public final class MtpTimeManager {
         this.timeDelta = timeDelta;
     }
 
+    public long getUTCTime(){
+        Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+        return cal.getTimeInMillis();
+    }
+
+    public long getUnixTime(){
+        try {
+
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy/mm/dd");
+            Date date = sdf.parse("1970/01/01");
+            return date.getTime();
+        }catch (Exception e){
+            return 0;
+        }
+    }
+
     public long generateMessageId() {
 
-    int a=        new Random().nextInt(0x0FFFFFFF);
-        BigInteger t = new BigInteger(getLocalTime()+timeDelta+"");
-        BigInteger tt = t.multiply(new BigInteger(2+"")).pow(32);
-        long number = ByteBuffer.wrap(Util.fromBigInt(tt)).order(ByteOrder.LITTLE_ENDIAN).getLong();
-        return  number ;
+            long unixtime = getUnixTime();
+            long utctime  = getUTCTime();
+
+            long time = (utctime );
+            long newMessageId = ((time / 1000 + timeDelta) << 32) |
+                    ((time % 1000) << 22) |
+                    (new Random().nextInt(524288) << 2);
+            if (newMessageId >= lastMessageID){
+                newMessageId += 4;
+            }
+            lastMessageID =newMessageId;
+            Logger.getInstance().log(timeDelta);
+            return newMessageId;
+
+
+    }
+
+    public long getTimeDelta() {
+        return timeDelta;
     }
 
     public byte[] getSessionId(){
