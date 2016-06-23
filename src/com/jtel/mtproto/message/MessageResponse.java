@@ -79,27 +79,27 @@ import com.jtel.mtproto.tl.TlObject;
  * @author <a href="mailto:mohammad.mdz72@gmail.com">Mohammad Mohammad Zade</a>
  */
 
-public class RpcResponse extends RpcHeaders {
+public class MessageResponse extends MessageHeaders {
 
 
-    public RpcResponse() {
+    public MessageResponse() {
     }
 
-    public RpcResponse(byte[] authKeyId, byte[] serverSalt, long messageId, int sequenceId, byte[] sessionId, byte[] authKey, TlObject response, byte[] messageBytes) {
+    public MessageResponse(byte[] authKeyId, byte[] serverSalt, long messageId, int sequenceId, byte[] sessionId, byte[] authKey, TlObject response, byte[] messageBytes) {
 
         super(authKeyId, serverSalt, messageId, sequenceId, sessionId, authKey);
         this.response = response;
         this.messageBytes = messageBytes;
     }
 
-    public RpcResponse(long messageId, TlObject response, byte[] messageBytes) {
+    public MessageResponse(long messageId, TlObject response, byte[] messageBytes) {
 
         super(messageId);
         this.response = response;
         this.messageBytes = messageBytes;
     }
 
-    public RpcResponse(TlObject response) {
+    public MessageResponse(TlObject response) {
         this.response = response;
     }
 

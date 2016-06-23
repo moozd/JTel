@@ -89,10 +89,12 @@ public final class TimeManager {
     private TimeManager() {
         seqNo =0;
     }
-    public int generateSeqNo(){
+    public int generateSeqNo(boolean isContentRealated){
       //  int res = seqNo *2+1;
       //  seqNo++;
-        return seqNo++ * 2 + 1 ;
+        int a = (isContentRealated)? seqNo++*2 : seqNo++ * 2 +1;
+        Logger.getInstance().log("seqNo",a);
+        return a;
     }
 
     public long getLocalTime() {
@@ -133,7 +135,7 @@ public final class TimeManager {
                 newMessageId += 4;
             }
             lastMessageID =newMessageId;
-            Logger.getInstance().log(timeDelta);
+
             return newMessageId;
 
 

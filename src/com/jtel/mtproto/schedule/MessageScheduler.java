@@ -17,7 +17,7 @@
 
 package com.jtel.mtproto.schedule;
 
-import com.jtel.mtproto.message.RpcResponse;
+import com.jtel.mtproto.message.MessageResponse;
 import com.jtel.mtproto.message.TlMessage;
 import com.jtel.mtproto.tl.InvalidTlParamException;
 import com.jtel.mtproto.transport.Transport;
@@ -37,33 +37,38 @@ import java.io.IOException;
 
 public class MessageScheduler {
 
-    private MessageQueue sendQueue;
+    private MessageQueue sentQueue;
     private Transport transport;
 
     public MessageScheduler() {
-        sendQueue =new MessageQueue();
+        sentQueue =new MessageQueue();
     }
 
 
 
     public void update(MessageQueue queue){
-        this.sendQueue =queue;
+        this.sentQueue =queue;
+    }
+
+
+    public MessageQueue getSentQueue() {
+        return sentQueue;
     }
 
     public void setTransport(Transport transport){
         this.transport = transport;
     }
 
-    public RpcResponse send(long msgId,int dc) throws IOException, InvalidTlParamException,TransportException{
-        TlMessage  message = sendQueue.get(msgId);
+    public MessageResponse send(long msgId, int dc) throws IOException, InvalidTlParamException,TransportException{
+        TlMessage  message = sentQueue.get(msgId);
         byte[] msgBytes = message.serialize();
         byte[] resp     = transport.send(dc,msgBytes);
         message.deSerialize(new ByteArrayInputStream(resp));
-        return message.getRpcResponse();
+        return message.getResponse();
     }
 
-    public RpcResponse send(int dc) throws IOException, InvalidTlParamException,TransportException{
-        long msgId = sendQueue.getTop().getRpcHeaders().getMessageId();
+    public MessageResponse send(int dc) throws IOException, InvalidTlParamException,TransportException{
+        long msgId = sentQueue.getTop().getHeaders().getMessageId();
         return send(msgId,dc);
     }
 

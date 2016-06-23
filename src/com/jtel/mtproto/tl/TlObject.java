@@ -27,7 +27,6 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
 
 import static com.jtel.mtproto.tl.Streams.*;
 /**
@@ -43,7 +42,7 @@ public class TlObject implements Tl {
 
     public int id;
     public String predicate;
-    public List<TlParam> params;
+    public List<TlParameter> params;
     public String type;
     private Logger console = Logger.getInstance();
     public TlObject(){
@@ -61,9 +60,13 @@ public class TlObject implements Tl {
         this.params    = object.params;
         this.type      = object.type;
     }
+
+    public List<TlObject> getBareVector(){
+        return params.get(0).getValue();
+    }
     public TlObject put(String field, Object o) {
 
-        for (TlParam param : params) {
+        for (TlParameter param : params) {
             if(param.name.equals(field)){
                 param.setValue(o);
                 return this;
@@ -72,8 +75,23 @@ public class TlObject implements Tl {
         return this;
     }
 
+    @Override
+    public String getName() {
+        return predicate;
+    }
+
+    @Override
+    public int getId() {
+        return id;
+    }
+
+    @Override
+    public TlType getType() {
+        return TlType.Object;
+    }
+
     public <T> T get(String field){
-        for (TlParam param : params) {
+        for (TlParameter param : params) {
             if(param.name.equals(field)){
 
                 return param.getValue() ;

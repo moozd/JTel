@@ -43,7 +43,7 @@ import static com.jtel.mtproto.tl.Streams.writeParams;
 public class TlMethod implements Tl {
     int id;
     public String method;
-    public List<TlParam> params;
+    public List<TlParameter> params;
     public String type;
 
     public TlMethod(String methodName) throws IOException{
@@ -61,7 +61,7 @@ public class TlMethod implements Tl {
     }
     @Nullable
     public TlMethod put(String field, @Nullable Object o) {
-        for (TlParam param : params) {
+        for (TlParameter param : params) {
             if(param.name.equals(field)){
                 param.setValue(o);
                 return this;
@@ -87,7 +87,24 @@ public class TlMethod implements Tl {
     }
 
     @Override
+    public String getName() {
+        return method;
+    }
+
+    @Override
+    public int getId() {
+        return id;
+    }
+
+    @Override
+    public TlType getType() {
+        return TlType.Method;
+    }
+
+    @Override
     public String toString() {
         return String.format("%s#%s %s = %s",method, HexBin.encode( ByteBuffer.allocate(4).putInt(id).array()),params.toString(),type);
     }
+
+
 }

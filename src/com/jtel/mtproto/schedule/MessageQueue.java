@@ -17,12 +17,10 @@
 
 package com.jtel.mtproto.schedule;
 
-import com.jtel.mtproto.message.NullMessage;
 import com.jtel.mtproto.message.TlMessage;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 
 /**
  * This file is part of JTel
@@ -81,15 +79,39 @@ public class MessageQueue {
         }
     }
 
+    public boolean isConfirmed(long msgId){
+        int i = find(msgId);
+        if(i>=0){
+            return messageSets.get(i).isConfirmed();
+        }
+        return false;
+    }
+
+    public void confirm(long messageId){
+        int i = find(messageId);
+        if(i>=0){
+            messageSets.get(i).setConfirmed(true);
+        }
+    }
+
 
     private class MessageSet {
 
         private TlMessage message;
         private long      messageId;
+        private boolean confirmed = false;
 
         public MessageSet(TlMessage message) {
-            this.messageId = message.getRpcHeaders().getMessageId();
+            this.messageId = message.getHeaders().getMessageId();
             this.message = message;
+        }
+
+        public void setConfirmed(boolean confirmed) {
+            this.confirmed = confirmed;
+        }
+
+        public boolean isConfirmed() {
+            return confirmed;
         }
 
         public TlMessage getMessage() {
@@ -99,9 +121,23 @@ public class MessageQueue {
         public long getMessageId() {
             return messageId;
         }
+
+
     }
 
 
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        for (MessageSet message: messageSets) {
+            builder.append(" [id : ");
+            builder.append(message.getMessageId());
+            builder.append("  ");
+            builder.append(message.getMessage());
+            builder.append("]");
+        }
+        return builder.toString();
+    }
 
 
 }

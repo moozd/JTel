@@ -2,7 +2,6 @@ package com.jtel.mtproto.tl;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 
 /**
  * This file is part of JTel
@@ -39,4 +38,11 @@ public interface Tl {
      *          cannot connect to given data center.
      */
     void  deSerialize(InputStream is) throws IOException;
+
+    String getName();
+
+    int getId();
+
+    TlType getType();
+
 }

@@ -28,7 +28,7 @@ import com.sun.org.apache.xerces.internal.impl.dv.util.HexBin;
  * @author <a href="mailto:mohammad.mdz72@gmail.com">Mohammad Mohammad Zade</a>
  */
 
-public class TlParam {
+public class TlParameter {
 
     public String type;
 
@@ -45,11 +45,11 @@ public class TlParam {
     }
 
 
-    public TlParam(){
+    public TlParameter(){
 
     }
 
-    public TlParam(String type){
+    public TlParameter(String type){
         this.type=type;
     }
     @Override

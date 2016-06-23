@@ -54,7 +54,7 @@ package com.jtel.mtproto.message;
 import com.jtel.common.log.Logger;
 import com.jtel.mtproto.secure.Util;
 import com.jtel.mtproto.tl.InvalidTlParamException;
-import com.jtel.mtproto.tl.TlMethod;
+import com.jtel.mtproto.tl.Tl;
 import com.jtel.mtproto.tl.TlObject;
 
 import java.io.ByteArrayInputStream;
@@ -78,13 +78,13 @@ public class EncryptedMessage extends TlMessage {
 
     private Logger console = Logger.getInstance();
 
-    public EncryptedMessage(TlMethod method, RpcHeaders header) {
+    public EncryptedMessage(Tl method, MessageHeaders header) {
         super(method, header);
     }
 
     @Override
     public byte[] serialize() throws IOException, InvalidTlParamException {
-        RpcHeaders rpcHeaders = getRpcHeaders();
+        MessageHeaders rpcHeaders = getHeaders();
         ByteArrayOutputStream mainStream = new ByteArrayOutputStream();
 
         //serializing method
@@ -136,12 +136,12 @@ public class EncryptedMessage extends TlMessage {
     public void deSerialize(InputStream is) throws IOException {
         byte[] auth_id = new byte[8];
         is.read(auth_id);
-        if(!Util.bytesCmp(auth_id,getRpcHeaders().getAuthKeyId())){
+        if(!Util.bytesCmp(auth_id, getHeaders().getAuthKeyId())){
             console.warn("auth_key_id" ,"dose not match.");
         }
         byte[] msg_key = readIntBytes(is,128);
         byte[] encrypted = Util.toByteArray(is);
-        Map<String,byte[]> aesKey =  Util.getAESKeyIV(msg_key,getRpcHeaders().getAuthKey(),false);
+        Map<String,byte[]> aesKey =  Util.getAESKeyIV(msg_key, getHeaders().getAuthKey(),false);
         byte[] decrypted = new byte[encrypted.length];
         Util.AES256IGEDecrypt(encrypted,decrypted,aesKey.get("iv"),aesKey.get("key"));
 
@@ -157,10 +157,10 @@ public class EncryptedMessage extends TlMessage {
 
         msgInputStream.read(innerMessage);
         TlObject object = new TlObject();
-       // console.table(innerMessage,getMethod().type);
+       // console.table(innerMessage,getContext().type);
         object.deSerialize(new ByteArrayInputStream(innerMessage));
 
-        RpcResponse rpcResponse = new RpcResponse();
+        MessageResponse rpcResponse = new MessageResponse();
         rpcResponse.setAuthKeyId(auth_id);
         rpcResponse.setServerSalt(responed_server_salt);
         rpcResponse.setSessionId(responed_session_id);
@@ -169,7 +169,7 @@ public class EncryptedMessage extends TlMessage {
         rpcResponse.setMessageBytes(innerMessage);
         rpcResponse.setObject(object);
 
-        saveResponse(rpcResponse);
+        setResponse(rpcResponse);
     }
 
     public EncryptedMessage() {;
@@ -179,9 +179,9 @@ public class EncryptedMessage extends TlMessage {
     protected Object clone() throws CloneNotSupportedException {
         super.clone();
         TlMessage message = new EncryptedMessage();
-        message.setMethod(this.getMethod());
-        message.setHeader(this.getRpcHeaders());
-        message.setResponse(this.getRpcResponse());
+        message.setContext(this.getContext());
+        message.setHeader(this.getHeaders());
+        message.setResponse(this.getResponse());
         return message;
     }
 }

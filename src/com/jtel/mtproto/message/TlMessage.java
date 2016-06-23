@@ -53,9 +53,9 @@ package com.jtel.mtproto.message;
 
 import com.jtel.mtproto.tl.InvalidTlParamException;
 import com.jtel.mtproto.tl.Tl;
-import com.jtel.mtproto.tl.TlMethod;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * This file is part of JTel
@@ -66,16 +66,16 @@ import java.io.IOException;
  * @author <a href="mailto:mohammad.mdz72@gmail.com">Mohammad Mohammad Zade</a>
  */
 
-public abstract class TlMessage implements Tl {
+public abstract class TlMessage  {
 
-    private TlMethod method;
+    private Tl context;
 
-    private RpcHeaders header;
-    private RpcResponse response;
+    private MessageHeaders header;
+    private MessageResponse response;
 
 
-    public TlMessage(TlMethod method, RpcHeaders header) {
-        this.method = method;
+    public TlMessage(Tl context, MessageHeaders header) {
+        this.context = context;
         this.header = header;
     }
 
@@ -83,48 +83,50 @@ public abstract class TlMessage implements Tl {
     }
 
 
-    protected void setResponse(RpcResponse response) {
+    protected void setResponse(MessageResponse response) {
         this.response = response;
     }
 
-    protected void setHeader(RpcHeaders header) {
+    protected void setHeader(MessageHeaders header) {
         this.header = header;
     }
 
 
 
     public byte[] toByteArray() throws IOException, InvalidTlParamException {
-        return method.serialize();
+        return context.serialize();
     }
 
-    public RpcHeaders getRpcHeaders() {
+    public MessageHeaders getHeaders() {
         return header;
     }
 
-    public void setRpcHeader(RpcHeaders header) {
-        this.header = header;
-    }
 
 
 
-    public RpcResponse getRpcResponse() {
+    public MessageResponse getResponse() {
         return response;
     }
 
-    protected void saveResponse(RpcResponse response) {
-        this.response = response;
+    public <T extends Tl > T getContext() {
+        return (T) context;
     }
 
-    public TlMethod getMethod() {
-        return method;
-    }
-
-    protected void setMethod(TlMethod method) {
-        this.method = method;
+    protected void setContext(Tl tlEntity) {
+        this.context = tlEntity;
     }
 
     @Override
     protected Object clone() throws CloneNotSupportedException {
         return super.clone();
     }
+
+    @Override
+    public String toString() {
+        return getContext().getName();
+    }
+
+    public abstract void deSerialize(InputStream is) throws IOException;
+
+    public abstract byte[] serialize() throws IOException, InvalidTlParamException;
 }

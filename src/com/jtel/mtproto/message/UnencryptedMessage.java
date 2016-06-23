@@ -79,7 +79,7 @@ public class UnencryptedMessage extends TlMessage {
     public UnencryptedMessage() {
     }
 
-    public UnencryptedMessage(TlMethod method, RpcHeaders header){
+    public UnencryptedMessage(TlMethod method, MessageHeaders header){
         super(method,header);
     }
     private Logger console = Logger.getInstance();
@@ -91,12 +91,12 @@ public class UnencryptedMessage extends TlMessage {
         byte[] message = toByteArray();
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         writeLong(os, 0L,"AuthStorage Key");
-        writeLong(os,( getRpcHeaders().getMessageId()),"Message ID");
+        writeLong(os,( getHeaders().getMessageId()),"Message ID");
         writeInt(os,message.length,"Message length");
         os.write(message);
         if (conf.debug()){
-            console.log(getMethod());
-            console.table(os.toByteArray(), getMethod().method);
+            console.log(getContext());
+            console.table(os.toByteArray(), getContext().getName());
         }
         return os.toByteArray();
     }
@@ -115,7 +115,7 @@ public class UnencryptedMessage extends TlMessage {
 
         byte[] responseBytes = new byte[message_len];
         is.read(responseBytes);
-        console.table(responseBytes,getMethod().type);
+      //  console.table(responseBytes,getContext().type);
         ByteArrayInputStream bis = new ByteArrayInputStream(responseBytes);
         TlObject responseObject = new TlObject();
         responseObject.deSerialize(bis);
@@ -126,21 +126,21 @@ public class UnencryptedMessage extends TlMessage {
             console.table(responseBytes,responseObject.predicate);
         }
 
-        RpcResponse rpcResponse = new RpcResponse();
-        rpcResponse.setAuthKeyId(new byte[8]);
-        rpcResponse.setMessageId(message_id);
-        rpcResponse.setMessageBytes(responseBytes);
-        rpcResponse.setObject(responseObject);
-        saveResponse(rpcResponse);
+        MessageResponse response = new MessageResponse();
+        response.setAuthKeyId(new byte[8]);
+        response.setMessageId(message_id);
+        response.setMessageBytes(responseBytes);
+        response.setObject(responseObject);
+        setResponse(response);
     }
 
     @Override
     protected Object clone() throws CloneNotSupportedException {
         super.clone();
         TlMessage message = new UnencryptedMessage();
-        message.setMethod(this.getMethod());
-        message.setHeader(this.getRpcHeaders());
-        message.setResponse(this.getRpcResponse());
+        message.setContext(this.getContext());
+        message.setHeader(this.getHeaders());
+        message.setResponse(this.getResponse());
         return message;
     }
 }

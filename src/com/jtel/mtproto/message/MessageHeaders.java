@@ -45,7 +45,7 @@ import com.jtel.mtproto.tl.TlObject;
  * @author <a href="mailto:mohammad.mdz72@gmail.com">Mohammad Mohammad Zade</a>
  */
 
-public class RpcHeaders {
+public class MessageHeaders {
     private boolean isApi = false;
     private byte[] authKeyId;
     private byte[] serverSalt;
@@ -55,12 +55,12 @@ public class RpcHeaders {
     private byte[]   authKey;
     long servertime =0;
 
-    public RpcHeaders(long messageId) {
+    public MessageHeaders(long messageId) {
         this.authKeyId = new byte[0];
         this.messageId = messageId;
     }
 
-    public RpcHeaders(byte[] authKeyId, byte[] serverSalt, long messageId, int sequenceId, byte[] sessionId, byte[] authKey) {
+    public MessageHeaders(byte[] authKeyId, byte[] serverSalt, long messageId, int sequenceId, byte[] sessionId, byte[] authKey) {
         this.authKeyId = authKeyId;
         this.serverSalt = serverSalt;
         this.messageId = messageId;
@@ -107,7 +107,7 @@ public class RpcHeaders {
         return servertime;
     }
 
-    public RpcHeaders() {
+    public MessageHeaders() {
     }
 
     public byte[] getSessionId() {

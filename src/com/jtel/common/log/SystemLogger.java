@@ -44,7 +44,7 @@ public class SystemLogger implements ILogger {
         }
         DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
         Date date = new Date();
-        return String.format("[%s] %s  - %s %s " ,superTag,dateFormat.format(date),tag,t);
+        return String.format("|%s| %s | %s : %s " ,superTag,dateFormat.format(date),tag,t);
     }
     @Override
     public void log(Object... os) {

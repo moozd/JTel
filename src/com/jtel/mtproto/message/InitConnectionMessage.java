@@ -51,10 +51,10 @@ public class InitConnectionMessage extends EncryptedMessage {
 
     private ConfStorage conf = ConfStorage.getInstance();
 
-    public InitConnectionMessage(RpcHeaders headers) {
+    public InitConnectionMessage(MessageHeaders headers) {
         super(null,headers);
         try {
-            setMethod(new TlMethod("help.getConfig"));
+            setContext(new TlMethod("help.getConfig"));
         }catch (Exception e){
             //empty
         }
@@ -72,7 +72,7 @@ public class InitConnectionMessage extends EncryptedMessage {
             initConnection.put("system_version","Linux x86_64");
             initConnection.put("app_version","0.0.3");
             initConnection.put("lang_code","en-US");
-            initConnection.put("query",getMethod());
+            initConnection.put("query", getContext());
             invokeWithLayer.put("query", initConnection);
 
            //Logger.getInstance().table(invokeWithLayer.serialize(), "init connection");

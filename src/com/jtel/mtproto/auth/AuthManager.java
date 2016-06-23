@@ -35,23 +35,27 @@
 package com.jtel.mtproto.auth;
 
 import com.jtel.common.log.Logger;
+import com.jtel.mtproto.message.MessageHeaders;
+import com.jtel.mtproto.message.TlMessage;
+import com.jtel.mtproto.message.UnencryptedMessage;
 import com.jtel.mtproto.storage.ConfStorage;
 import com.jtel.mtproto.auth.pq.Pq;
 import com.jtel.mtproto.auth.pq.PqSolver;
 import com.jtel.mtproto.secure.Util;
 import com.jtel.mtproto.secure.PublicKeyStorage;
 import com.jtel.mtproto.secure.Randoms;
-import com.jtel.mtproto.MtpEngine;
 import com.jtel.mtproto.secure.TimeManager;
 import com.jtel.mtproto.tl.InvalidTlParamException;
+import com.jtel.mtproto.tl.Streams;
 import com.jtel.mtproto.tl.TlMethod;
 import com.jtel.mtproto.tl.TlObject;
+import com.jtel.mtproto.transport.Transport;
+import com.jtel.mtproto.transport.TransportException;
 
 import static com.jtel.mtproto.secure.Util.*;
 
 import java.io.*;
 import java.math.BigInteger;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -64,13 +68,15 @@ import java.util.*;
  */
 
 public final class AuthManager {
+    private final String TAG = getClass().getSimpleName();
 
+    private Transport transport;
 
     /**
      * private constructor class is available throw getInstance()
      */
-    public AuthManager() {
-
+    public AuthManager(Transport transport) {
+        this.transport =transport;
     }
 
     /**
@@ -103,6 +109,40 @@ public final class AuthManager {
     }
 
 
+    protected TlObject invokeSimpleMethod(int dc,TlMethod method){
+        try {
+            MessageHeaders headers = new MessageHeaders();
+            headers.setAuthKeyId(new byte[]{0,0,0,0,0,0,0,0});
+            headers.setMessageId(TimeManager.getInstance().generateMessageId());
+            TlMessage simpleMessage = new UnencryptedMessage(method,headers);
+            byte[] msg = simpleMessage.serialize();
+            byte[] res = new byte[0];
+            if(transport != null){
+                res = transport.send(dc,msg);
+            }
+
+            simpleMessage.deSerialize(new ByteArrayInputStream(res));
+            return simpleMessage.getResponse().getObject();
+
+        }
+        catch (TransportException e){
+            console.error("Transport error :",e.getCode(), e.getMessage());
+        }
+        catch (InvalidTlParamException e){
+            console.error("InvalidTlParam error :",e.getMessage());
+        }
+        catch (Exception e){
+            console.error("Unknown error :", e.getMessage());
+        }
+        return new TlObject();
+    }
+
+    private void log(Object... elements){
+
+        console.log(getClass().getSimpleName(),elements);
+    }
+
+
     /**
      * authenticate to given data center
      * @param dcid data center id
@@ -111,13 +151,12 @@ public final class AuthManager {
      */
     protected AuthCredentials authAttempt(int dcid) throws IOException,InvalidTlParamException{
 
-        //configuring MTProto service and starting it
-        MtpEngine mtproto = MtpEngine.getInstance();
-        mtproto.setDc(dcid);
+        console.log(TAG,"authenticating on dc" ,"["+dcid+"]");
+        long started = System.currentTimeMillis();
 
         //step 1 ,calling req_pq request
-        TlObject resPq = mtproto.invokeMtpCall
-                (
+        TlObject resPq = invokeSimpleMethod
+                (dcid,
                         new TlMethod("req_pq")
                                 .put("nonce", Randoms.nextRandomBytes(16)) // 128 bit random number
                 );
@@ -129,7 +168,7 @@ public final class AuthManager {
         Pq          pq                      =  new Pq(resPq.get("pq"));
         List<Long>  public_key_fingerprints =  resPq.get("server_public_key_fingerprints");
 
-        long start = System.nanoTime();
+
         //solving pq number using prim factoring , pq = p*q where p < q
         pq =  PqSolver.Solve(pq);
 
@@ -167,8 +206,8 @@ public final class AuthManager {
 
         //step 2 starts from here , starting dh key exchange
         //by invoking req_DH_params method
-        TlObject Server_Dh_Params = mtproto.invokeMtpCall
-                (
+        TlObject Server_Dh_Params = invokeSimpleMethod
+                (dcid,
                         new TlMethod("req_DH_params")       //method
                         .put("nonce",nonce)                 //nonce 128 bit random number from step 1
                         .put("server_nonce",server_nonce)   //server_nonce  128 bit random number from step 1
@@ -204,7 +243,7 @@ public final class AuthManager {
 
         //first 20 bytes of encrypted answer is answer hash and the rest of it
         //is answer itself
-        byte[] answer_hash = subArray(answer_with_hash,0,20);
+       // byte[] answer_hash = subArray(answer_with_hash,0,20);
         byte[] answer      = subArray(answer_with_hash,20);
 
 
@@ -224,10 +263,6 @@ public final class AuthManager {
 
 
         long    server_time  =(int)server_DH_inner_data.get("server_time")  - time/1000;
-
-        console.log("lt",time);
-        console.log("st",server_DH_inner_data.get("server_time"));
-        console.log("dt",server_time);
         timeManager.setTimeDelta(server_time);
 
 
@@ -266,7 +301,7 @@ public final class AuthManager {
         AES256IGEEncrypt(data_with_sha_pa,encrypted_data,tmp_iv,tmp_key);
 
         //step 3 sendSync set_client_DH_params
-        TlObject set_client_DH_params=  mtproto.invokeMtpCall(
+        TlObject set_client_DH_params=  invokeSimpleMethod(dcid,
                     new TlMethod("set_client_DH_params")
                             .put("nonce",nonce) //nonce 128 bit random number from step 1
                             .put("server_nonce",server_nonce) //server_nonce 128 bit random number from step 1
@@ -288,7 +323,7 @@ public final class AuthManager {
             case "dh_gen_ok":
 
                 if(!bytesCmp(new_nonce_hash_1,set_client_DH_params.get("new_nonce_hash1"))){
-                    console.warn("new_nonce_hash1" , "failed");
+                    console.warn(TAG,"new_nonce_hash1" , "failed");
                     console.table(new_nonce_hash_1,"client");
                     console.table(set_client_DH_params.get("new_nonce_hash1"),"server");
                     return new AuthCredentials();
@@ -296,8 +331,8 @@ public final class AuthManager {
 
                 //server_salt is bytesXor of first eight byte of new_nonce and first eight byte of server_nonce
                 byte[] server_salt = bytesXor(subArray(new_nonce,0,8),subArray(server_nonce,0,8));
-
-                console.log("Done.");
+                long finished = System.currentTimeMillis();
+                console.log(TAG,"Done.", (finished -started)/1000F ,"s");
                 if(conf.debug()) {
                     //printing hex table of server salt and auth_key
                     console.table(server_salt, "server_salt");

@@ -19,38 +19,32 @@ package com.jtel;
 
 import com.jtel.common.log.Logger;
 import com.jtel.mtproto.MtpEngine;
-import com.jtel.mtproto.secure.TimeManager;
-import com.jtel.mtproto.storage.ConfStorage;
+import com.jtel.mtproto.message.AckMessage;
+import com.jtel.mtproto.message.TlMessage;
 import com.jtel.mtproto.storage.MtpFileStorage;
 import com.jtel.mtproto.tl.Streams;
 import com.jtel.mtproto.tl.TlMethod;
-import com.jtel.mtproto.tl.schema.TlSchemaProvider;
+import com.jtel.mtproto.tl.TlObject;
+import com.jtel.mtproto.tl.TlParameter;
 import com.jtel.mtproto.transport.HttpTransport;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Main {
     private static Logger console = Logger.getInstance();
 
     public static void main(String[] args) throws Exception {
-        ConfStorage.getInstance().setDebugging(false);
-        TimeManager timeManager = TimeManager.getInstance();
         MtpEngine engine = MtpEngine.getInstance();
-
-          engine.prepare(new MtpFileStorage(),new HttpTransport());
-
-   //    engine.authenticate(3);
-
-        console.log(TlSchemaProvider.getInstance().getDefinitions("Message",false));
-        engine.setDc(3);
-        //engine.initConnection();
-//
-       // engine.setDc(1);
-
-       engine.invokeApiCall(new TlMethod("auth.checkPhone").put("phone_number","989118836748"));
-       //  engine.authenticate(1);
-
+        engine.createSession(new MtpFileStorage(),new HttpTransport());
+        engine.invokeApiCall(new TlMethod("auth.checkPhone").put("phone_number","989118836748"));
+        engine.invokeApiCall(new TlMethod("help.getConfig"));
+        engine.invokeApiCall(new TlMethod("help.getConfig"));
     }
-
+/*max_delay: 500,
+      wait_after: 150,
+      max_wait: maxWait*/
 
 }

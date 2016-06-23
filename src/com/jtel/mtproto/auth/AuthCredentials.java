@@ -21,6 +21,8 @@ package com.jtel.mtproto.auth;
 import com.sun.org.apache.xerces.internal.impl.dv.util.HexBin;
 
 import java.io.Serializable;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 /**
  * This file is part of JTel
@@ -87,6 +89,9 @@ public class AuthCredentials implements Serializable {
 
     public void setServerSalt(byte[] serverSalt) {
         this.serverSalt = serverSalt;
+    }
+    public void setServerSalt(long serverSalt) {
+        this.serverSalt = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN).putLong(serverSalt).array();
     }
 
     public void setAuthKey(byte[] authKey) {
