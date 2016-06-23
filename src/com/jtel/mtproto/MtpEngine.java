@@ -383,12 +383,11 @@ public class MtpEngine {
         if(pendingAck.size()!=0){
            // console.log("ack");
           // TlObject o =sendLongPoll();
-           // sendMsgAck();
-            //response=sendLongPoll();
+            sendMsgAck();
+            //processIncoming(0,sendLongPoll());
         }
 
-
-       // console.log("ddd",ret);
+        // console.log("ddd",ret);
        // return ret;// message.getResponse().getObject();
         return message.getResponse().getObject();
     }
@@ -401,13 +400,18 @@ public class MtpEngine {
            case "bad_server_salt":
                console.log(TAG,response.predicate, "changing server salt to new one.");
                applyServerSalt(getDc(),response.get("new_server_salt"),sentMessage);
+               break;
            case "msg_container":
                List<TlObject> msgVector = response.getBareVector();
-               console.log(msgVector.size());
-               for (TlObject element: msgVector) {
+               //console.log(msgVector.size());
+               msgVector.stream().distinct()
+                       .forEach(a->
+                               processIncoming(msgId, a)
+                       );
+/*               for (TlObject element: msgVector) {
 
-                   processIncoming(msgId, element);
-               }
+
+               }*/
               break;
            case "message":
               // console.log(response);
@@ -417,7 +421,7 @@ public class MtpEngine {
                processMsgAck(response.get("msg_ids"));
                break;
            case "rpc_result":
-             //  console.log("rpc_result",response);
+              console.log("rpc_result",response);
                break;
        }
    }
