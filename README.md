@@ -7,7 +7,7 @@ Java Telegram API Client.
 <p>Aes ige and pq resolver implementation belongs to ex3ndr.
 
 <h3>Usage</h3>
-<code>
+
         MtpEngine engine = MtpEngine.getInstance();
         engine.createSession(new MtpFileStorage(),new HttpTransport());
         TlObject sentCode = engine.invokeApiCall(
@@ -19,6 +19,6 @@ Java Telegram API Client.
                 .put("lang_code","en")
         );
 
+
         System.out.println(sentCode);
         System.out.println(sentCode.get("phone_code_hash"));
-</code>
