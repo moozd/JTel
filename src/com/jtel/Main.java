@@ -19,10 +19,12 @@ package com.jtel;
 
 import com.jtel.common.log.Logger;
 import com.jtel.mtproto.MtpEngine;
+import com.jtel.mtproto.storage.ConfStorage;
 import com.jtel.mtproto.storage.MtpFileStorage;
 import com.jtel.mtproto.tl.TlMethod;
 import com.jtel.mtproto.tl.TlObject;
 import com.jtel.mtproto.transport.HttpTransport;
+import com.sun.deploy.config.Config;
 
 public class Main {
     private static Logger console = Logger.getInstance();
@@ -30,9 +32,17 @@ public class Main {
     public static void main(String[] args) throws Exception {
         MtpEngine engine = MtpEngine.getInstance();
         engine.createSession(new MtpFileStorage(),new HttpTransport());
-        TlObject authCheckedPhone = engine.invokeApiCall(new TlMethod("auth.checkPhone").put("phone_number","989118836748"));
-        console.log("screen",authCheckedPhone);
-//        engine.invokeApiCall(new TlMethod("help.getConfig"));
+        TlObject sentCode = engine.invokeApiCall(
+                new TlMethod("auth.sendCode")
+                .put("phone_number","989118836748")
+                .put("sms_type",0)
+                .put("api_id",  ConfStorage.getInstance().getItem("api-id"))
+                .put("api_hash",ConfStorage.getInstance().getItem("api-hash"))
+                .put("lang_code","en")
+        );
+
+        console.log("sms sent",sentCode);
+
 
     }
 /*max_delay: 500,

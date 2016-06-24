@@ -39,7 +39,9 @@ import com.jtel.mtproto.transport.TransportException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 
 
 /**
@@ -103,6 +105,14 @@ public class MtpEngine {
     private Transport   transport;
 
 
+    /**
+     * sent messages history
+     */
+    private MessageQueue sentQueue;
+
+
+
+
 
 
 
@@ -110,7 +120,8 @@ public class MtpEngine {
      * private constructor you cannot create instance of this class using new you must cull getInstance()
      */
     private MtpEngine(){
-        this.console        = Logger.getInstance();
+        this.console         = Logger.getInstance();
+        this.sentQueue       = new MessageQueue();
     }
     
 
@@ -272,30 +283,6 @@ public class MtpEngine {
 
 
 
-
-    /*------------------------------------*/
-
-    private MessageQueue sentQueue;
-    private MessageQueue resendQueue =new MessageQueue();
-    private List<Long> pendingAck;
-    private TlObject   publishResponse;
-
-    protected void setPublishResponse(TlObject publishResponse) {
-        this.publishResponse = publishResponse;
-    }
-
-    protected void clearPublishedResponse(){
-        publishResponse = null;
-    }
-
-    protected boolean isPublishedResponseReady(){
-        return publishResponse != null;
-    }
-
-    protected TlObject getPublishResponse() {
-        return publishResponse;
-    }
-
     /**
      * creates rpc headers for encrypted messages
      * @param dc to get auth data and server time registered to this dc
@@ -324,28 +311,23 @@ public class MtpEngine {
      */
     public void initConnection (){
 
-        if(sentQueue == null){
-            sentQueue = new MessageQueue();
-        }
-        if(pendingAck == null){
-            pendingAck = new ArrayList<>();
-        }
-
         console.log(TAG ,"initializing connection");
         int currentDc = getDc();
         TlMessage message = new InitConnectionMessage(createMessageHeaders(currentDc,false));
         TlObject nearestDc =sendMessage(message);
         TlMethod method = message.getContext();
 
-           console.log("initConnection->",nearestDc);
+        console.log("initConnection->",nearestDc);
 
         if(!nearestDc.getType().equals(method.getType())) return;
 
         setDc(nearestDc.get("nearest_dc"));
-        try {
-            authenticate(getDc());
-        }catch (Exception e){
-            //n
+        if (!isNetworkReady() || !isAuthenticatedOnDc(getDc())){
+            try {
+                checkCurrentDc();
+            }catch (Exception e){
+                console.error(TAG,"authentication failed.",e.getMessage());
+            }
         }
     }
 
@@ -398,82 +380,67 @@ public class MtpEngine {
                 console.error(TAG,"Unknown error :", e.getMessage());
         }
 
-        TlObject ret = message.getResponse().getObject();
-        processIncoming(message.getHeaders().getMessageId(), message.getResponse().getObject());
-        if (resendQueue.getCount() >0){
-            return sendMessage(resendQueue.poll());
-        }
-
-        if(pendingAck.size()!=0){
-            return sendMsgAck();
-        }
-
-
-
-
-        return isPublishedResponseReady()? publishResponse:ret;
+        return  processResponse(message.getHeaders().getMessageId(),message.getResponse().getObject().getPredicate(),message.getResponse().getObject());
     }
 
-   public void processIncoming(long msgId, TlObject response) {
-       TlMessage sentMessage = sentQueue.get(msgId);
-       console.log(response.getPredicate());
-       switch (response.getPredicate()) {
+    protected TlObject processResponse(long messageId,String predicate,TlObject response){
+        //console.log(TAG,"processing message", messageId , predicate);
+        switch (predicate){
+            case "msg_container":
+                List<TlObject> messages = response.get("messages");
+               return handleMessageContainer(messages).get(messages.size()-1);
+            case "message":
+                TlObject body = response.get("body");
+                return processResponse(response.get("msg_id"),body.getPredicate(),body);
+            case "bad_server_salt":
+                return handleBadServerSalt(getDc(),response.get("new_server_salt"));
+            case "msgs_ack":
+                List<Long> messageAck = response.get("msg_ids");
+                return handleMessageAck(messageAck);
 
-           case "bad_server_salt":
-               console.log(TAG,response.getPredicate(), "changing server salt to new one.");
-               applyServerSalt(getDc(),response.get("new_server_salt"),sentMessage);
-               break;
-           case "msg_container":
-               List<TlObject> msgVector = response.get("messages");
-               console.log(msgVector.size());
-               msgVector.forEach(k-> {
-                                   processIncoming(msgId, k);
-                               }
-                       );
-              break;
-           case "message":
-              // console.log(response);
-               processIncoming(response.get("msg_id"),response.get("body"));
-               break;
-           case "msgs_ack":
-               processMsgAck(response.get("msg_ids"));
-               break;
-           case "rpc_result":
-               TlObject obj = response.get("result");
-               setPublishResponse(obj);
-               break;
-       }
-   }
+            case "rpc_result":
+                return handleRpc(messageId,response);
+        }
+        return response;
+    }
 
-    protected void applyServerSalt(int dc, long salt, TlMessage lastMessage){
+    protected List<TlObject> handleMessageContainer(List<TlObject> messages){
+        List<TlObject> responses = new ArrayList<>();
+        messages.stream().forEach(message ->{
+            responses.add(processResponse(message.get("msg_id"),message.getPredicate(),message));
+        });
+        return responses;
+    }
+
+    protected TlObject handleBadServerSalt(int dc, long salt){
         AuthCredentials credentials = getAuth(dc);
         credentials.setServerSalt(salt);
         saveAuth(dc, credentials);
+        TlMessage lastMessage = sentQueue.getTop();
         lastMessage.getHeaders().setServerSalt(credentials.getServerSalt());
-        resendQueue.push(lastMessage);
+        TlObject resend = sendMessage(lastMessage);
+        return processResponse(lastMessage.getHeaders().getMessageId(),resend.getPredicate(),resend);
     }
 
-
-    protected void processMsgAck(List<Long> messageId){
-            messageId.forEach(id -> {
-             //   if(!pendingAck.contains(id)){
-                    pendingAck.add(id);
-               // }
-            });
-       // console.log(TAG,"pending ack",pendingAck.size());
+    protected TlObject handleMessageAck(List<Long> messageIds){
+        try {
+            TlMessage ack = new AckMessage(createMessageHeaders(getDc(),false),new ArrayList<Long>(messageIds));
+            TlObject res = sendMessage(ack);
+            return processResponse(ack.getHeaders().getMessageId(),res.getPredicate(),res);
+        }catch (Exception e) {
+            console.error(TAG,"an error occurred while sending ack message.",e.getMessage());
+            return null;
+        }
     }
 
-    protected TlObject sendMsgAck(){
-       // console.log(TAG,"Acknowledges sent.",pendingAck,"count:",pendingAck.size());
-       try {
-           TlMessage ack = new AckMessage(createMessageHeaders(getDc(),false),new ArrayList<Long>(pendingAck));
-           pendingAck.clear();
-           return  sendMessage(ack);
-       }catch (Exception e){
-           //// STOPSHIP: 6/22/16
-           return null;
-       }
+    protected TlObject handleRpc(long messageId,TlObject rpc){
+        if(rpc.get("result") != null){
+            return rpc.get("result");
+        }
+
+        return null;
     }
+
 
     protected TlObject sendLongPoll(){
         console.log(TAG,"Long poll sent.");
