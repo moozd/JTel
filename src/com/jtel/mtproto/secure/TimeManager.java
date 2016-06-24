@@ -93,7 +93,6 @@ public final class TimeManager {
       //  int res = seqNo *2+1;
       //  seqNo++;
         int a = (isContentRealated)? seqNo++*2 : seqNo++ * 2 +1;
-        Logger.getInstance().log("seqNo",a);
         return a;
     }
 

@@ -123,7 +123,7 @@ public abstract class TlMessage  {
 
     @Override
     public String toString() {
-        return getContext().getName();
+        return getContext().getEntityName();
     }
 
     public abstract void deSerialize(InputStream is) throws IOException;

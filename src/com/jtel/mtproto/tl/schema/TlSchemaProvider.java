@@ -72,12 +72,8 @@ public abstract class TlSchemaProvider {
 
 
     protected void initialize(){
-        if(apiSchema == null){
             apiSchema = loadMtpSchema();
-        }
-        if (mtpSchema == null) {
             mtpSchema = loadApiSchema();
-        }
     }
 
     public TlSchema getApiSchema() {
@@ -91,6 +87,7 @@ public abstract class TlSchemaProvider {
 
 
     public TlObject getConstructor(String predicate, boolean mtp) {
+        initialize();
         List<TlObject> constructors;
         if(mtp) {
             constructors = mtpSchema.constructors;
@@ -100,7 +97,7 @@ public abstract class TlSchemaProvider {
         }
 
         for (TlObject o : constructors) {
-            if (o.predicate.equals(predicate)) {
+            if (o.getPredicate().equals(predicate)) {
                 //System.out.println(o);
                 return o;
             }
@@ -108,6 +105,7 @@ public abstract class TlSchemaProvider {
         return null;
     }
     public TlObject getConstructor(String predicate) {
+        initialize();
         TlObject tlObject = getConstructor(predicate,false);
         if(tlObject == null) {
             tlObject = getConstructor(predicate,true);
@@ -115,16 +113,16 @@ public abstract class TlSchemaProvider {
         return tlObject;
     }
     public TlObject getConstructor(int id) {
-
+        initialize();
 
         for (TlObject o : mtpSchema.constructors) {
-            if (o.id == id) {
+            if (o.getId() == id) {
                // System.out.println(o);
                 return o;
             }
         }
         for (TlObject o : apiSchema.constructors) {
-            if (o.id == id) {
+            if (o.getId() == id) {
                 //System.out.println(o);
                 return o;
             }
@@ -132,6 +130,7 @@ public abstract class TlSchemaProvider {
         return null;
     }
     public List<TlObject> getDefinitions(String type, boolean mtp) {
+        initialize();
         List<TlObject> constructors;
         List<TlObject> definitions = new ArrayList<>();
         if(mtp) {
@@ -142,22 +141,23 @@ public abstract class TlSchemaProvider {
         }
 
         for (TlObject o : constructors) {
-            if (o.type.equals(type)) {
+            if (o.getType().equals(type)) {
                 definitions.add(o);
             }
         }
         return definitions;
     }
 
-    public TlObject getFirstDefination(String type){
+    public TlObject getFirstDefinition(String type){
+        initialize();
         return apiSchema.constructors
                 .stream()
-                .filter(a -> a.type.equals(type))
+                .filter(a -> a.getType().equals(type))
                 .findFirst()
                 .orElse(
                         mtpSchema.constructors
                                 .stream()
-                                .filter(b-> b.type.equals(type))
+                                .filter(b-> b.getType().equals(type))
                                 .findFirst()
                                 .orElse(null)
                 );
@@ -166,13 +166,14 @@ public abstract class TlSchemaProvider {
     }
 
     public TlMethod getMethod(String method){
+        initialize();
         for (TlMethod o : mtpSchema.methods) {
-            if (o.method.equals(method)) {
+            if (o.getMethodName().equals(method)) {
                 return o;
             }
         }
         for (TlMethod o : apiSchema.methods) {
-            if (o.method.equals(method)) {
+            if (o.getMethodName().equals(method)) {
                 return o;
             }
         }

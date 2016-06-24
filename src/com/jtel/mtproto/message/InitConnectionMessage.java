@@ -34,6 +34,7 @@
 
 package com.jtel.mtproto.message;
 
+import com.jtel.common.log.Logger;
 import com.jtel.mtproto.storage.ConfStorage;
 import com.jtel.mtproto.tl.TlMethod;
 
@@ -54,7 +55,7 @@ public class InitConnectionMessage extends EncryptedMessage {
     public InitConnectionMessage(MessageHeaders headers) {
         super(null,headers);
         try {
-            setContext(new TlMethod("help.getConfig"));
+            setContext(new TlMethod("help.getNearestDc"));
         }catch (Exception e){
             //empty
         }
@@ -82,8 +83,8 @@ public class InitConnectionMessage extends EncryptedMessage {
         }
         catch (Exception e){
             //empty
-            e.printStackTrace();
-            //Logger.getInstance().error("InitConnection",e.getMessage());
+           // e.printStackTrace();
+            Logger.getInstance().error("InitConnection",e.getMessage());
         }
 
         return new byte[0];

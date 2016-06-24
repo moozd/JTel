@@ -39,10 +39,10 @@ public interface Tl {
      */
     void  deSerialize(InputStream is) throws IOException;
 
-    String getName();
+    String getEntityName();
 
     int getId();
 
-    TlType getType();
+    TlType getEntityType();
 
 }

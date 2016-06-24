@@ -37,6 +37,7 @@ import com.jtel.mtproto.transport.TransportException;
 
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -277,6 +278,23 @@ public class MtpEngine {
     private MessageQueue sentQueue;
     private MessageQueue resendQueue =new MessageQueue();
     private List<Long> pendingAck;
+    private TlObject   publishResponse;
+
+    protected void setPublishResponse(TlObject publishResponse) {
+        this.publishResponse = publishResponse;
+    }
+
+    protected void clearPublishedResponse(){
+        publishResponse = null;
+    }
+
+    protected boolean isPublishedResponseReady(){
+        return publishResponse != null;
+    }
+
+    protected TlObject getPublishResponse() {
+        return publishResponse;
+    }
 
     /**
      * creates rpc headers for encrypted messages
@@ -285,17 +303,15 @@ public class MtpEngine {
      * a message serialization needs
      * @see MessageHeaders
      */
-    public MessageHeaders createMessageHeaders(int dc,boolean contentRealated){
+    public MessageHeaders createMessageHeaders(int dc,boolean contentRelated){
         MessageHeaders headers = new MessageHeaders();
-
         AuthCredentials credentials = getAuth(dc);
         TimeManager.getInstance().setTimeDelta(credentials.getServerTime());
         headers.setAuthKey(credentials.getAuthKey());
-
         headers.setAuthKeyId(credentials.getAuthKeyId());
         headers.setServerSalt(credentials.getServerSalt());
         headers.setSessionId(storage.getItem("session_id"));
-        headers.setSequenceId(TimeManager.getInstance().generateSeqNo(contentRealated));
+        headers.setSequenceId(TimeManager.getInstance().generateSeqNo(contentRelated));
         headers.setMessageId(TimeManager.getInstance().generateMessageId());
 
         return headers;
@@ -320,9 +336,17 @@ public class MtpEngine {
         TlMessage message = new InitConnectionMessage(createMessageHeaders(currentDc,false));
         TlObject nearestDc =sendMessage(message);
         TlMethod method = message.getContext();
-        if(!nearestDc.type.equals(method.type) ) return;
+
+           console.log("initConnection->",nearestDc);
+
+        if(!nearestDc.getType().equals(method.getType())) return;
 
         setDc(nearestDc.get("nearest_dc"));
+        try {
+            authenticate(getDc());
+        }catch (Exception e){
+            //n
+        }
     }
 
 
@@ -354,15 +378,14 @@ public class MtpEngine {
      *         @see com.jtel.mtproto.tl.TlObject
      */
     protected TlObject sendMessage(TlMessage message){
-
+       // clearPublishedResponse();
         try {
-            console.log(TAG,"sending",message.getContext());
+            console.log(TAG,"request >",message.getContext().getEntityName());
             byte[] msg = message.serialize();
             int currentDc = getDc();
             byte[] response = transport.send(currentDc, msg);
             message.deSerialize(new ByteArrayInputStream(response));
-            console.log("Response",message.getResponse().getObject());
-         //   console.table(message.getResponse().getMessageBytes(),message.getResponse().getObject().predicate);
+            console.log(TAG,"response>",message.getResponse().getObject());
             sentQueue.push(message);
         }
         catch (TransportException e){
@@ -371,47 +394,42 @@ public class MtpEngine {
         catch (InvalidTlParamException e){
             console.error(TAG,"InvalidTlParam error :",e.getMessage());
         }
-        catch (Exception e){
-            console.error(TAG,"Unknown error :", e.getMessage());
+        catch (IOException e){
+                console.error(TAG,"Unknown error :", e.getMessage());
         }
-     //   console.log("ddd",message.getResponse().getObject());
+
+        TlObject ret = message.getResponse().getObject();
         processIncoming(message.getHeaders().getMessageId(), message.getResponse().getObject());
         if (resendQueue.getCount() >0){
             return sendMessage(resendQueue.poll());
         }
 
         if(pendingAck.size()!=0){
-           // console.log("ack");
-          // TlObject o =sendLongPoll();
-            sendMsgAck();
-            //processIncoming(0,sendLongPoll());
+            return sendMsgAck();
         }
 
-        // console.log("ddd",ret);
-       // return ret;// message.getResponse().getObject();
-        return message.getResponse().getObject();
+
+
+
+        return isPublishedResponseReady()? publishResponse:ret;
     }
 
    public void processIncoming(long msgId, TlObject response) {
        TlMessage sentMessage = sentQueue.get(msgId);
-       // console.log("ppp",.predicate);
-       switch (response.predicate) {
+       console.log(response.getPredicate());
+       switch (response.getPredicate()) {
 
            case "bad_server_salt":
-               console.log(TAG,response.predicate, "changing server salt to new one.");
+               console.log(TAG,response.getPredicate(), "changing server salt to new one.");
                applyServerSalt(getDc(),response.get("new_server_salt"),sentMessage);
                break;
            case "msg_container":
-               List<TlObject> msgVector = response.getBareVector();
-               //console.log(msgVector.size());
-               msgVector.stream().distinct()
-                       .forEach(a->
-                               processIncoming(msgId, a)
+               List<TlObject> msgVector = response.get("messages");
+               console.log(msgVector.size());
+               msgVector.forEach(k-> {
+                                   processIncoming(msgId, k);
+                               }
                        );
-/*               for (TlObject element: msgVector) {
-
-
-               }*/
               break;
            case "message":
               // console.log(response);
@@ -421,7 +439,8 @@ public class MtpEngine {
                processMsgAck(response.get("msg_ids"));
                break;
            case "rpc_result":
-              console.log("rpc_result",response);
+               TlObject obj = response.get("result");
+               setPublishResponse(obj);
                break;
        }
    }
@@ -436,23 +455,20 @@ public class MtpEngine {
 
 
     protected void processMsgAck(List<Long> messageId){
-        for (Long id : messageId){
-            if(!pendingAck.contains(id)){
-             //   console.log("add ack pending", id);
-                pendingAck.add(id);
-            }
-        }
-        console.log(TAG,"pending ack",pendingAck.size());
+            messageId.forEach(id -> {
+             //   if(!pendingAck.contains(id)){
+                    pendingAck.add(id);
+               // }
+            });
+       // console.log(TAG,"pending ack",pendingAck.size());
     }
 
     protected TlObject sendMsgAck(){
-        console.log(TAG,"Acknowledges sent.","count:",pendingAck.size());
+       // console.log(TAG,"Acknowledges sent.",pendingAck,"count:",pendingAck.size());
        try {
-           TlMessage ack = new AckMessage(createMessageHeaders(getDc(),false), pendingAck);
+           TlMessage ack = new AckMessage(createMessageHeaders(getDc(),false),new ArrayList<Long>(pendingAck));
            pendingAck.clear();
-           console.log(TAG,"pending ack",pendingAck.size());
-          return sendMessage(ack);
-
+           return  sendMessage(ack);
        }catch (Exception e){
            //// STOPSHIP: 6/22/16
            return null;

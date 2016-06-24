@@ -19,19 +19,10 @@ package com.jtel;
 
 import com.jtel.common.log.Logger;
 import com.jtel.mtproto.MtpEngine;
-import com.jtel.mtproto.message.AckMessage;
-import com.jtel.mtproto.message.TlMessage;
 import com.jtel.mtproto.storage.MtpFileStorage;
-import com.jtel.mtproto.tl.Streams;
 import com.jtel.mtproto.tl.TlMethod;
 import com.jtel.mtproto.tl.TlObject;
-import com.jtel.mtproto.tl.TlParameter;
 import com.jtel.mtproto.transport.HttpTransport;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.util.ArrayList;
-import java.util.List;
 
 public class Main {
     private static Logger console = Logger.getInstance();
@@ -39,9 +30,10 @@ public class Main {
     public static void main(String[] args) throws Exception {
         MtpEngine engine = MtpEngine.getInstance();
         engine.createSession(new MtpFileStorage(),new HttpTransport());
-        engine.invokeApiCall(new TlMethod("auth.checkPhone").put("phone_number","989118836748"));
-        engine.invokeApiCall(new TlMethod("help.getConfig"));
-        engine.invokeApiCall(new TlMethod("help.getConfig"));
+        TlObject authCheckedPhone = engine.invokeApiCall(new TlMethod("auth.checkPhone").put("phone_number","989118836748"));
+        console.log("screen",authCheckedPhone);
+//        engine.invokeApiCall(new TlMethod("help.getConfig"));
+
     }
 /*max_delay: 500,
       wait_after: 150,

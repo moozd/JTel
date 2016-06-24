@@ -46,11 +46,11 @@ import com.jtel.mtproto.secure.PublicKeyStorage;
 import com.jtel.mtproto.secure.Randoms;
 import com.jtel.mtproto.secure.TimeManager;
 import com.jtel.mtproto.tl.InvalidTlParamException;
-import com.jtel.mtproto.tl.Streams;
 import com.jtel.mtproto.tl.TlMethod;
 import com.jtel.mtproto.tl.TlObject;
 import com.jtel.mtproto.transport.Transport;
 import com.jtel.mtproto.transport.TransportException;
+import org.junit.experimental.theories.suppliers.TestedOn;
 
 import static com.jtel.mtproto.secure.Util.*;
 
@@ -190,10 +190,10 @@ public final class AuthManager {
         //byte array then we will concat hash and pqInnerData and
         //at the end we should add padding to to this new array
         //after that result array will be exactly 256 bytes.
-        byte[] pqInner = p_q_inner_data.serialize();
-        byte[] hash = Util.SHA1(pqInner);
-        byte[] padd = Randoms.nextRandomBytes(255 - hash.length- pqInner.length);
-        byte[] data_with_hash = Util.concat(hash,pqInner,padd);
+        byte[] pqInner  = p_q_inner_data.serialize();
+        byte[] hash     = Util.SHA1(pqInner);
+        byte[] padding  = Randoms.nextRandomBytes(255 - hash.length- pqInner.length);
+        byte[] data_with_hash = Util.concat(hash,pqInner, padding);
 
         //after registering api_id on Telegram server they will give you a public key
         //they have limited count of public keys that are available at any Telegram
@@ -221,7 +221,7 @@ public final class AuthManager {
         //if not it will respond with "server_DH_params_ok" . in case it fails i will restart
         // the whole operation
 
-        if(Server_Dh_Params.predicate.equals("server_DH_params_fail")){
+        if(Server_Dh_Params.getPredicate().equals("server_DH_params_fail")){
             console.error("dh key exchange failed","retrying...");
             return authAttempt(dcid);
 
@@ -319,7 +319,7 @@ public final class AuthManager {
         byte[] new_nonce_hash_3 = subArray(SHA1(concat(new_nonce,new byte[]{3},auth_key_sha_aux)),4,16);
 
         //if server returns dh_gen_ok object then dh key exchange is done successfully
-        switch(set_client_DH_params.predicate) {
+        switch(set_client_DH_params.getPredicate()) {
             case "dh_gen_ok":
 
                 if(!bytesCmp(new_nonce_hash_1,set_client_DH_params.get("new_nonce_hash1"))){

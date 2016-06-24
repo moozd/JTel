@@ -17,26 +17,43 @@
 
 package com.jtel.mtproto.tl;
 
+import com.jtel.common.io.Storage;
+
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * This file is part of JTel
  * IntelliJ idea.
- * Date     : 6/10/16
+ * Date     : 6/23/16
  * Package : com.jtel.mtproto.tl
  *
  * @author <a href="mailto:mohammad.mdz72@gmail.com">Mohammad Mohammad Zade</a>
  */
 
-public class InvalidTlParamException extends Exception {
-
-    public InvalidTlParamException(TlParam param){
-        super(String.format("%s : Invalid type %s .expecting %s",param.getName(),param.getValue().getClass().getTypeName(),param.getType()));
+public class TlpFlags {
+    List<String> pFlags;
+    public TlpFlags(){
+        pFlags = new ArrayList<>();
     }
 
-    public InvalidTlParamException(TlParam param, String givenType){
-        super(String.format("%s : Invalid type %s .expecting %s",param.getName(),givenType,param.getType()));
+
+    protected void addFlag(String flag){
+        pFlags.add(flag);
     }
 
-    public InvalidTlParamException(String param,String expectedType, String givenType){
-        super(String.format("%s : Invalid type %s .expecting %s",param,givenType,expectedType));
+    public boolean hasFlag(String flag){
+        return pFlags.contains(flag);
+    }
+
+    @Override
+    public String toString() {
+        String flags ="<";
+        flags+=String.join(",",pFlags);
+        if(flags.equals("<")){
+            flags+="...";
+        }
+        flags +=">";
+        return String.format("pFlags:%s",flags);
     }
 }

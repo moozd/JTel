@@ -31,7 +31,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.zip.GZIPInputStream;
 
 
 /**
@@ -108,8 +107,8 @@ public final class Streams {
         }
         if (DEBUG && !field.equals(""))    console.log(String.format("%s<%s(padding=%s)>:%s ",field,"Bytes",pad,HexBin.encode(n)));
     }
-    public static void writeParams(OutputStream os, List<TlParameter> params, String field ) throws IOException,InvalidTlParamException {
-        for (TlParameter param : params)
+    public static void writeParams(OutputStream os, List<TlParam> params, String field ) throws IOException,InvalidTlParamException {
+        for (TlParam param : params)
         {
             writeParam(os,param);
 
@@ -119,21 +118,22 @@ public final class Streams {
     }
 
 
-    public static void writeParam(OutputStream os,TlParameter param)throws IOException,InvalidTlParamException {
-        switch (param.type) {
+    public static void writeParam(OutputStream os,TlParam param)throws IOException,InvalidTlParamException {
+       // console.log(param.getName(),param.getType(),param.getValue());
+        switch (param.getType()) {
             case "#":
             case "int":
                 if(! (param.getValue() instanceof Integer)){
                     throw new InvalidTlParamException(param);
                 }
-                writeInt(os,param.getValue(),param.name);
+                writeInt(os,param.getValue(),param.getName());
                 break;
             case "double":
             case "long":
                 if(! (param.getValue() instanceof Long)){
                     throw new InvalidTlParamException(param);
                 }
-                writeLong(os, param.getValue(),param.name);
+                writeLong(os, param.getValue(),param.getName());
                 break;
             case "int128":
             case "int256":
@@ -141,40 +141,40 @@ public final class Streams {
                 if(! (param.getValue() instanceof byte[])){
                     throw new InvalidTlParamException(param);
                 }
-                writeIntBytes(os,param.getValue(),((byte[])param.getValue()).length,param.name);
+                writeIntBytes(os,param.getValue(),((byte[])param.getValue()).length,param.getName());
                 break;
             case "string":
                 if(! (param.getValue() instanceof String)){
                     throw new InvalidTlParamException(param);
                 }
-                writeString(os,param.getValue(),param.name);
+                writeString(os,param.getValue(),param.getName());
                 break;
             case "bytes":
                 if(! (param.getValue() instanceof byte[])){
                     throw new InvalidTlParamException(param);
                 }
-                writeBytes(os,param.getValue(),param.name);
+                writeBytes(os,param.getValue(),param.getName());
                 break;
             case "Bool":
                 if(! (param.getValue() instanceof Boolean)){
                     throw new InvalidTlParamException(param);
                 }
-                writeBool(os,param.getValue(),param.name);
+                writeBool(os,param.getValue(),param.getName());
                 break;
             case "true":   return;
             default:
-                if(param.type.startsWith("Vector") || param.type.startsWith("vector")) {
-                    String type = param.type.substring(param.type.indexOf("<")+1,param.type.indexOf(">"));
+                if(param.getType().startsWith("Vector") || param.getType().startsWith("vector")) {
+                    String type = param.getType().substring(param.getType().indexOf("<")+1,param.getType().indexOf(">"));
                     TlObject vector = TlSchemaProvider.getInstance().getConstructor("vector");
                     if(! (param.getValue() instanceof List)){
                         throw new InvalidTlParamException(param);
                     }
                     List<TlObject> items = param.getValue();
 
-                    writeInt(os,vector.id,type+ "(" +param.name+")");
+                    writeInt(os,vector.getId(),type+ "(" +param.getName()+")");
                     writeInt(os,items.size(),"Length");
                     for(int i =0;i<items.size();i++) {
-                        TlParameter parameter = new TlParameter(type);
+                        TlParam parameter = new TlParam(type);
                         parameter.setValue(items.get(i));
                         writeParam(os,parameter);
                     }
@@ -246,79 +246,82 @@ public final class Streams {
         }
         return false;
     }
-    public static List<TlParameter> readParams(InputStream is, List<TlParameter> params) throws IOException {
-
-            for(TlParameter param : params) {
-                param = readParam(is,param);
-
-            }
-       return params;
-    }
-    public static TlParameter readParam(InputStream is , TlParameter param) throws IOException {
+    public static TlParam readParam(InputStream is , TlParam param , int flags) throws IOException {
       //  console.log(param.type);
-        switch (param.type) {
+        switch (param.getType()) {
             case "#":
             case "int":
                 param.setValue(readInt(is));
-                break;
+                return param;
             case "long":
                 param.setValue(readLong(is));
-                break;
+                return param;
             case "int128":
                 param.setValue(readInt128(is));
-                break;
+                return param;
             case "int256":
                 param.setValue(readInt256(is));
-                break;
+                return param;
             case "int512":
                 param.setValue(readIntBytes(is, 512));
-                break;
+                return param;
             case "string":
             case "bytes":
                 param.setValue(readBytes(is));
-                break;
+                return param;
             case "double":
                 param.setValue(readLong(is));
-                break;
+                return param;
             case "Bool":
                 param.setValue(readBool(is));
-         /*   case "gzip_packed":
-                console.log();
-                GZIPInputStream gzipInputStream = new GZIPInputStream(is);
-                break;*/
+                return param;
             default:
-                if (param.type.startsWith("Vector") || param.type.startsWith("vector")) {
+                if (param.getType().startsWith("Vector") || param.getType().startsWith("vector")) {
 
-                    String condType = param.type.substring(param.type.indexOf("<") + 1, param.type.indexOf(">"));
-                    if(param.type.startsWith("V")){
-                        int a =readInt(is);
-                        if(a == 0x3072cfa1){
-                            console.log(":Sc");
+                    String condType = param.getType().substring(param.getType().indexOf("<") + 1, param.getType().indexOf(">"));
+                    if(param.getType().startsWith("V")){
+                        int cons = readInt(is);
+                        if(cons == 0x3072cfa1){
+                            console.error("gzip vector");
                         }
                     }
                     int len = readInt(is);
-                   // console.log("reading vector",condType,len);
-                    List<TlParameter> t = new ArrayList<>(len);
+                    List<TlParam> t = new ArrayList<>(len);
                     for (int i = 0; i < len; i++) {
-                        TlParameter item = readParam(is, new TlParameter(condType));
-                     //   console.log(condType,item);
+                        TlParam item = readParam(is, new TlParam(condType),0);
                         t.add(item.getValue());
                     }
                     param.setValue(t);
-                } else if(param.type.startsWith("%")) {
-
+                    return param;
+                } else if(param.getType().startsWith("%")) {
                     TlObject o = new TlObject();
-                    o.deserializeBare(is,param.type);
+                    o.deserializeBare(is,param.getType());
                     param.setValue(o);
-           /*     else if(param)*/
-                } else {
-                    TlObject o = new TlObject();
-                    o.deSerialize(is);
-                    param.setValue(o);
+                    return param;
+                } else if(param.isConditionalType()) {
+                    String type = param.getType();
+                    String[] condType = type.split("\\?");
+                    String[] fieldBit = condType[0].split("\\.");
+                    int bit = 1 << Integer.parseInt(fieldBit[1]);
+                    int pFlag = ((flags & bit));
+                    if (pFlag == 0){
+                     //   console.log("cond type skip",type);
+                        param.setValue("skip");
+                        return param;
+                    }
+                    if (condType[1].equals("true")) {
+                       // console.log("cond type not skip",type);
+                        param.setValue("true");
+                        return param;
+                    }
+                    param.setValue(condType[1]);
                 }
-
+                TlObject o = new TlObject();
+                o.deSerialize(is);
+                param.setValue(o);
+                return  param;
         }
-        return  param;
+
     }
 
 

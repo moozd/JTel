@@ -41,10 +41,10 @@ import static com.jtel.mtproto.tl.Streams.writeParams;
  */
 
 public class TlMethod implements Tl {
-    int id;
-    public String method;
-    public List<TlParameter> params;
-    public String type;
+    private int id;
+    private String method;
+    private List<TlParam> params;
+    private String type;
 
     public TlMethod(String methodName) throws IOException{
         TlSchemaProvider schemaManagerService = TlSchemaProvider.getInstance();
@@ -61,13 +61,25 @@ public class TlMethod implements Tl {
     }
     @Nullable
     public TlMethod put(String field, @Nullable Object o) {
-        for (TlParameter param : params) {
-            if(param.name.equals(field)){
+        for (TlParam param : params) {
+            if(param.getName().equals(field)){
                 param.setValue(o);
                 return this;
             }
         }
         return this;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public String getMethodName() {
+        return method;
+    }
+
+    public List<TlParam> getParams() {
+        return params;
     }
 
     @Override
@@ -87,7 +99,7 @@ public class TlMethod implements Tl {
     }
 
     @Override
-    public String getName() {
+    public String getEntityName() {
         return method;
     }
 
@@ -97,7 +109,7 @@ public class TlMethod implements Tl {
     }
 
     @Override
-    public TlType getType() {
+    public TlType getEntityType() {
         return TlType.Method;
     }
 
