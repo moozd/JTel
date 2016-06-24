@@ -34,9 +34,9 @@ public class Main {
 
 
         engine.createSession(new MtpFileStorage(),new HttpTransport());
-       /* TlObject users = engine.invokeApiCall(new TlMethod("contacts.getContacts")
-        .put("hash",""));*/
-        signIn();
+        TlObject users = engine.invokeApiCall(new TlMethod("contacts.getContacts")
+        .put("hash",""));
+      //  signIn();
 
 
 

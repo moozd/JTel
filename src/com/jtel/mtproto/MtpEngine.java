@@ -451,20 +451,16 @@ public class MtpEngine {
                     String tag = error.substring(0,error.lastIndexOf("_"));
                     switch (tag){
                         case "FLOOD_WAIT":
-                            TimeZone tz = TimeZone.getTimeZone("UTC");
-                            SimpleDateFormat HH = new SimpleDateFormat("HH:mm:ss");
-                            String[] time = HH.format(new Date(X)).split(":");
-                            console.error(TAG,tag);
-                            error = "you have to wait about " + time[0] +" hours and "
-                                                              + time[1] +" minutes and "
-                                                              + time[2] +" seconds.";
+                            console.error(TAG,"\\",tag,"\\");
+                            console.error(TAG,"you have to wait about " +Math.floor( X/60 )+" minutes.");
                             break;
                     }
-
+                case 401:
+                    console.error(TAG,"\\",error,"\\");
                     break;
 
             }
-            console.error("         ",error);
+
         }
 
         return rpcResult;
