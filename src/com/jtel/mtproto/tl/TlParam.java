@@ -106,13 +106,10 @@ public class TlParam {
         if(getValue() != null){
          val = "= " + getValue();
         if( getType().equals("string")){
-            try {
-                val = new String(getValue(), "UTF-8");
-            }catch (Exception e){
-                val = "format error";
-            }
+
+                val =getValue();
         }
         }
-        return String.format("%s:%s %s",name,type,val);
+        return String.format("%s<%s> %s",name,type,val);
     }
 }

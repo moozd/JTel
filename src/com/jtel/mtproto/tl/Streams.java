@@ -144,11 +144,10 @@ public final class Streams {
                 writeIntBytes(os,param.getValue(),((byte[])param.getValue()).length,param.getName());
                 break;
             case "string":
-                if(! (param.getValue() instanceof String)){
-                    throw new InvalidTlParamException(param);
+                if( (param.getValue() instanceof String)){
+                    writeString(os,param.getValue(),param.getName());
+                    break;
                 }
-                writeString(os,param.getValue(),param.getName());
-                break;
             case "bytes":
                 if(! (param.getValue() instanceof byte[])){
                     throw new InvalidTlParamException(param);
@@ -266,6 +265,8 @@ public final class Streams {
                 param.setValue(readIntBytes(is, 512));
                 return param;
             case "string":
+                param.setValue(new String(readBytes(is),"UTF-8"));
+                return param;
             case "bytes":
                 param.setValue(readBytes(is));
                 return param;
@@ -274,6 +275,8 @@ public final class Streams {
                 return param;
             case "Bool":
                 param.setValue(readBool(is));
+                return param;
+            case "true":
                 return param;
             default:
                 if (param.getType().startsWith("Vector") || param.getType().startsWith("vector")) {
@@ -314,7 +317,10 @@ public final class Streams {
                         param.setValue("true");
                         return param;
                     }
-                    param.setValue(condType[1]);
+                   // console.log("cond object",condType[1],type);
+                    param.setValue(readParam(is, new TlParam(condType[1]),0).getValue());
+                    param.setType(condType[1]);
+                    return param;
                 }
                 TlObject o = new TlObject();
                 o.deSerialize(is);

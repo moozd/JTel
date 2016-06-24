@@ -33,6 +33,9 @@ public abstract class FileStorage extends Storage {
     public FileStorage(){
         super();
         initialize();
+        if(!new File(getPath()).exists()){
+            save();
+        }
     }
 
     @Override

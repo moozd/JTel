@@ -44,30 +44,30 @@ public class SystemLogger implements ILogger {
         }
         DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
         Date date = new Date();
-        return String.format("|%s| %s | %s : %s " ,superTag,dateFormat.format(date),tag,t);
+        return String.format("|%s| %s | %s  %s " ,superTag,dateFormat.format(date),tag,t);
     }
     @Override
-    public void log(Object... os) {
+    public synchronized void log(Object... os) {
         Object[] o =Arrays.copyOfRange(os,1,os.length);
         System.out.println(createMessage("  LOG  ",os[0],o));
     }
 
 
     @Override
-    public void warn(Object... os) {
+    public synchronized void warn(Object... os) {
         Object[] o =Arrays.copyOfRange(os,1,os.length);
         System.err.println(createMessage("WARNING",os[0],o));
     }
 
 
     @Override
-    public void error(Object... os) {
+    public synchronized void error(Object... os) {
         Object[] o =Arrays.copyOfRange(os,1,os.length);
         System.err.println(createMessage(" ERROR ",os[0],o));
     }
 
     @Override
-    public void table(byte[] data ,String name) {
+    public synchronized void table(byte[] data ,String name) {
         System.out.println(createMessage(" TABLE ", name , data.length + " Bytes"));
         System.out.print("\t\t  ");
         for(int i=0;i<data.length;i++){

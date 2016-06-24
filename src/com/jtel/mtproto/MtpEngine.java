@@ -38,10 +38,8 @@ import com.jtel.mtproto.transport.TransportException;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 
 /**
@@ -250,7 +248,7 @@ public class MtpEngine {
             reset();
         }
         if(!isNetworkReady()){
-           authenticate(1);
+           authenticate();
            setDc(1);
         }
         getStorage().setItem("session_id", Randoms.nextRandomBytes(8));
@@ -282,6 +280,19 @@ public class MtpEngine {
     }
 
 
+    public boolean needSignIn(){
+        return getStorage().getItem("need_sign_in");
+    }
+
+    public  void saveSignIn(TlObject object){
+        getStorage().setItem("need_sign_in",false);
+        getStorage().setItem("user_info",object);
+        getStorage().save();
+    }
+
+    public TlObject getUserInfo(){
+        return getStorage().getItem("user_info");
+    }
 
     /**
      * creates rpc headers for encrypted messages
@@ -310,25 +321,18 @@ public class MtpEngine {
      * method that sends api id user agent and some other stuffs to servers
      */
     public void initConnection (){
-
         console.log(TAG ,"initializing connection");
         int currentDc = getDc();
         TlMessage message = new InitConnectionMessage(createMessageHeaders(currentDc,false));
         TlObject nearestDc =sendMessage(message);
         TlMethod method = message.getContext();
+        console.log(TAG,"conf    >","country="+nearestDc.get("country"),"dc="+nearestDc.get("nearest_dc"));
 
-        console.log("initConnection->",nearestDc);
 
         if(!nearestDc.getType().equals(method.getType())) return;
 
         setDc(nearestDc.get("nearest_dc"));
-        if (!isNetworkReady() || !isAuthenticatedOnDc(getDc())){
-            try {
-                checkCurrentDc();
-            }catch (Exception e){
-                console.error(TAG,"authentication failed.",e.getMessage());
-            }
-        }
+
     }
 
 
@@ -362,12 +366,13 @@ public class MtpEngine {
     protected TlObject sendMessage(TlMessage message){
        // clearPublishedResponse();
         try {
+            long t = System.currentTimeMillis();
             console.log(TAG,"request >",message.getContext().getEntityName());
             byte[] msg = message.serialize();
             int currentDc = getDc();
             byte[] response = transport.send(currentDc, msg);
             message.deSerialize(new ByteArrayInputStream(response));
-            console.log(TAG,"response>",message.getResponse().getObject());
+            console.log(TAG,"finished in ",(System.currentTimeMillis()-t)/1000F+"s");
             sentQueue.push(message);
         }
         catch (TransportException e){
@@ -434,11 +439,35 @@ public class MtpEngine {
     }
 
     protected TlObject handleRpc(long messageId,TlObject rpc){
-        if(rpc.get("result") != null){
-            return rpc.get("result");
+
+        TlObject rpcResult = rpc.get("result");
+
+        if(rpcResult.getPredicate().equals("rpc_error")){
+            String   error =rpcResult.get("error_message");;
+            switch ((int)rpcResult.get("error_code")){
+                case 303:
+                case 420:
+                    int X =Integer.parseInt(error.substring(error.lastIndexOf("_")+1));
+                    String tag = error.substring(0,error.lastIndexOf("_"));
+                    switch (tag){
+                        case "FLOOD_WAIT":
+                            TimeZone tz = TimeZone.getTimeZone("UTC");
+                            SimpleDateFormat HH = new SimpleDateFormat("HH:mm:ss");
+                            String[] time = HH.format(new Date(X)).split(":");
+                            console.error(TAG,tag);
+                            error = "you have to wait about " + time[0] +" hours and "
+                                                              + time[1] +" minutes and "
+                                                              + time[2] +" seconds.";
+                            break;
+                    }
+
+                    break;
+
+            }
+            console.error("         ",error);
         }
 
-        return null;
+        return rpcResult;
     }
 
 

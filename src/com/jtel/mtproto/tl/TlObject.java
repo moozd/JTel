@@ -177,7 +177,7 @@ public class TlObject implements Tl {
         TlObject object = null;
         try {
             object = (TlObject) TlSchemaProvider.getInstance().getConstructor(id).clone();
-        }catch (CloneNotSupportedException e){
+        }catch (Exception e){
             console.error(e);
         }
         if(object == null){
