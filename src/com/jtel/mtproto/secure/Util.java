@@ -1,11 +1,10 @@
 package com.jtel.mtproto.secure;
 
 import com.jtel.common.log.Logger;
-import com.jtel.mtproto.MtpEngine;
+import com.jtel.mtproto.MtpClient;
 import com.jtel.mtproto.auth.AuthCredentials;
 import com.jtel.mtproto.secure.aes.AESFastEngine;
 import com.jtel.mtproto.secure.aes.KeyParameter;
-import com.jtel.mtproto.tl.Streams;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -234,7 +233,7 @@ public class Util {
        return bos.toByteArray();
     }
 
-    public  static void printDc(MtpEngine engine,int dc){
+    public  static void printDc(MtpClient engine, int dc){
 
         AuthCredentials credentials = engine.getAuth(dc);
         Logger.getInstance().log("dc "+dc+" credentials");

@@ -38,7 +38,6 @@ import com.jtel.mtproto.transport.TransportException;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 
@@ -57,21 +56,21 @@ import java.util.*;
  * this class is singleton
  */
 
-public class MtpEngine {
+public class MtpClient {
 
     private final String TAG = getClass().getSimpleName();
     /**
      * class instance to hold single instance of it
      */
-    private static MtpEngine instance;
+    private static MtpClient instance;
 
     /**
      * method to getAuth current instance or create new one in case it is not created yet
      * @return object of this class
      */
-    public static MtpEngine getInstance() {
+    public static MtpClient getInstance() {
         if (instance == null) {
-            instance = new MtpEngine();
+            instance = new MtpClient();
 
         }
         return instance;
@@ -117,7 +116,7 @@ public class MtpEngine {
     /**
      * private constructor you cannot create instance of this class using new you must cull getInstance()
      */
-    private MtpEngine(){
+    private MtpClient(){
         this.console         = Logger.getInstance();
         this.sentQueue       = new MessageQueue();
     }

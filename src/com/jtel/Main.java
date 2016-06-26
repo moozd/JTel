@@ -17,8 +17,9 @@
 
 package com.jtel;
 
+import com.jtel.api.*;
 import com.jtel.common.log.Logger;
-import com.jtel.mtproto.MtpEngine;
+import com.jtel.mtproto.MtpClient;
 import com.jtel.mtproto.storage.ConfStorage;
 import com.jtel.mtproto.storage.MtpFileStorage;
 import com.jtel.mtproto.tl.TlMethod;
@@ -29,17 +30,17 @@ import java.util.Scanner;
 
 public class Main {
     private static Logger console = Logger.getInstance();
-    private static MtpEngine engine = MtpEngine.getInstance();
+    private static MtpClient client = MtpClient.getInstance();
     public static void main(String[] args) throws Exception {
 
 
-        engine.createSession(new MtpFileStorage(),new HttpTransport());
-        TlObject users = engine.invokeApiCall(new TlMethod("contacts.getContacts")
-        .put("hash",""));
-      //  signIn();
+        client.createSession(new MtpFileStorage(),new HttpTransport());
+//        TlObject users = client.invokeApiCall(new TlMethod("contacts.getContacts")
+//        .put("hash",""));
+        //signIn();
 
-
-
+   /*    console.log( Auth.checkPhone("989118836748") );*/
+        console.log( Auth.sendCode("989118836758",0,"en") );
 
 
     }
@@ -52,7 +53,7 @@ public class Main {
         String lang_code    = "en";
 
 
-        TlObject sentCode = engine.invokeApiCall(
+        TlObject sentCode = client.invokeApiCall(
                 new TlMethod("auth.sendCode")
                         .put("phone_number" ,phone_number)
                         .put("sms_type"     ,sms_type    )
@@ -72,7 +73,7 @@ public class Main {
         String phone_code_hash = sentCode.get("phone_code_hash");
         String phone_code      = scanner.next();
 
-        TlObject auth = engine.invokeApiCall(
+        TlObject auth = client.invokeApiCall(
                 new TlMethod("auth.signIn")
                         .put("phone_number"     ,phone_number)
                         .put("phone_code_hash"  ,phone_code_hash)
@@ -80,7 +81,7 @@ public class Main {
         );
 
         console.log("signIn done",auth);
-        engine.saveSignIn(auth);
+        client.saveSignIn(auth);
 
     }
 /*max_delay: 500,
