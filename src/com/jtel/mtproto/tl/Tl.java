@@ -30,6 +30,7 @@ public interface Tl {
      */
     byte[] serialize() throws IOException,InvalidTlParamException;
 
+    byte[] serializeBare() throws IOException ,InvalidTlParamException;
     /**
      * to convert InputStream like network InputStream to TlObject we will use this method
      * @param is InputStream if you have byte array convert it to ByteArrayInputStream and pass it throw method
@@ -38,6 +39,8 @@ public interface Tl {
      *          cannot connect to given data center.
      */
     void  deSerialize(InputStream is) throws IOException;
+
+    void deserializeBare(InputStream is, String type) throws IOException;
 
     String getEntityName();
 

@@ -177,8 +177,20 @@ public final class Streams {
                         parameter.setValue(items.get(i));
                         writeParam(os,parameter);
                     }
-                } else {
+                } else if(param.getType().startsWith("%")) {
                     Tl s = param.getValue();
+                    os.write(s.serializeBare());
+                }
+               /* else if(param.isConditionalType()){
+                    String type = param.getType();
+                    String[] condType = type.split("\\?");
+                    String[] fieldBit = condType[0].split("\\.");
+                    int bit = 1 << Integer.parseInt(fieldBit[1]);
+                    int pFlag = ((flags & bit));
+                }*/
+                else {
+                    Tl s = param.getValue();
+
                     os.write(s.serialize());
                 }
 

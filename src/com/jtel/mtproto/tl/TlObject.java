@@ -157,13 +157,20 @@ public class TlObject implements Tl {
     }
 
 
+    @Override
+    public byte[] serializeBare() throws IOException, InvalidTlParamException {
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        writeParams(os,params,predicate+" params");
+        return os.toByteArray();
+    }
+
+    @Override
     public void deserializeBare(InputStream is, String type) throws IOException{
         TlObject object = TlSchemaProvider.getInstance().getFirstDefinition(type.substring(1));
         if(object == null){
             console.error("not found",type);
-            return;
+            throw new IOException("constructor " + type + "does not exists in current schema layer");
         }
-      //  console.log(object.predicate);
         this.id        = object.id;
         this.predicate = object.predicate;
         this.type      = object.type;
@@ -178,11 +185,11 @@ public class TlObject implements Tl {
         try {
             object = (TlObject) TlSchemaProvider.getInstance().getConstructor(id).clone();
         }catch (Exception e){
-            console.error(e);
+            throw new IOException("clone failed, cannot cast constructor.");
+
         }
         if(object == null){
-            console.error(getClass().getSimpleName(),"invalid constructor id","0x"+Integer.toHexString(id));
-            return;
+            throw new IOException("constructor " + type + "does not exists in current schema layer");
         }
         this.id        = object.id;
         this.predicate = object.predicate;

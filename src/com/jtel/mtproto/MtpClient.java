@@ -376,12 +376,15 @@ public class MtpClient {
         }
         catch (TransportException e){
             console.error(TAG,"Transport error :",e.getCode(), e.getMessage());
+            e.printStackTrace();
         }
         catch (InvalidTlParamException e){
             console.error(TAG,"InvalidTlParam error :",e.getMessage());
+            e.printStackTrace();
         }
         catch (IOException e){
                 console.error(TAG,"Unknown error :", e.getMessage());
+            e.printStackTrace();
         }
 
         return  processResponse(message.getHeaders().getMessageId(),message.getResponse().getObject().getPredicate(),message.getResponse().getObject());

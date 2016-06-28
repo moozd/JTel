@@ -20,6 +20,7 @@ package com.jtel.mtproto.tl;
 import com.jtel.mtproto.tl.schema.TlSchemaProvider;
 import com.sun.istack.internal.Nullable;
 import com.sun.org.apache.xerces.internal.impl.dv.util.HexBin;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -53,6 +54,7 @@ public class TlMethod implements Tl {
         this.method = method.method;
         this.params = method.params;
         this.type   = method.type;
+
     }
     public  TlMethod(){
         method ="unknown";
@@ -90,12 +92,19 @@ public class TlMethod implements Tl {
         return os.toByteArray();
     }
 
-
-
+    @Override
+    public byte[] serializeBare() throws IOException, InvalidTlParamException {
+        throw new NotImplementedException();
+    }
 
     @Override
     public void deSerialize(InputStream is) throws IOException {
-        return;
+        throw  new NotImplementedException();
+    }
+
+    @Override
+    public void deserializeBare(InputStream is, String type) throws IOException {
+        throw  new NotImplementedException();
     }
 
     @Override
