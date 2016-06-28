@@ -15,26 +15,21 @@
  *     along with JTel.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.jtel;
+package com.jtel.mtproto;
 
+/**
+ * This file is part of JTel
+ * IntelliJ idea.
+ * Date     : 6/28/16
+ * Package : com.jtel.mtproto
+ *
+ * @author <a href="mailto:mohammad.mdz72@gmail.com">Mohammad Mohammad Zade</a>
+ */
 
-import com.jtel.api.TelegramApi;
-import com.jtel.common.log.Logger;
-import com.jtel.mtproto.storage.MtpFileStorage;
-import com.jtel.mtproto.transport.HttpTransport;
-
-public class Main {
-
-    static Logger console = Logger.getInstance();
-    public static void main(String[] args)  {
-
-        try {
-            TelegramApi api = new TelegramApi(new MtpFileStorage(), new HttpTransport());
-            console.log(api.help.getConfig());
-        }catch (Exception e){
-            console.error(e.getMessage());
-        }
-
-
-    }
+public enum MtpStates {
+    NETWORK_FAILED,
+    TL_BAD_PARAMETER_TYPE,
+    MTP_UNKNOWN_FAILURE,
+    MTP_SERVER_HAND_SHAKE_FAILED,
+    API_METHOD_INVOCATION_FAILED
 }

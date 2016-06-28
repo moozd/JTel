@@ -38,7 +38,7 @@ import com.jtel.api.base.ApiContext;
 import com.jtel.api.base.Pair;
 import com.jtel.common.io.FileStorage;
 import com.jtel.mtproto.MtpClient;
-import com.jtel.mtproto.auth.AuthFailedException;
+import com.jtel.mtproto.MtpException;
 import com.jtel.mtproto.tl.TlObject;
 import com.jtel.mtproto.transport.Transport;
 
@@ -67,7 +67,7 @@ public class TelegramApi {
     public final Users    users;
 
 
-    public TelegramApi(FileStorage storage, Transport transport)  throws AuthFailedException{
+    public TelegramApi(FileStorage storage, Transport transport)  throws MtpException{
 
        //MtpClient configuration
        MtpClient.getInstance().createSession(storage,transport);
@@ -110,7 +110,7 @@ public class TelegramApi {
          * @param lang_code  (TL Definition : string)
          * @return Bool
          */
-        public TlObject registerDevice (int token_type, String token, String device_model, String system_version, String app_version, boolean app_sandbox, String lang_code) {
+        public TlObject registerDevice (int token_type, String token, String device_model, String system_version, String app_version, boolean app_sandbox, String lang_code) throws MtpException {
             return generate(
 
                     new Pair("token_type", token_type),
@@ -129,7 +129,7 @@ public class TelegramApi {
          * @param token  (TL Definition : string)
          * @return Bool
          */
-        public  TlObject unregisterDevice ( int token_type, String token) {
+        public  TlObject unregisterDevice ( int token_type, String token) throws MtpException {
             return generate(
 
                     new Pair("token_type", token_type),
@@ -143,7 +143,7 @@ public class TelegramApi {
          * @param settings  (TL Definition : InputPeerNotifySettings)
          * @return Bool
          */
-        public  TlObject updateNotifySettings ( TlObject peer, TlObject settings) {
+        public  TlObject updateNotifySettings ( TlObject peer, TlObject settings) throws MtpException {
             return generate(
 
                     new Pair("peer", peer),
@@ -156,7 +156,7 @@ public class TelegramApi {
          * @param peer  (TL Definition : InputNotifyPeer)
          * @return PeerNotifySettings
          */
-        public  TlObject getNotifySettings ( TlObject peer) {
+        public  TlObject getNotifySettings ( TlObject peer) throws MtpException {
             return generate(
 
                     new Pair("peer", peer)
@@ -167,7 +167,7 @@ public class TelegramApi {
          *
          * @return Bool
          */
-        public  TlObject resetNotifySettings () {
+        public  TlObject resetNotifySettings () throws MtpException {
             return generate(
 
             );
@@ -179,7 +179,7 @@ public class TelegramApi {
          * @param last_name  (TL Definition : string)
          * @return User
          */
-        public  TlObject updateProfile ( String first_name, String last_name) {
+        public  TlObject updateProfile ( String first_name, String last_name) throws MtpException {
             return generate(
 
                     new Pair("first_name", first_name),
@@ -192,7 +192,7 @@ public class TelegramApi {
          * @param offline  (TL Definition : Bool)
          * @return Bool
          */
-        public  TlObject updateStatus ( boolean offline) {
+        public  TlObject updateStatus ( boolean offline) throws MtpException {
             return generate(
 
                     new Pair("offline", offline)
@@ -203,7 +203,7 @@ public class TelegramApi {
          *
          * @return Vector<WallPaper>
          */
-        public  TlObject getWallPapers () {
+        public  TlObject getWallPapers () throws MtpException {
             return generate(
 
             );
@@ -215,7 +215,7 @@ public class TelegramApi {
          * @param reason  (TL Definition : ReportReason)
          * @return Bool
          */
-        public  TlObject reportPeer ( TlObject peer, TlObject reason) {
+        public  TlObject reportPeer ( TlObject peer, TlObject reason) throws MtpException {
             return generate(
 
                     new Pair("peer", peer),
@@ -228,7 +228,7 @@ public class TelegramApi {
          * @param username  (TL Definition : string)
          * @return Bool
          */
-        public  TlObject checkUsername ( String username) {
+        public  TlObject checkUsername ( String username) throws MtpException {
             return generate(
 
                     new Pair("username", username)
@@ -240,7 +240,7 @@ public class TelegramApi {
          * @param username  (TL Definition : string)
          * @return User
          */
-        public  TlObject updateUsername ( String username) {
+        public  TlObject updateUsername ( String username) throws MtpException {
             return generate(
 
                     new Pair("username", username)
@@ -252,7 +252,7 @@ public class TelegramApi {
          * @param key  (TL Definition : InputPrivacyKey)
          * @return account.PrivacyRules
          */
-        public  TlObject getPrivacy ( TlObject key) {
+        public  TlObject getPrivacy ( TlObject key) throws MtpException {
             return generate(
 
                     new Pair("key", key)
@@ -265,7 +265,7 @@ public class TelegramApi {
          * @param rules  (TL Definition : Vector<InputPrivacyRule>)
          * @return account.PrivacyRules
          */
-        public  TlObject setPrivacy ( TlObject key, List<TlObject> rules) {
+        public  TlObject setPrivacy ( TlObject key, List<TlObject> rules) throws MtpException {
             return generate(
 
                     new Pair("key", key),
@@ -278,7 +278,7 @@ public class TelegramApi {
          * @param reason  (TL Definition : string)
          * @return Bool
          */
-        public  TlObject deleteAccount ( String reason) {
+        public  TlObject deleteAccount ( String reason) throws MtpException {
             return generate(
 
                     new Pair("reason", reason)
@@ -289,7 +289,7 @@ public class TelegramApi {
          *
          * @return AccountDaysTTL
          */
-        public  TlObject getAccountTTL () {
+        public  TlObject getAccountTTL () throws MtpException {
             return generate(
 
             );
@@ -300,7 +300,7 @@ public class TelegramApi {
          * @param ttl  (TL Definition : AccountDaysTTL)
          * @return Bool
          */
-        public  TlObject setAccountTTL ( TlObject ttl) {
+        public  TlObject setAccountTTL ( TlObject ttl) throws MtpException {
             return generate(
 
                     new Pair("ttl", ttl)
@@ -312,7 +312,7 @@ public class TelegramApi {
          * @param phone_number  (TL Definition : string)
          * @return account.SentChangePhoneCode
          */
-        public  TlObject sendChangePhoneCode ( String phone_number) {
+        public  TlObject sendChangePhoneCode ( String phone_number) throws MtpException {
             return generate(
 
                     new Pair("phone_number", phone_number)
@@ -326,7 +326,7 @@ public class TelegramApi {
          * @param phone_code  (TL Definition : string)
          * @return User
          */
-        public  TlObject changePhone ( String phone_number, String phone_code_hash, String phone_code) {
+        public  TlObject changePhone ( String phone_number, String phone_code_hash, String phone_code) throws MtpException {
             return generate(
 
                     new Pair("phone_number", phone_number),
@@ -340,7 +340,7 @@ public class TelegramApi {
          * @param period  (TL Definition : int)
          * @return Bool
          */
-        public  TlObject updateDeviceLocked ( int period) {
+        public  TlObject updateDeviceLocked ( int period) throws MtpException {
             return generate(
 
                     new Pair("period", period)
@@ -351,7 +351,7 @@ public class TelegramApi {
          *
          * @return account.Authorizations
          */
-        public  TlObject getAuthorizations () {
+        public  TlObject getAuthorizations () throws MtpException {
             return generate(
 
             );
@@ -362,7 +362,7 @@ public class TelegramApi {
          * @param hash  (TL Definition : long)
          * @return Bool
          */
-        public  TlObject resetAuthorization ( long hash) {
+        public  TlObject resetAuthorization ( long hash) throws MtpException {
             return generate(
 
                     new Pair("hash", hash)
@@ -373,13 +373,13 @@ public class TelegramApi {
          *
          * @return account.Password
          */
-        public  TlObject getPassword () {
+        public  TlObject getPassword () throws MtpException {
             return generate(
 
             );
         }
 
-        protected Account() {
+        protected Account() throws MtpException {
             super();
         }
 
@@ -389,7 +389,7 @@ public class TelegramApi {
          * @param current_password_hash  (TL Definition : bytes)
          * @return account.PasswordSettings
          */
-        public  TlObject getPasswordSettings (byte[] current_password_hash) {
+        public  TlObject getPasswordSettings (byte[] current_password_hash) throws MtpException {
             return generate(
 
                     new Pair("current_password_hash", current_password_hash)
@@ -402,7 +402,7 @@ public class TelegramApi {
          * @param new_settings  (TL Definition : account.PasswordInputSettings)
          * @return Bool
          */
-        public  TlObject updatePasswordSettings ( byte[] current_password_hash, TlObject new_settings) {
+        public  TlObject updatePasswordSettings ( byte[] current_password_hash, TlObject new_settings) throws MtpException {
             return generate(
 
                     new Pair("current_password_hash", current_password_hash),
@@ -423,7 +423,7 @@ public class TelegramApi {
 
     public class Auth extends ApiContext {
 
-        protected Auth() {
+        protected Auth() throws MtpException {
             super();
         }
 
@@ -432,7 +432,7 @@ public class TelegramApi {
          * @param phone_number  (TL Definition : string)
          * @return auth.CheckedPhone
          */
-        public  TlObject checkPhone ( String phone_number) {
+        public  TlObject checkPhone ( String phone_number) throws MtpException {
             return generate(
 
                     new Pair("phone_number", phone_number)
@@ -448,7 +448,7 @@ public class TelegramApi {
          * @param lang_code  (TL Definition : string)
          * @return auth.SentCode
          */
-        public  TlObject sendCode ( String phone_number, int sms_type, int api_id, String api_hash, String lang_code) {
+        public  TlObject sendCode ( String phone_number, int sms_type, int api_id, String api_hash, String lang_code) throws MtpException {
             return generate(
 
                     new Pair("phone_number", phone_number),
@@ -466,7 +466,7 @@ public class TelegramApi {
          * @param lang_code  (TL Definition : string)
          * @return auth.SentCode
          */
-        public  TlObject sendCode ( String phone_number, int sms_type,String lang_code) {
+        public  TlObject sendCode ( String phone_number, int sms_type,String lang_code) throws MtpException {
             return generate(
 
                     new Pair("phone_number", phone_number),
@@ -483,7 +483,7 @@ public class TelegramApi {
          * @param phone_code_hash  (TL Definition : string)
          * @return Bool
          */
-        public  TlObject sendCall ( String phone_number, String phone_code_hash) {
+        public  TlObject sendCall ( String phone_number, String phone_code_hash) throws MtpException {
             return generate(
 
                     new Pair("phone_number", phone_number),
@@ -500,7 +500,7 @@ public class TelegramApi {
          * @param last_name  (TL Definition : string)
          * @return auth.Authorization
          */
-        public  TlObject signUp ( String phone_number, String phone_code_hash, String phone_code, String first_name, String last_name) {
+        public  TlObject signUp ( String phone_number, String phone_code_hash, String phone_code, String first_name, String last_name) throws MtpException {
             return generate(
 
                     new Pair("phone_number", phone_number),
@@ -518,7 +518,7 @@ public class TelegramApi {
          * @param phone_code  (TL Definition : string)
          * @return auth.Authorization
          */
-        public  TlObject signIn ( String phone_number, String phone_code_hash, String phone_code) {
+        public  TlObject signIn ( String phone_number, String phone_code_hash, String phone_code) throws MtpException {
             return generate(
 
                     new Pair("phone_number", phone_number),
@@ -531,7 +531,7 @@ public class TelegramApi {
          *
          * @return Bool
          */
-        public  TlObject logOut () {
+        public  TlObject logOut () throws MtpException {
             return generate(
 
             );
@@ -541,7 +541,7 @@ public class TelegramApi {
          *
          * @return Bool
          */
-        public  TlObject resetAuthorizations () {
+        public  TlObject resetAuthorizations () throws MtpException {
             return generate(
 
             );
@@ -553,7 +553,7 @@ public class TelegramApi {
          * @param message  (TL Definition : string)
          * @return Bool
          */
-        public  TlObject sendInvites ( List<String> phone_numbers, String message) {
+        public  TlObject sendInvites ( List<String> phone_numbers, String message) throws MtpException {
             return generate(
 
                     new Pair("phone_numbers", phone_numbers),
@@ -566,7 +566,7 @@ public class TelegramApi {
          * @param dc_id  (TL Definition : int)
          * @return auth.ExportedAuthorization
          */
-        public  TlObject exportAuthorization ( int dc_id) {
+        public  TlObject exportAuthorization ( int dc_id) throws MtpException {
             return generate(
 
                     new Pair("dc_id", dc_id)
@@ -579,7 +579,7 @@ public class TelegramApi {
          * @param bytes  (TL Definition : bytes)
          * @return auth.Authorization
          */
-        public  TlObject importAuthorization ( int id, byte[] bytes) {
+        public  TlObject importAuthorization ( int id, byte[] bytes) throws MtpException {
             return generate(
 
                     new Pair("id", id),
@@ -595,7 +595,7 @@ public class TelegramApi {
          * @param encrypted_message  (TL Definition : bytes)
          * @return Bool
          */
-        public  TlObject bindTempAuthKey ( long perm_auth_key_id, long nonce, int expires_at, byte[] encrypted_message) {
+        public  TlObject bindTempAuthKey ( long perm_auth_key_id, long nonce, int expires_at, byte[] encrypted_message) throws MtpException {
             return generate(
 
                     new Pair("perm_auth_key_id", perm_auth_key_id),
@@ -611,7 +611,7 @@ public class TelegramApi {
          * @param phone_code_hash  (TL Definition : string)
          * @return Bool
          */
-        public  TlObject sendSms ( String phone_number, String phone_code_hash) {
+        public  TlObject sendSms ( String phone_number, String phone_code_hash) throws MtpException {
             return generate(
 
                     new Pair("phone_number", phone_number),
@@ -627,7 +627,7 @@ public class TelegramApi {
          * @param bot_auth_token  (TL Definition : string)
          * @return auth.Authorization
          */
-        public  TlObject importBotAuthorization ( int flags, int api_id, String api_hash, String bot_auth_token) {
+        public  TlObject importBotAuthorization ( int flags, int api_id, String api_hash, String bot_auth_token) throws MtpException {
             return generate(
 
                     new Pair("flags", flags),
@@ -642,7 +642,7 @@ public class TelegramApi {
          * @param password_hash  (TL Definition : bytes)
          * @return auth.Authorization
          */
-        public  TlObject checkPassword ( byte[] password_hash) {
+        public  TlObject checkPassword ( byte[] password_hash) throws MtpException {
             return generate(
 
                     new Pair("password_hash", password_hash)
@@ -653,7 +653,7 @@ public class TelegramApi {
          *
          * @return auth.PasswordRecovery
          */
-        public  TlObject requestPasswordRecovery () {
+        public  TlObject requestPasswordRecovery () throws MtpException {
             return generate(
 
             );
@@ -664,7 +664,7 @@ public class TelegramApi {
          * @param code  (TL Definition : string)
          * @return auth.Authorization
          */
-        public  TlObject recoverPassword ( String code) {
+        public  TlObject recoverPassword ( String code) throws MtpException {
             return generate(
 
                     new Pair("code", code)
@@ -685,7 +685,7 @@ public class TelegramApi {
      */
 
     public  class Channels extends ApiContext {
-        protected Channels() {
+        protected Channels() throws MtpException {
             super();
         }
         /**
@@ -694,7 +694,7 @@ public class TelegramApi {
          * @param limit  (TL Definition : int)
          * @return messages.Dialogs
          */
-        public  TlObject getDialogs ( int offset, int limit) {
+        public  TlObject getDialogs ( int offset, int limit) throws MtpException {
             return generate(
 
                     new Pair("offset", offset),
@@ -712,7 +712,7 @@ public class TelegramApi {
          * @param min_id  (TL Definition : int)
          * @return messages.Messages
          */
-        public  TlObject getImportantHistory ( TlObject channel, int offset_id, int add_offset, int limit, int max_id, int min_id) {
+        public  TlObject getImportantHistory ( TlObject channel, int offset_id, int add_offset, int limit, int max_id, int min_id) throws MtpException {
             return generate(
 
                     new Pair("channel", channel),
@@ -730,7 +730,7 @@ public class TelegramApi {
          * @param max_id  (TL Definition : int)
          * @return Bool
          */
-        public  TlObject readHistory ( TlObject channel, int max_id) {
+        public  TlObject readHistory ( TlObject channel, int max_id) throws MtpException {
             return generate(
 
                     new Pair("channel", channel),
@@ -744,7 +744,7 @@ public class TelegramApi {
          * @param id  (TL Definition : Vector<int>)
          * @return messages.AffectedMessages
          */
-        public  TlObject deleteMessages ( TlObject channel, List<Integer> id) {
+        public  TlObject deleteMessages ( TlObject channel, List<Integer> id) throws MtpException {
             return generate(
 
                     new Pair("channel", channel),
@@ -758,7 +758,7 @@ public class TelegramApi {
          * @param user_id  (TL Definition : InputUser)
          * @return messages.AffectedHistory
          */
-        public  TlObject deleteUserHistory ( TlObject channel, TlObject user_id) {
+        public  TlObject deleteUserHistory ( TlObject channel, TlObject user_id) throws MtpException {
             return generate(
 
                     new Pair("channel", channel),
@@ -773,7 +773,7 @@ public class TelegramApi {
          * @param id  (TL Definition : Vector<int>)
          * @return Bool
          */
-        public  TlObject reportSpam ( TlObject channel, TlObject user_id, List<Integer> id) {
+        public  TlObject reportSpam ( TlObject channel, TlObject user_id, List<Integer> id) throws MtpException {
             return generate(
 
                     new Pair("channel", channel),
@@ -788,7 +788,7 @@ public class TelegramApi {
          * @param id  (TL Definition : Vector<int>)
          * @return messages.Messages
          */
-        public  TlObject getMessages ( TlObject channel, List<Integer> id) {
+        public  TlObject getMessages ( TlObject channel, List<Integer> id) throws MtpException {
             return generate(
 
                     new Pair("channel", channel),
@@ -804,7 +804,7 @@ public class TelegramApi {
          * @param limit  (TL Definition : int)
          * @return channels.ChannelParticipants
          */
-        public  TlObject getParticipants ( TlObject channel, TlObject filter, int offset, int limit) {
+        public  TlObject getParticipants ( TlObject channel, TlObject filter, int offset, int limit) throws MtpException {
             return generate(
 
                     new Pair("channel", channel),
@@ -820,7 +820,7 @@ public class TelegramApi {
          * @param user_id  (TL Definition : InputUser)
          * @return channels.ChannelParticipant
          */
-        public  TlObject getParticipant ( TlObject channel, TlObject user_id) {
+        public  TlObject getParticipant ( TlObject channel, TlObject user_id) throws MtpException {
             return generate(
 
                     new Pair("channel", channel),
@@ -833,7 +833,7 @@ public class TelegramApi {
          * @param id  (TL Definition : Vector<InputChannel>)
          * @return messages.Chats
          */
-        public  TlObject getChannels ( List<TlObject> id) {
+        public  TlObject getChannels ( List<TlObject> id) throws MtpException {
             return generate(
 
                     new Pair("id", id)
@@ -845,7 +845,7 @@ public class TelegramApi {
          * @param channel  (TL Definition : InputChannel)
          * @return messages.ChatFull
          */
-        public  TlObject getFullChannel ( TlObject channel) {
+        public  TlObject getFullChannel ( TlObject channel) throws MtpException {
             return generate(
 
                     new Pair("channel", channel)
@@ -861,7 +861,7 @@ public class TelegramApi {
          * @param about  (TL Definition : string)
          * @return Updates
          */
-        public  TlObject createChannel ( String title, String about) {
+        public  TlObject createChannel ( String title, String about) throws MtpException {
             return generate(
 
                      //new Pair("flags", flags),
@@ -878,7 +878,7 @@ public class TelegramApi {
          * @param about  (TL Definition : string)
          * @return Bool
          */
-        public  TlObject editAbout ( TlObject channel, String about) {
+        public  TlObject editAbout ( TlObject channel, String about) throws MtpException {
             return generate(
 
                     new Pair("channel", channel),
@@ -893,7 +893,7 @@ public class TelegramApi {
          * @param role  (TL Definition : ChannelParticipantRole)
          * @return Updates
          */
-        public  TlObject editAdmin ( TlObject channel, TlObject user_id, TlObject role) {
+        public  TlObject editAdmin ( TlObject channel, TlObject user_id, TlObject role) throws MtpException {
             return generate(
 
                     new Pair("channel", channel),
@@ -908,7 +908,7 @@ public class TelegramApi {
          * @param title  (TL Definition : string)
          * @return Updates
          */
-        public  TlObject editTitle ( TlObject channel, String title) {
+        public  TlObject editTitle ( TlObject channel, String title) throws MtpException {
             return generate(
 
                     new Pair("channel", channel),
@@ -922,7 +922,7 @@ public class TelegramApi {
          * @param photo  (TL Definition : InputChatPhoto)
          * @return Updates
          */
-        public  TlObject editPhoto ( TlObject channel, TlObject photo) {
+        public  TlObject editPhoto ( TlObject channel, TlObject photo) throws MtpException {
             return generate(
 
                     new Pair("channel", channel),
@@ -936,7 +936,7 @@ public class TelegramApi {
          * @param enabled  (TL Definition : Bool)
          * @return Updates
          */
-        public  TlObject toggleComments ( TlObject channel, boolean enabled) {
+        public  TlObject toggleComments ( TlObject channel, boolean enabled) throws MtpException {
             return generate(
 
                     new Pair("channel", channel),
@@ -950,7 +950,7 @@ public class TelegramApi {
          * @param username  (TL Definition : string)
          * @return Bool
          */
-        public  TlObject checkUsername ( TlObject channel, String username) {
+        public  TlObject checkUsername ( TlObject channel, String username) throws MtpException {
             return generate(
 
                     new Pair("channel", channel),
@@ -964,7 +964,7 @@ public class TelegramApi {
          * @param username  (TL Definition : string)
          * @return Bool
          */
-        public  TlObject updateUsername ( TlObject channel, String username) {
+        public  TlObject updateUsername ( TlObject channel, String username) throws MtpException {
             return generate(
 
                     new Pair("channel", channel),
@@ -977,7 +977,7 @@ public class TelegramApi {
          * @param channel  (TL Definition : InputChannel)
          * @return Updates
          */
-        public  TlObject joinChannel ( TlObject channel) {
+        public  TlObject joinChannel ( TlObject channel) throws MtpException {
             return generate(
 
                     new Pair("channel", channel)
@@ -989,7 +989,7 @@ public class TelegramApi {
          * @param channel  (TL Definition : InputChannel)
          * @return Updates
          */
-        public  TlObject leaveChannel ( TlObject channel) {
+        public  TlObject leaveChannel ( TlObject channel) throws MtpException {
             return generate(
 
                     new Pair("channel", channel)
@@ -1002,7 +1002,7 @@ public class TelegramApi {
          * @param users  (TL Definition : Vector<InputUser>)
          * @return Updates
          */
-        public  TlObject inviteToChannel ( TlObject channel, List<TlObject> users) {
+        public  TlObject inviteToChannel ( TlObject channel, List<TlObject> users) throws MtpException {
             return generate(
 
                     new Pair("channel", channel),
@@ -1017,7 +1017,7 @@ public class TelegramApi {
          * @param kicked  (TL Definition : Bool)
          * @return Updates
          */
-        public  TlObject kickFromChannel (TlObject channel, TlObject user_id, boolean kicked) {
+        public  TlObject kickFromChannel (TlObject channel, TlObject user_id, boolean kicked) throws MtpException {
             return generate(
 
                     new Pair("channel", channel),
@@ -1034,7 +1034,7 @@ public class TelegramApi {
          * @param channel  (TL Definition : InputChannel)
          * @return ExportedChatInvite
          */
-        public  TlObject exportInvite ( TlObject channel) {
+        public  TlObject exportInvite ( TlObject channel) throws MtpException {
             return generate(
 
                     new Pair("channel", channel)
@@ -1046,7 +1046,7 @@ public class TelegramApi {
          * @param channel  (TL Definition : InputChannel)
          * @return Updates
          */
-        public  TlObject deleteChannel ( TlObject channel) {
+        public  TlObject deleteChannel ( TlObject channel) throws MtpException {
             return generate(
 
                     new Pair("channel", channel)
@@ -1064,7 +1064,7 @@ public class TelegramApi {
      */
 
     public class Contacts extends ApiContext {
-        protected Contacts() {
+        protected Contacts() throws MtpException {
             super();
         }
 
@@ -1072,7 +1072,7 @@ public class TelegramApi {
          *
          * @return Vector<ContactStatus>
          */
-        public  TlObject getStatuses () {
+        public  TlObject getStatuses () throws MtpException {
             return generate(
 
             );
@@ -1083,7 +1083,7 @@ public class TelegramApi {
          * @param hash  (TL Definition : string)
          * @return contacts.Contacts
          */
-        public  TlObject getContacts ( String hash) {
+        public  TlObject getContacts ( String hash) throws MtpException {
             return generate(
 
                     new Pair("hash", hash)
@@ -1096,7 +1096,7 @@ public class TelegramApi {
          * @param replace  (TL Definition : Bool)
          * @return contacts.ImportedContacts
          */
-        public  TlObject importContacts ( List<TlObject> contacts, boolean replace) {
+        public  TlObject importContacts ( List<TlObject> contacts, boolean replace) throws MtpException {
             return generate(
 
                     new Pair("contacts", contacts),
@@ -1109,7 +1109,7 @@ public class TelegramApi {
          * @param limit  (TL Definition : int)
          * @return contacts.Suggested
          */
-        public  TlObject getSuggested ( int limit) {
+        public  TlObject getSuggested ( int limit) throws MtpException {
             return generate(
 
                     new Pair("limit", limit)
@@ -1121,7 +1121,7 @@ public class TelegramApi {
          * @param id  (TL Definition : InputUser)
          * @return contacts.Link
          */
-        public  TlObject deleteContact ( TlObject id) {
+        public  TlObject deleteContact ( TlObject id) throws MtpException {
             return generate(
 
                     new Pair("id", id)
@@ -1133,7 +1133,7 @@ public class TelegramApi {
          * @param id  (TL Definition : Vector<InputUser>)
          * @return Bool
          */
-        public  TlObject deleteContacts ( List<TlObject> id) {
+        public  TlObject deleteContacts ( List<TlObject> id) throws MtpException {
             return generate(
 
                     new Pair("id", id)
@@ -1145,7 +1145,7 @@ public class TelegramApi {
          * @param id  (TL Definition : InputUser)
          * @return Bool
          */
-        public  TlObject block ( TlObject id) {
+        public  TlObject block ( TlObject id) throws MtpException {
             return generate(
 
                     new Pair("id", id)
@@ -1157,7 +1157,7 @@ public class TelegramApi {
          * @param id  (TL Definition : InputUser)
          * @return Bool
          */
-        public  TlObject unblock ( TlObject id) {
+        public  TlObject unblock ( TlObject id) throws MtpException {
             return generate(
 
                     new Pair("id", id)
@@ -1170,7 +1170,7 @@ public class TelegramApi {
          * @param limit  (TL Definition : int)
          * @return contacts.Blocked
          */
-        public  TlObject getBlocked ( int offset, int limit) {
+        public  TlObject getBlocked ( int offset, int limit) throws MtpException {
             return generate(
 
                     new Pair("offset", offset),
@@ -1182,7 +1182,7 @@ public class TelegramApi {
          *
          * @return Vector<int>
          */
-        public  TlObject exportCard () {
+        public  TlObject exportCard () throws MtpException {
             return generate(
 
             );
@@ -1193,7 +1193,7 @@ public class TelegramApi {
          * @param export_card  (TL Definition : Vector<int>)
          * @return User
          */
-        public  TlObject importCard ( List<Integer> export_card) {
+        public  TlObject importCard ( List<Integer> export_card) throws MtpException {
             return generate(
 
                     new Pair("export_card", export_card)
@@ -1206,7 +1206,7 @@ public class TelegramApi {
          * @param limit  (TL Definition : int)
          * @return contacts.Found
          */
-        public  TlObject search ( String q, int limit) {
+        public  TlObject search ( String q, int limit) throws MtpException {
             return generate(
 
                     new Pair("q", q),
@@ -1219,7 +1219,7 @@ public class TelegramApi {
          * @param username  (TL Definition : string)
          * @return contacts.ResolvedPeer
          */
-        public  TlObject resolveUsername (String username) {
+        public  TlObject resolveUsername (String username) throws MtpException {
             return generate(
 
                     new Pair("username", username)
@@ -1237,7 +1237,7 @@ public class TelegramApi {
      */
 
     public class Help extends ApiContext {
-        protected Help() {
+        protected Help() throws MtpException {
             super();
         }
 
@@ -1245,7 +1245,7 @@ public class TelegramApi {
          *
          * @return Config
          */
-        public  TlObject getConfig () {
+        public  TlObject getConfig () throws MtpException {
             return generate(
 
             );
@@ -1255,7 +1255,7 @@ public class TelegramApi {
          *
          * @return NearestDc
          */
-        public  TlObject getNearestDc () {
+        public  TlObject getNearestDc () throws MtpException {
             return generate(
 
             );
@@ -1269,7 +1269,7 @@ public class TelegramApi {
          * @param lang_code  (TL Definition : string)
          * @return help.AppUpdate
          */
-        public  TlObject getAppUpdate ( String device_model, String system_version, String app_version, String lang_code) {
+        public  TlObject getAppUpdate ( String device_model, String system_version, String app_version, String lang_code) throws MtpException {
             return generate(
 
                     new Pair("device_model", device_model),
@@ -1284,7 +1284,7 @@ public class TelegramApi {
          * @param events  (TL Definition : Vector<InputAppEvent>)
          * @return Bool
          */
-        public  TlObject saveAppLog ( List<TlObject> events) {
+        public  TlObject saveAppLog ( List<TlObject> events) throws MtpException {
             return generate(
 
                     new Pair("events", events)
@@ -1296,7 +1296,7 @@ public class TelegramApi {
          * @param lang_code  (TL Definition : string)
          * @return help.InviteText
          */
-        public  TlObject getInviteText ( String lang_code) {
+        public  TlObject getInviteText ( String lang_code) throws MtpException {
             return generate(
 
                     new Pair("lang_code", lang_code)
@@ -1307,7 +1307,7 @@ public class TelegramApi {
          *
          * @return help.Support
          */
-        public  TlObject getSupport () {
+        public  TlObject getSupport () throws MtpException {
             return generate(
 
             );
@@ -1321,7 +1321,7 @@ public class TelegramApi {
          * @param lang_code  (TL Definition : string)
          * @return help.AppChangelog
          */
-        public  TlObject getAppChangelog ( String device_model, String system_version, String app_version, String lang_code) {
+        public  TlObject getAppChangelog ( String device_model, String system_version, String app_version, String lang_code) throws MtpException {
             return generate(
 
                     new Pair("device_model", device_model),
@@ -1336,7 +1336,7 @@ public class TelegramApi {
          * @param lang_code  (TL Definition : string)
          * @return help.TermsOfService
          */
-        public  TlObject getTermsOfService (String lang_code) {
+        public  TlObject getTermsOfService (String lang_code) throws MtpException {
             return generate(
 
                     new Pair("lang_code", lang_code)
@@ -1354,7 +1354,7 @@ public class TelegramApi {
      */
 
     public class Messages extends ApiContext {
-        protected Messages() {
+        protected Messages() throws MtpException {
             super();
         }
 
@@ -1363,7 +1363,7 @@ public class TelegramApi {
          * @param id  (TL Definition : Vector<int>)
          * @return messages.Messages
          */
-        public  TlObject getMessages ( List<Integer> id) {
+        public  TlObject getMessages ( List<Integer> id) throws MtpException {
             return generate(
 
                     new Pair("id", id)
@@ -1378,7 +1378,7 @@ public class TelegramApi {
          * @param limit  (TL Definition : int)
          * @return messages.Dialogs
          */
-        public  TlObject getDialogs ( int offset_date, int offset_id, TlObject offset_peer, int limit) {
+        public  TlObject getDialogs ( int offset_date, int offset_id, TlObject offset_peer, int limit) throws MtpException {
             return generate(
 
                     new Pair("offset_date", offset_date),
@@ -1398,7 +1398,7 @@ public class TelegramApi {
          * @param min_id  (TL Definition : int)
          * @return messages.Messages
          */
-        public  TlObject getHistory ( TlObject peer, int offset_id, int add_offset, int limit, int max_id, int min_id) {
+        public  TlObject getHistory ( TlObject peer, int offset_id, int add_offset, int limit, int max_id, int min_id) throws MtpException {
             return generate(
 
                     new Pair("peer", peer),
@@ -1425,7 +1425,7 @@ public class TelegramApi {
     //     * @param limit  (TL Definition : int)
     //     * @return messages.Messages
     //     */
-    //    public  TlObject search ( # flags, flags.0?true important_only, TlObject peer, String q, TlObject filter, int min_date, int max_date, int offset, int max_id, int limit) {
+    //    public  TlObject search ( # flags, flags.0?true important_only, TlObject peer, String q, TlObject filter, int min_date, int max_date, int offset, int max_id, int limit) throws MtpException {
     //        return generate(
     //
     //                new Pair("flags", flags),
@@ -1447,7 +1447,7 @@ public class TelegramApi {
          * @param max_id  (TL Definition : int)
          * @return messages.AffectedMessages
          */
-        public  TlObject readHistory ( TlObject peer, int max_id) {
+        public  TlObject readHistory ( TlObject peer, int max_id) throws MtpException {
             return generate(
 
                     new Pair("peer", peer),
@@ -1461,7 +1461,7 @@ public class TelegramApi {
          * @param max_id  (TL Definition : int)
          * @return messages.AffectedHistory
          */
-        public  TlObject deleteHistory ( TlObject peer, int max_id) {
+        public  TlObject deleteHistory ( TlObject peer, int max_id) throws MtpException {
             return generate(
 
                     new Pair("peer", peer),
@@ -1474,7 +1474,7 @@ public class TelegramApi {
          * @param id  (TL Definition : Vector<int>)
          * @return messages.AffectedMessages
          */
-        public  TlObject deleteMessages ( List<Integer> id) {
+        public  TlObject deleteMessages ( List<Integer> id) throws MtpException {
             return generate(
 
                     new Pair("id", id)
@@ -1486,7 +1486,7 @@ public class TelegramApi {
          * @param max_id  (TL Definition : int)
          * @return Vector<ReceivedNotifyMessage>
          */
-        public  TlObject receivedMessages ( int max_id) {
+        public  TlObject receivedMessages ( int max_id) throws MtpException {
             return generate(
 
                     new Pair("max_id", max_id)
@@ -1499,7 +1499,7 @@ public class TelegramApi {
          * @param action  (TL Definition : SendMessageAction)
          * @return Bool
          */
-        public  TlObject setTyping ( TlObject peer, TlObject action) {
+        public  TlObject setTyping ( TlObject peer, TlObject action) throws MtpException {
             return generate(
 
                     new Pair("peer", peer),
@@ -1521,7 +1521,7 @@ public class TelegramApi {
     //     * @param entities  (TL Definition : flags.3?Vector<MessageEntity>)
     //     * @return Updates
     //     */
-    //    public  TlObject sendMessage ( # flags, flags.1?true no_webpage, flags.4?true broadcast, TlObject peer, flags.0?int reply_to_msg_id, String message, long random_id, flags.2?ReplyMarkup reply_markup, flags.3?Vector<MessageEntity> entities) {
+    //    public  TlObject sendMessage ( # flags, flags.1?true no_webpage, flags.4?true broadcast, TlObject peer, flags.0?int reply_to_msg_id, String message, long random_id, flags.2?ReplyMarkup reply_markup, flags.3?Vector<MessageEntity> entities) throws MtpException {
     //        return generate(
     //
     //                new Pair("flags", flags),
@@ -1548,7 +1548,7 @@ public class TelegramApi {
     //     * @param reply_markup  (TL Definition : flags.2?ReplyMarkup)
     //     * @return Updates
     //     */
-    //    public  TlObject sendMedia ( # flags, flags.4?true broadcast, TlObject peer, flags.0?int reply_to_msg_id, TlObject media, long random_id, flags.2?ReplyMarkup reply_markup) {
+    //    public  TlObject sendMedia ( # flags, flags.4?true broadcast, TlObject peer, flags.0?int reply_to_msg_id, TlObject media, long random_id, flags.2?ReplyMarkup reply_markup) throws MtpException {
     //        return generate(
     //
     //                new Pair("flags", flags),
@@ -1572,7 +1572,7 @@ public class TelegramApi {
     //     * @param to_peer  (TL Definition : InputPeer)
     //     * @return Updates
     //     */
-    //    public  TlObject forwardMessages ( # flags, flags.4?true broadcast, TlObject from_peer, List<int> id, List<long> random_id, TlObject to_peer) {
+    //    public  TlObject forwardMessages ( # flags, flags.4?true broadcast, TlObject from_peer, List<int> id, List<long> random_id, TlObject to_peer) throws MtpException {
     //        return generate(
     //
     //                new Pair("flags", flags),
@@ -1589,7 +1589,7 @@ public class TelegramApi {
          * @param peer  (TL Definition : InputPeer)
          * @return Bool
          */
-        public  TlObject reportSpam ( TlObject peer) {
+        public  TlObject reportSpam ( TlObject peer) throws MtpException {
             return generate(
 
                     new Pair("peer", peer)
@@ -1601,7 +1601,7 @@ public class TelegramApi {
          * @param id  (TL Definition : Vector<int>)
          * @return messages.Chats
          */
-        public  TlObject getChats ( List<Integer> id) {
+        public  TlObject getChats ( List<Integer> id) throws MtpException {
             return generate(
 
                     new Pair("id", id)
@@ -1613,7 +1613,7 @@ public class TelegramApi {
          * @param chat_id  (TL Definition : int)
          * @return messages.ChatFull
          */
-        public  TlObject getFullChat ( int chat_id) {
+        public  TlObject getFullChat ( int chat_id) throws MtpException {
             return generate(
 
                     new Pair("chat_id", chat_id)
@@ -1626,7 +1626,7 @@ public class TelegramApi {
          * @param title  (TL Definition : string)
          * @return Updates
          */
-        public  TlObject editChatTitle ( int chat_id, String title) {
+        public  TlObject editChatTitle ( int chat_id, String title) throws MtpException {
             return generate(
 
                     new Pair("chat_id", chat_id),
@@ -1640,7 +1640,7 @@ public class TelegramApi {
          * @param photo  (TL Definition : InputChatPhoto)
          * @return Updates
          */
-        public  TlObject editChatPhoto ( int chat_id, TlObject photo) {
+        public  TlObject editChatPhoto ( int chat_id, TlObject photo) throws MtpException {
             return generate(
 
                     new Pair("chat_id", chat_id),
@@ -1655,7 +1655,7 @@ public class TelegramApi {
          * @param fwd_limit  (TL Definition : int)
          * @return Updates
          */
-        public  TlObject addChatUser ( int chat_id, TlObject user_id, int fwd_limit) {
+        public  TlObject addChatUser ( int chat_id, TlObject user_id, int fwd_limit) throws MtpException {
             return generate(
 
                     new Pair("chat_id", chat_id),
@@ -1670,7 +1670,7 @@ public class TelegramApi {
          * @param user_id  (TL Definition : InputUser)
          * @return Updates
          */
-        public  TlObject deleteChatUser ( int chat_id, TlObject user_id) {
+        public  TlObject deleteChatUser ( int chat_id, TlObject user_id) throws MtpException {
             return generate(
 
                     new Pair("chat_id", chat_id),
@@ -1684,7 +1684,7 @@ public class TelegramApi {
          * @param title  (TL Definition : string)
          * @return Updates
          */
-        public  TlObject createChat ( List<TlObject> users, String title) {
+        public  TlObject createChat ( List<TlObject> users, String title) throws MtpException {
             return generate(
 
                     new Pair("users", users),
@@ -1699,7 +1699,7 @@ public class TelegramApi {
          * @param random_id  (TL Definition : long)
          * @return Updates
          */
-        public  TlObject forwardMessage ( TlObject peer, int id, long random_id) {
+        public  TlObject forwardMessage ( TlObject peer, int id, long random_id) throws MtpException {
             return generate(
 
                     new Pair("peer", peer),
@@ -1716,7 +1716,7 @@ public class TelegramApi {
          * @param media  (TL Definition : InputMedia)
          * @return Updates
          */
-        public  TlObject sendBroadcast ( List<TlObject> contacts, List<Long> random_id, String message, TlObject media) {
+        public  TlObject sendBroadcast ( List<TlObject> contacts, List<Long> random_id, String message, TlObject media) throws MtpException {
             return generate(
 
                     new Pair("contacts", contacts),
@@ -1732,7 +1732,7 @@ public class TelegramApi {
          * @param random_length  (TL Definition : int)
          * @return messages.DhConfig
          */
-        public  TlObject getDhConfig ( int version, int random_length) {
+        public  TlObject getDhConfig ( int version, int random_length) throws MtpException {
             return generate(
 
                     new Pair("version", version),
@@ -1747,7 +1747,7 @@ public class TelegramApi {
          * @param g_a  (TL Definition : bytes)
          * @return EncryptedChat
          */
-        public  TlObject requestEncryption ( TlObject user_id, int random_id, byte[] g_a) {
+        public  TlObject requestEncryption ( TlObject user_id, int random_id, byte[] g_a) throws MtpException {
             return generate(
 
                     new Pair("user_id", user_id),
@@ -1763,7 +1763,7 @@ public class TelegramApi {
          * @param key_fingerprint  (TL Definition : long)
          * @return EncryptedChat
          */
-        public  TlObject acceptEncryption ( TlObject peer, byte[] g_b, long key_fingerprint) {
+        public  TlObject acceptEncryption ( TlObject peer, byte[] g_b, long key_fingerprint) throws MtpException {
             return generate(
 
                     new Pair("peer", peer),
@@ -1777,7 +1777,7 @@ public class TelegramApi {
          * @param chat_id  (TL Definition : int)
          * @return Bool
          */
-        public  TlObject discardEncryption ( int chat_id) {
+        public  TlObject discardEncryption ( int chat_id) throws MtpException {
             return generate(
 
                     new Pair("chat_id", chat_id)
@@ -1790,7 +1790,7 @@ public class TelegramApi {
          * @param typing  (TL Definition : Bool)
          * @return Bool
          */
-        public  TlObject setEncryptedTyping ( TlObject peer, boolean typing) {
+        public  TlObject setEncryptedTyping ( TlObject peer, boolean typing) throws MtpException {
             return generate(
 
                     new Pair("peer", peer),
@@ -1804,7 +1804,7 @@ public class TelegramApi {
          * @param max_date  (TL Definition : int)
          * @return Bool
          */
-        public  TlObject readEncryptedHistory ( TlObject peer, int max_date) {
+        public  TlObject readEncryptedHistory ( TlObject peer, int max_date) throws MtpException {
             return generate(
 
                     new Pair("peer", peer),
@@ -1819,7 +1819,7 @@ public class TelegramApi {
          * @param data  (TL Definition : bytes)
          * @return messages.SentEncryptedMessage
          */
-        public  TlObject sendEncrypted ( TlObject peer, long random_id, byte[] data) {
+        public  TlObject sendEncrypted ( TlObject peer, long random_id, byte[] data) throws MtpException {
             return generate(
 
                     new Pair("peer", peer),
@@ -1836,7 +1836,7 @@ public class TelegramApi {
          * @param file  (TL Definition : InputEncryptedFile)
          * @return messages.SentEncryptedMessage
          */
-        public  TlObject sendEncryptedFile ( TlObject peer, long random_id, byte[] data, TlObject file) {
+        public  TlObject sendEncryptedFile ( TlObject peer, long random_id, byte[] data, TlObject file) throws MtpException {
             return generate(
 
                     new Pair("peer", peer),
@@ -1853,7 +1853,7 @@ public class TelegramApi {
          * @param data  (TL Definition : bytes)
          * @return messages.SentEncryptedMessage
          */
-        public  TlObject sendEncryptedService ( TlObject peer, long random_id, byte[] data) {
+        public  TlObject sendEncryptedService ( TlObject peer, long random_id, byte[] data) throws MtpException {
             return generate(
 
                     new Pair("peer", peer),
@@ -1867,7 +1867,7 @@ public class TelegramApi {
          * @param max_qts  (TL Definition : int)
          * @return Vector<long>
          */
-        public  TlObject receivedQueue ( int max_qts) {
+        public  TlObject receivedQueue ( int max_qts) throws MtpException {
             return generate(
 
                     new Pair("max_qts", max_qts)
@@ -1879,7 +1879,7 @@ public class TelegramApi {
          * @param id  (TL Definition : Vector<int>)
          * @return messages.AffectedMessages
          */
-        public  TlObject readMessageContents ( List<Integer> id) {
+        public  TlObject readMessageContents ( List<Integer> id) throws MtpException {
             return generate(
 
                     new Pair("id", id)
@@ -1892,7 +1892,7 @@ public class TelegramApi {
          * @param hash  (TL Definition : string)
          * @return messages.Stickers
          */
-        public  TlObject getStickers ( String emoticon, String hash) {
+        public  TlObject getStickers ( String emoticon, String hash) throws MtpException {
             return generate(
 
                     new Pair("emoticon", emoticon),
@@ -1905,7 +1905,7 @@ public class TelegramApi {
          * @param hash  (TL Definition : int)
          * @return messages.AllStickers
          */
-        public  TlObject getAllStickers ( int hash) {
+        public  TlObject getAllStickers ( int hash) throws MtpException {
             return generate(
 
                     new Pair("hash", hash)
@@ -1917,7 +1917,7 @@ public class TelegramApi {
          * @param message  (TL Definition : string)
          * @return MessageMedia
          */
-        public  TlObject getWebPagePreview ( String message) {
+        public  TlObject getWebPagePreview ( String message) throws MtpException {
             return generate(
 
                     new Pair("message", message)
@@ -1929,7 +1929,7 @@ public class TelegramApi {
          * @param chat_id  (TL Definition : int)
          * @return ExportedChatInvite
          */
-        public  TlObject exportChatInvite ( int chat_id) {
+        public  TlObject exportChatInvite ( int chat_id) throws MtpException {
             return generate(
 
                     new Pair("chat_id", chat_id)
@@ -1941,7 +1941,7 @@ public class TelegramApi {
          * @param hash  (TL Definition : string)
          * @return ChatInvite
          */
-        public  TlObject checkChatInvite ( String hash) {
+        public  TlObject checkChatInvite ( String hash) throws MtpException {
             return generate(
 
                     new Pair("hash", hash)
@@ -1953,7 +1953,7 @@ public class TelegramApi {
          * @param hash  (TL Definition : string)
          * @return Updates
          */
-        public  TlObject importChatInvite ( String hash) {
+        public  TlObject importChatInvite ( String hash) throws MtpException {
             return generate(
 
                     new Pair("hash", hash)
@@ -1965,7 +1965,7 @@ public class TelegramApi {
          * @param stickerset  (TL Definition : InputStickerSet)
          * @return messages.StickerSet
          */
-        public  TlObject getStickerSet ( TlObject stickerset) {
+        public  TlObject getStickerSet ( TlObject stickerset) throws MtpException {
             return generate(
 
                     new Pair("stickerset", stickerset)
@@ -1978,7 +1978,7 @@ public class TelegramApi {
          * @param disabled  (TL Definition : Bool)
          * @return Bool
          */
-        public  TlObject installStickerSet ( TlObject stickerset, boolean disabled) {
+        public  TlObject installStickerSet ( TlObject stickerset, boolean disabled) throws MtpException {
             return generate(
 
                     new Pair("stickerset", stickerset),
@@ -1991,7 +1991,7 @@ public class TelegramApi {
          * @param stickerset  (TL Definition : InputStickerSet)
          * @return Bool
          */
-        public  TlObject uninstallStickerSet ( TlObject stickerset) {
+        public  TlObject uninstallStickerSet ( TlObject stickerset) throws MtpException {
             return generate(
 
                     new Pair("stickerset", stickerset)
@@ -2006,7 +2006,7 @@ public class TelegramApi {
          * @param start_param  (TL Definition : string)
          * @return Updates
          */
-        public  TlObject startBot ( TlObject bot, TlObject peer, long random_id, String start_param) {
+        public  TlObject startBot ( TlObject bot, TlObject peer, long random_id, String start_param) throws MtpException {
             return generate(
 
                     new Pair("bot", bot),
@@ -2023,7 +2023,7 @@ public class TelegramApi {
          * @param increment  (TL Definition : Bool)
          * @return Vector<int>
          */
-        public  TlObject getMessagesViews ( TlObject peer, List<Integer> id, boolean increment) {
+        public  TlObject getMessagesViews ( TlObject peer, List<Integer> id, boolean increment) throws MtpException {
             return generate(
 
                     new Pair("peer", peer),
@@ -2038,7 +2038,7 @@ public class TelegramApi {
          * @param enabled  (TL Definition : Bool)
          * @return Updates
          */
-        public  TlObject toggleChatAdmins ( int chat_id, boolean enabled) {
+        public  TlObject toggleChatAdmins ( int chat_id, boolean enabled) throws MtpException {
             return generate(
 
                     new Pair("chat_id", chat_id),
@@ -2053,7 +2053,7 @@ public class TelegramApi {
          * @param is_admin  (TL Definition : Bool)
          * @return Bool
          */
-        public  TlObject editChatAdmin ( int chat_id, TlObject user_id, boolean is_admin) {
+        public  TlObject editChatAdmin ( int chat_id, TlObject user_id, boolean is_admin) throws MtpException {
             return generate(
 
                     new Pair("chat_id", chat_id),
@@ -2067,7 +2067,7 @@ public class TelegramApi {
          * @param chat_id  (TL Definition : int)
          * @return Updates
          */
-        public  TlObject migrateChat ( int chat_id) {
+        public  TlObject migrateChat ( int chat_id) throws MtpException {
             return generate(
 
                     new Pair("chat_id", chat_id)
@@ -2083,7 +2083,7 @@ public class TelegramApi {
          * @param limit  (TL Definition : int)
          * @return messages.Messages
          */
-        public  TlObject searchGlobal ( String q, int offset_date, TlObject offset_peer, int offset_id, int limit) {
+        public  TlObject searchGlobal ( String q, int offset_date, TlObject offset_peer, int offset_id, int limit) throws MtpException {
             return generate(
 
                     new Pair("q", q),
@@ -2099,7 +2099,7 @@ public class TelegramApi {
          * @param order  (TL Definition : Vector<long>)
          * @return Bool
          */
-        public  TlObject reorderStickerSets ( List<Long> order) {
+        public  TlObject reorderStickerSets ( List<Long> order) throws MtpException {
             return generate(
 
                     new Pair("order", order)
@@ -2113,7 +2113,7 @@ public class TelegramApi {
          * @param mime_type  (TL Definition : string)
          * @return Document
          */
-        public  TlObject getDocumentByHash ( byte[] sha256, int size, String mime_type) {
+        public  TlObject getDocumentByHash ( byte[] sha256, int size, String mime_type) throws MtpException {
             return generate(
 
                     new Pair("sha256", sha256),
@@ -2128,7 +2128,7 @@ public class TelegramApi {
          * @param offset  (TL Definition : int)
          * @return messages.FoundGifs
          */
-        public  TlObject searchGifs ( String q, int offset) {
+        public  TlObject searchGifs ( String q, int offset) throws MtpException {
             return generate(
 
                     new Pair("q", q),
@@ -2141,7 +2141,7 @@ public class TelegramApi {
          * @param hash  (TL Definition : int)
          * @return messages.SavedGifs
          */
-        public  TlObject getSavedGifs ( int hash) {
+        public  TlObject getSavedGifs ( int hash) throws MtpException {
             return generate(
 
                     new Pair("hash", hash)
@@ -2154,7 +2154,7 @@ public class TelegramApi {
          * @param unsave  (TL Definition : Bool)
          * @return Bool
          */
-        public  TlObject saveGif ( TlObject id, boolean unsave) {
+        public  TlObject saveGif ( TlObject id, boolean unsave) throws MtpException {
             return generate(
 
                     new Pair("id", id),
@@ -2169,7 +2169,7 @@ public class TelegramApi {
          * @param offset  (TL Definition : string)
          * @return messages.BotResults
          */
-        public  TlObject getInlineBotResults ( TlObject bot, String query, String offset) {
+        public  TlObject getInlineBotResults ( TlObject bot, String query, String offset) throws MtpException {
             return generate(
 
                     new Pair("bot", bot),
@@ -2189,7 +2189,7 @@ public class TelegramApi {
     //     * @param next_offset  (TL Definition : flags.2?string)
     //     * @return Bool
     //     */
-    //    public  TlObject setInlineBotResults ( # flags, flags.0?true gallery, flags.1?true private, long query_id, List<TlObject> results, int cache_time, flags.2?string next_offset) {
+    //    public  TlObject setInlineBotResults ( # flags, flags.0?true gallery, flags.1?true private, long query_id, List<TlObject> results, int cache_time, flags.2?string next_offset) throws MtpException {
     //        return generate(
     //
     //                new Pair("flags", flags),
@@ -2214,7 +2214,7 @@ public class TelegramApi {
          * @return Updates
          */
         //// TODO: 6/27/16 fix optinal flags on methods
-    //    public  TlObject sendInlineBotResult (#flags, flags.4?true broadcast, TlObject peer, flags.0?int reply_to_msg_id, long random_id, long query_id, String id) {
+    //    public  TlObject sendInlineBotResult (#flags, flags.4?true broadcast, TlObject peer, flags.0?int reply_to_msg_id, long random_id, long query_id, String id) throws MtpException {
     //        return generate(
     //
     //                new Pair("flags", flags),
@@ -2239,7 +2239,7 @@ public class TelegramApi {
      */
 
     public class Updates extends ApiContext {
-        protected Updates() {
+        protected Updates() throws MtpException {
             super();
         }
 
@@ -2247,7 +2247,7 @@ public class TelegramApi {
          *
          * @return updates.State
          */
-        public  TlObject getState () {
+        public  TlObject getState () throws MtpException {
             return generate(
 
             );
@@ -2260,7 +2260,7 @@ public class TelegramApi {
          * @param qts  (TL Definition : int)
          * @return updates.Difference
          */
-        public  TlObject getDifference ( int pts, int date, int qts) {
+        public  TlObject getDifference ( int pts, int date, int qts) throws MtpException {
             return generate(
 
                     new Pair("pts", pts),
@@ -2277,7 +2277,7 @@ public class TelegramApi {
          * @param limit  (TL Definition : int)
          * @return updates.ChannelDifference
          */
-        public  TlObject getChannelDifference (TlObject channel, TlObject filter, int pts, int limit) {
+        public  TlObject getChannelDifference (TlObject channel, TlObject filter, int pts, int limit) throws MtpException {
             return generate(
 
                     new Pair("channel", channel),
@@ -2310,7 +2310,7 @@ public class TelegramApi {
          * @param bytes  (TL Definition : bytes)
          * @return Bool
          */
-        public  TlObject saveFilePart ( long file_id, int file_part, byte[] bytes) {
+        public  TlObject saveFilePart ( long file_id, int file_part, byte[] bytes) throws MtpException {
             return generate(
 
                     new Pair("file_id", file_id),
@@ -2319,7 +2319,7 @@ public class TelegramApi {
             );
         }
 
-        protected Upload() {
+        protected Upload() throws MtpException {
             super();
         }
 
@@ -2330,7 +2330,7 @@ public class TelegramApi {
          * @param limit  (TL Definition : int)
          * @return upload.File
          */
-        public  TlObject getFile ( TlObject location, int offset, int limit) {
+        public  TlObject getFile ( TlObject location, int offset, int limit) throws MtpException {
             return generate(
 
                     new Pair("location", location),
@@ -2347,7 +2347,7 @@ public class TelegramApi {
          * @param bytes  (TL Definition : bytes)
          * @return Bool
          */
-        public  TlObject saveBigFilePart (long file_id, int file_part, int file_total_parts, byte[] bytes) {
+        public  TlObject saveBigFilePart (long file_id, int file_part, int file_total_parts, byte[] bytes) throws MtpException {
             return generate(
 
                     new Pair("file_id", file_id),
@@ -2369,7 +2369,7 @@ public class TelegramApi {
 
     public   class Users extends ApiContext {
 
-        protected Users() {
+        protected Users() throws MtpException {
             super();
         }
 
@@ -2379,7 +2379,7 @@ public class TelegramApi {
          * @param id  (TL Definition : Vector<InputUser>)
          * @return Vector<User>
          */
-        public  TlObject getUsers (List<TlObject> id) {
+        public  TlObject getUsers (List<TlObject> id) throws MtpException {
             return generate(
 
                     new Pair("id", id)
@@ -2391,7 +2391,7 @@ public class TelegramApi {
          * @param id  (TL Definition : InputUser)
          * @return UserFull
          */
-        public  TlObject getFullUser ( TlObject id) {
+        public  TlObject getFullUser ( TlObject id) throws MtpException {
             return generate(
 
                     new Pair("id", id)

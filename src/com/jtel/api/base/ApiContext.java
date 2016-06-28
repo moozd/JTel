@@ -15,27 +15,11 @@
  *     along with JTel.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * This file is part of JTel.
- *
- *     JTel is free software: you can redistribute it and/or modify
- *     it under the terms of the GNU General Public License as published by
- *     the Free Software Foundation, either version 3 of the License, or
- *     (at your option) any later version.
- *
- *     JTel is distributed in the hope that it will be useful,
- *     but WITHOUT ANY WARRANTY; without even the implied warranty of
- *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *     GNU General Public License for more details.
- *
- *     You should have received a copy of the GNU General Public License
- *     along with JTel.  If not, see <http://www.gnu.org/licenses/>.
- */
-
 package com.jtel.api.base;
 
-import com.jtel.common.log.Logger;
 import com.jtel.mtproto.MtpClient;
+import com.jtel.mtproto.MtpException;
+import com.jtel.mtproto.MtpStates;
 import com.jtel.mtproto.storage.ConfStorage;
 import com.jtel.mtproto.tl.TlMethod;
 import com.jtel.mtproto.tl.TlObject;
@@ -73,7 +57,7 @@ public class ApiContext {
         return apiHash;
     }
 
-    protected TlObject generate(Pair... pairs) {
+    protected TlObject generate(Pair... pairs) throws MtpException {
         try {
             StackTraceElement element = Thread.currentThread().getStackTrace()[2];
             String className = getClass().getSimpleName().toLowerCase();
@@ -85,7 +69,7 @@ public class ApiContext {
             }
             return client.invokeApiCall(method);
         } catch (Exception e) {
-          throw new RuntimeException(e);
+          throw new MtpException(MtpStates.API_METHOD_INVOCATION_FAILED,e);
         }
     }
 

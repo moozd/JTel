@@ -228,7 +228,7 @@ public class MtpClient {
      * @param transport transport object
      * @throws AuthFailedException
      */
-    public void createSession(FileStorage storage, Transport transport) throws AuthFailedException{
+    public void createSession(FileStorage storage, Transport transport) throws MtpException{
         createSession(storage,transport,false);
     }
 
@@ -239,7 +239,7 @@ public class MtpClient {
      * @param reset rest if (true) storage will be removed
      * @throws AuthFailedException
      */
-    public void createSession(FileStorage storage, Transport transport, boolean reset) throws AuthFailedException{
+    public void createSession(FileStorage storage, Transport transport, boolean reset) throws MtpException{
         setStorage(storage);
         setTransport(transport);
         setAuthManager(new AuthManager(transport));
@@ -247,7 +247,12 @@ public class MtpClient {
             reset();
         }
         if(!isNetworkReady()){
-           authenticate();
+            try {
+                authenticate();
+            }catch (AuthFailedException e){
+                throw  new MtpException(MtpStates.MTP_SERVER_HAND_SHAKE_FAILED,"client could not authenticate from server "+ getDc() ,e);
+
+            }
            setDc(1);
         }
         getStorage().setItem("session_id", Randoms.nextRandomBytes(8));
@@ -319,7 +324,7 @@ public class MtpClient {
      * invokeWithLayer method that determines layer number and initConnection
      * method that sends api id user agent and some other stuffs to servers
      */
-    public void initConnection (){
+    public void initConnection () throws MtpException{
         console.log(TAG ,"initializing connection");
         int currentDc = getDc();
         TlMessage message = new InitConnectionMessage(createMessageHeaders(currentDc,false));
@@ -341,7 +346,7 @@ public class MtpClient {
      * @param method @see com.JTel.mtproto.tl.TlMethod
      * @return @see com.JTel.mtproto.tl.TlObject
      */
-    public TlObject invokeApiCall(TlMethod method){
+    public TlObject invokeApiCall(TlMethod method) throws MtpException{
         try {
             checkCurrentDc();
         }
@@ -362,7 +367,7 @@ public class MtpClient {
      * @return RPC result after deserialization
      *         @see com.jtel.mtproto.tl.TlObject
      */
-    protected TlObject sendMessage(TlMessage message){
+    protected TlObject sendMessage(TlMessage message) throws MtpException{
        // clearPublishedResponse();
         try {
             long t = System.currentTimeMillis();
@@ -375,22 +380,22 @@ public class MtpClient {
             sentQueue.push(message);
         }
         catch (TransportException e){
-            console.error(TAG,"Transport error :",e.getCode(), e.getMessage());
-            e.printStackTrace();
+            throw new MtpException(MtpStates.NETWORK_FAILED,  e.getMessage(),e);
         }
         catch (InvalidTlParamException e){
             console.error(TAG,"InvalidTlParam error :",e.getMessage());
-            e.printStackTrace();
+            throw new MtpException(MtpStates.TL_BAD_PARAMETER_TYPE, e.getMessage(),e);
+
         }
         catch (IOException e){
-                console.error(TAG,"Unknown error :", e.getMessage());
-            e.printStackTrace();
+            throw new MtpException(MtpStates.MTP_UNKNOWN_FAILURE, e.getMessage(),e);
+
         }
 
         return  processResponse(message.getHeaders().getMessageId(),message.getResponse().getObject().getPredicate(),message.getResponse().getObject());
     }
 
-    protected TlObject processResponse(long messageId,String predicate,TlObject response){
+    protected TlObject processResponse(long messageId,String predicate,TlObject response) throws MtpException{
         //console.log(TAG,"processing message", messageId , predicate);
         switch (predicate){
             case "msg_container":
@@ -411,15 +416,18 @@ public class MtpClient {
         return response;
     }
 
-    protected List<TlObject> handleMessageContainer(List<TlObject> messages){
+    protected List<TlObject> handleMessageContainer(List<TlObject> messages) throws MtpException{
         List<TlObject> responses = new ArrayList<>();
-        messages.stream().forEach(message ->{
-            responses.add(processResponse(message.get("msg_id"),message.getPredicate(),message));
-        });
+/*        messages.stream().forEach(message ->{
+            responses.add();
+        });*/
+        for(int i=0;i<messages.size();i++){
+            responses.add(  processResponse(messages.get(i).get("msg_id"),messages.get(i).getPredicate(),messages.get(i)));
+        }
         return responses;
     }
 
-    protected TlObject handleBadServerSalt(int dc, long salt){
+    protected TlObject handleBadServerSalt(int dc, long salt) throws MtpException{
         AuthCredentials credentials = getAuth(dc);
         credentials.setServerSalt(salt);
         saveAuth(dc, credentials);
@@ -429,15 +437,18 @@ public class MtpClient {
         return processResponse(lastMessage.getHeaders().getMessageId(),resend.getPredicate(),resend);
     }
 
-    protected TlObject handleMessageAck(List<Long> messageIds){
+    protected TlObject handleMessageAck(List<Long> messageIds) throws MtpException{
+        TlMessage ack;
         try {
-            TlMessage ack = new AckMessage(createMessageHeaders(getDc(),false),new ArrayList<Long>(messageIds));
+             ack = new AckMessage(createMessageHeaders(getDc(), false), new ArrayList<Long>(messageIds));
+        }catch (InvalidTlParamException e){
+            throw  new MtpException(MtpStates.TL_BAD_PARAMETER_TYPE,"ack message bad type.",e);
+        }
+        catch (IOException e){
+            throw  new MtpException(MtpStates.NETWORK_FAILED,"could not send ack messages.",e);
+        }
             TlObject res = sendMessage(ack);
             return processResponse(ack.getHeaders().getMessageId(),res.getPredicate(),res);
-        }catch (Exception e) {
-            console.error(TAG,"an error occurred while sending ack message.",e.getMessage());
-            return null;
-        }
     }
 
     protected TlObject handleRpc(long messageId,TlObject rpc){
@@ -468,7 +479,6 @@ public class MtpClient {
         return rpcResult;
     }
 
-
     protected TlObject sendLongPoll(){
         console.log(TAG,"Long poll sent.");
         try{
@@ -479,5 +489,7 @@ public class MtpClient {
         }
 
     }
+
+
 
 }
