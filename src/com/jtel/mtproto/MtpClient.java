@@ -19,6 +19,7 @@
 package com.jtel.mtproto;
 
 import com.jtel.common.io.FileStorage;
+import com.jtel.common.log.Colors;
 import com.jtel.common.log.Logger;
 
 import com.jtel.mtproto.auth.AuthCredentials;
@@ -187,7 +188,7 @@ public class MtpClient {
     
 
     /**
-     * change current dc id
+     * setForeColor current dc id
      * @param currentDcID data center id
      */
     public void setDc(int currentDcID) {
@@ -226,7 +227,7 @@ public class MtpClient {
      * createSession client to start authenticate
      * @param storage storage file
      * @param transport transport object
-     * @throws AuthFailedException
+     * @throws MtpException
      */
     public void createSession(FileStorage storage, Transport transport) throws MtpException{
         createSession(storage,transport,false);
@@ -237,7 +238,7 @@ public class MtpClient {
      * @param storage storage object
      * @param transport transport object
      * @param reset rest if (true) storage will be removed
-     * @throws AuthFailedException
+     * @throws MtpException
      */
     public void createSession(FileStorage storage, Transport transport, boolean reset) throws MtpException{
         setStorage(storage);
@@ -284,19 +285,17 @@ public class MtpClient {
     }
 
 
-    public boolean needSignIn(){
-        return getStorage().getItem("need_sign_in");
+    public boolean isUserSignedIn(){
+        Object v = getStorage().getItem("need_sign_in");
+        if(v==null) v= false;
+        return (boolean)v;
     }
 
-    public  void saveSignIn(TlObject object){
-        getStorage().setItem("need_sign_in",false);
-        getStorage().setItem("user_info",object);
+    public  void setSignIn(boolean t){
+        getStorage().setItem("need_sign_in",t);
         getStorage().save();
     }
 
-    public TlObject getUserInfo(){
-        return getStorage().getItem("user_info");
-    }
 
     /**
      * creates rpc headers for encrypted messages
@@ -315,7 +314,6 @@ public class MtpClient {
         headers.setSessionId(storage.getItem("session_id"));
         headers.setSequenceId(TimeManager.getInstance().generateSeqNo(contentRelated));
         headers.setMessageId(TimeManager.getInstance().generateMessageId());
-
         return headers;
     }
 
@@ -330,11 +328,7 @@ public class MtpClient {
         TlMessage message = new InitConnectionMessage(createMessageHeaders(currentDc,false));
         TlObject nearestDc =sendMessage(message);
         TlMethod method = message.getContext();
-        console.log(TAG,"conf    >","country="+nearestDc.get("country"),"dc="+nearestDc.get("nearest_dc"));
-
-
-        if(!nearestDc.getType().equals(method.getType())) return;
-
+        console.log(Colors.YELLOW,TAG,"conf    >","country="+nearestDc.get("country"),"dc="+nearestDc.get("nearest_dc"));
         setDc(nearestDc.get("nearest_dc"));
 
     }
@@ -371,12 +365,12 @@ public class MtpClient {
        // clearPublishedResponse();
         try {
             long t = System.currentTimeMillis();
-            console.log(TAG,"request >",message.getContext().getEntityName());
+            console.log(Colors.YELLOW,TAG,"request >","(dc:"+getDc()+")",message.getContext().getName());
             byte[] msg = message.serialize();
             int currentDc = getDc();
             byte[] response = transport.send(currentDc, msg);
             message.deSerialize(new ByteArrayInputStream(response));
-            console.log(TAG,"finished in ",(System.currentTimeMillis()-t)/1000F+"s");
+            console.log(Colors.GREEN,TAG,"finished in ",(System.currentTimeMillis()-t)/1000F+"s");
             sentQueue.push(message);
         }
         catch (TransportException e){
@@ -392,7 +386,7 @@ public class MtpClient {
 
         }
 
-        return  processResponse(message.getHeaders().getMessageId(),message.getResponse().getObject().getPredicate(),message.getResponse().getObject());
+        return  processResponse(message.getHeaders().getMessageId(),message.getResponse().getObject().getName(),message.getResponse().getObject());
     }
 
     protected TlObject processResponse(long messageId,String predicate,TlObject response) throws MtpException{
@@ -403,7 +397,7 @@ public class MtpClient {
                return handleMessageContainer(messages).get(messages.size()-1);
             case "message":
                 TlObject body = response.get("body");
-                return processResponse(response.get("msg_id"),body.getPredicate(),body);
+                return processResponse(response.get("msg_id"),body.getName(),body);
             case "bad_server_salt":
                 return handleBadServerSalt(getDc(),response.get("new_server_salt"));
             case "msgs_ack":
@@ -418,11 +412,8 @@ public class MtpClient {
 
     protected List<TlObject> handleMessageContainer(List<TlObject> messages) throws MtpException{
         List<TlObject> responses = new ArrayList<>();
-/*        messages.stream().forEach(message ->{
-            responses.add();
-        });*/
         for(int i=0;i<messages.size();i++){
-            responses.add(  processResponse(messages.get(i).get("msg_id"),messages.get(i).getPredicate(),messages.get(i)));
+            responses.add(  processResponse(messages.get(i).get("msg_id"),messages.get(i).getName(),messages.get(i)));
         }
         return responses;
     }
@@ -434,7 +425,7 @@ public class MtpClient {
         TlMessage lastMessage = sentQueue.getTop();
         lastMessage.getHeaders().setServerSalt(credentials.getServerSalt());
         TlObject resend = sendMessage(lastMessage);
-        return processResponse(lastMessage.getHeaders().getMessageId(),resend.getPredicate(),resend);
+        return processResponse(lastMessage.getHeaders().getMessageId(),resend.getName(),resend);
     }
 
     protected TlObject handleMessageAck(List<Long> messageIds) throws MtpException{
@@ -448,14 +439,14 @@ public class MtpClient {
             throw  new MtpException(MtpStates.NETWORK_FAILED,"could not send ack messages.",e);
         }
             TlObject res = sendMessage(ack);
-            return processResponse(ack.getHeaders().getMessageId(),res.getPredicate(),res);
+            return processResponse(ack.getHeaders().getMessageId(),res.getName(),res);
     }
 
     protected TlObject handleRpc(long messageId,TlObject rpc){
 
         TlObject rpcResult = rpc.get("result");
 
-        if(rpcResult.getPredicate().equals("rpc_error")){
+        if(rpcResult.getName().equals("rpc_error")){
             String   error =rpcResult.get("error_message");;
             switch ((int)rpcResult.get("error_code")){
                 case 303:

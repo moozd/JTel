@@ -15,20 +15,34 @@
  *     along with JTel.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.jtel.common.io;
+package com.jtel.common.log;
 
 /**
  * This file is part of JTel
  * IntelliJ idea.
- * Date     : 6/17/16
- * Package : com.jtel.common.io
+ * Date     : 6/28/16
+ * Package : com.jtel.common.log
  *
  * @author <a href="mailto:mohammad.mdz72@gmail.com">Mohammad Mohammad Zade</a>
  */
 
-public class ReadOnlyPropertyException extends Exception {
+public enum  Colors {
+    RESET  ("\u001B[0m"),
+    BLACK  ("\u001B[30m"),
+    RED    ("\u001B[31m"),
+    GREEN  ("\u001B[32m"),
+    YELLOW ("\u001B[33m"),
+    BLUE ("\u001B[34m"),
+   PURPLE("\u001B[35m"),
+   CYAN ("\u001B[36m"),
+   WHITE  ("\u001B[37m");
+    private final String name;
+    private Colors(String s){
+        name = s;
+    }
 
-    public ReadOnlyPropertyException(String property) {
-        super("Cannot setForeColor readonly property of Storage > \""+property+"\"");
+    @Override
+    public String toString() {
+        return name;
     }
 }

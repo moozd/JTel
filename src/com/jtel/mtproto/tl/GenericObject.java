@@ -15,20 +15,26 @@
  *     along with JTel.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.jtel.common.io;
+package com.jtel.mtproto.tl;
 
 /**
  * This file is part of JTel
  * IntelliJ idea.
- * Date     : 6/17/16
- * Package : com.jtel.common.io
+ * Date     : 6/29/16
+ * Package : com.jtel.mtproto.tl
  *
  * @author <a href="mailto:mohammad.mdz72@gmail.com">Mohammad Mohammad Zade</a>
  */
 
-public class ReadOnlyPropertyException extends Exception {
+public class GenericObject {
 
-    public ReadOnlyPropertyException(String property) {
-        super("Cannot setForeColor readonly property of Storage > \""+property+"\"");
+    private Object value;
+
+    public GenericObject(Object value) {
+        this.value = value;
+    }
+
+    public <T> T getValue() {
+        return (T) value;
     }
 }

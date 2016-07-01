@@ -28,6 +28,8 @@ package com.jtel.common.log;
 
 public interface ILogger {
 
+    void log(Colors color , Object... os);
+
     void log(Object... os);
 
     void warn(Object... os);

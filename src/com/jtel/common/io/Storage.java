@@ -83,6 +83,7 @@ public abstract class Storage implements Serializable{
     }
 
     public <T> T getItem(String key){
+       if (!pairs.containsKey(key)) return null;
         return (T)pairs.get(key);
     }
 

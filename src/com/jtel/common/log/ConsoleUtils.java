@@ -15,20 +15,21 @@
  *     along with JTel.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.jtel.common.io;
+package com.jtel.common.log;
 
 /**
  * This file is part of JTel
  * IntelliJ idea.
- * Date     : 6/17/16
- * Package : com.jtel.common.io
+ * Date     : 6/28/16
+ * Package : com.jtel.common.log
  *
  * @author <a href="mailto:mohammad.mdz72@gmail.com">Mohammad Mohammad Zade</a>
  */
 
-public class ReadOnlyPropertyException extends Exception {
+public class ConsoleUtils {
 
-    public ReadOnlyPropertyException(String property) {
-        super("Cannot setForeColor readonly property of Storage > \""+property+"\"");
+
+    public static void setForeColor(Colors code){
+        System.out.print(code);
     }
 }

@@ -30,7 +30,7 @@ import java.util.Map;
  *
  * @author <a href="mailto:mohammad.mdz72@gmail.com">Mohammad Mohammad Zade</a>
  */
-public class Util {
+public class Utils {
 
 
     public static byte[] SHA1(byte[] src) {
@@ -246,4 +246,8 @@ public class Util {
 
 
 
+    public static boolean isArray(Object object){
+        if(object != null) return object.getClass().isArray();
+        return false;
+    }
 }

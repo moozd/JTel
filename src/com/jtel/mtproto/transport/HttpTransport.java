@@ -18,7 +18,7 @@
 package com.jtel.mtproto.transport;
 
 import com.jtel.mtproto.storage.ConfStorage;
-import com.jtel.mtproto.secure.Util;
+import com.jtel.mtproto.secure.Utils;
 import com.jtel.mtproto.tl.InvalidTlParamException;
 
 import java.io.*;
@@ -51,7 +51,7 @@ public class HttpTransport extends Transport {
         connection.getOutputStream().flush();
         connection.getOutputStream().close();
         errorCode = connection.getResponseCode();
-        return Util.toByteArray(connection.getInputStream());
+        return Utils.toByteArray(connection.getInputStream());
     }
 
     @Override

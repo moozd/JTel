@@ -15,33 +15,20 @@
  *     along with JTel.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * This file is part of JTel.
- *
- *     JTel is free software: you can redistribute it and/or modify
- *     it under the terms of the GNU General Public License as published by
- *     the Free Software Foundation, either version 3 of the License, or
- *     (at your option) any later version.
- *
- *     JTel is distributed in the hope that it will be useful,
- *     but WITHOUT ANY WARRANTY; without even the implied warranty of
- *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *     GNU General Public License for more details.
- *
- *     You should have received a copy of the GNU General Public License
- *     along with JTel.  If not, see <http://www.gnu.org/licenses/>.
- */
-
 package com.jtel.api;
 
 import com.jtel.api.base.ApiContext;
 import com.jtel.api.base.Pair;
 import com.jtel.common.io.FileStorage;
+import com.jtel.common.log.Colors;
+import com.jtel.common.log.Logger;
 import com.jtel.mtproto.MtpClient;
 import com.jtel.mtproto.MtpException;
+
 import com.jtel.mtproto.tl.TlObject;
 import com.jtel.mtproto.transport.Transport;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -65,25 +52,72 @@ public class TelegramApi {
     public final Updates  updates;
     public final Upload   upload;
     public final Users    users;
-
+    private Transport   mtpTransport;
+    private FileStorage mtpFileStorage;
+    private MtpClient   mtpClient;
+    Logger console = Logger.getInstance();
 
     public TelegramApi(FileStorage storage, Transport transport)  throws MtpException{
 
-       //MtpClient configuration
-       MtpClient.getInstance().createSession(storage,transport);
+        this.mtpFileStorage = storage;
+        this.mtpTransport   = transport;
+        //MtpClient configuration
+        this.mtpClient = MtpClient.getInstance();
+        mtpClient.createSession(storage,transport);
 
-       //loading methods
-       this.account  = new Account();
-       this.auth     = new Auth();
-       this.channels = new Channels();
-       this.contacts = new Contacts();
-       this.help     = new Help();
-       this.messages = new Messages();
-       this.updates  = new Updates();
-       this.upload   = new Upload();
-       this.users    = new Users();
+        //loading methods
+        this.account  = new Account();
+        this.auth     = new Auth();
+        this.channels = new Channels();
+        this.contacts = new Contacts();
+        this.help     = new Help();
+        this.messages = new Messages();
+        this.updates  = new Updates();
+        this.upload   = new Upload();
+        this.users    = new Users();
+
+
+        if(isUserOn()){
+         TlObject fullUser = null;
+            try {
+                fullUser = users.getFullUser(new TlObject("inputUserSelf")).get("user");
+            }catch (IOException e){
+                //pass
+            }
+            if(fullUser != null){
+                console.log(Colors.CYAN, "welcome",  fullUser.get("first_name"),"(phone: "+fullUser.get("phone") + ")");
+            }
+        }
    }
 
+    public FileStorage getFileStorage() {
+        return mtpFileStorage;
+    }
+
+    public MtpClient getClient() {
+        return mtpClient;
+    }
+
+    public void removeSession() throws MtpException{
+        auth.logOut();
+        mtpClient.createSession(mtpFileStorage,mtpTransport,true);
+        mtpClient.setSignIn(false);
+    }
+
+    public boolean isUserOn(){
+        return mtpClient.isUserSignedIn();
+    }
+
+    public int getCurrentDcId(){
+        return MtpClient.getInstance().getDc();
+    }
+
+    protected void exportAuthToAll() throws MtpException{
+        for(int i=1;i<6;i++){
+            TlObject exported = auth.exportAuthorization(1);
+            auth.importAuthorization(exported.get("id"),exported.get("bytes"));
+        }
+    }
 
     /* auto generted code from tl schema */
 
@@ -519,12 +553,17 @@ public class TelegramApi {
          * @return auth.Authorization
          */
         public  TlObject signIn ( String phone_number, String phone_code_hash, String phone_code) throws MtpException {
-            return generate(
+           TlObject auth = generate(
 
                     new Pair("phone_number", phone_number),
                     new Pair("phone_code_hash", phone_code_hash),
                     new Pair("phone_code", phone_code)
             );
+            if(auth.getName().equals("auth.authorization")) {
+                exportAuthToAll();
+                mtpClient.setSignIn(true);
+            }
+            return auth;
         }
 
         /**
@@ -532,6 +571,7 @@ public class TelegramApi {
          * @return Bool
          */
         public  TlObject logOut () throws MtpException {
+            mtpClient.setSignIn(false);
             return generate(
 
             );
@@ -1410,36 +1450,32 @@ public class TelegramApi {
             );
         }
 
-        ////// TODO: 6/27/16 fix flags
-    //    /**
-    //     *
-    //     * @param flags  (TL Definition : #)
-    //     * @param important_only  (TL Definition : flags.0?true)
-    //     * @param peer  (TL Definition : InputPeer)
-    //     * @param q  (TL Definition : string)
-    //     * @param filter  (TL Definition : MessagesFilter)
-    //     * @param min_date  (TL Definition : int)
-    //     * @param max_date  (TL Definition : int)
-    //     * @param offset  (TL Definition : int)
-    //     * @param max_id  (TL Definition : int)
-    //     * @param limit  (TL Definition : int)
-    //     * @return messages.Messages
-    //     */
-    //    public  TlObject search ( # flags, flags.0?true important_only, TlObject peer, String q, TlObject filter, int min_date, int max_date, int offset, int max_id, int limit) throws MtpException {
-    //        return generate(
-    //
-    //                new Pair("flags", flags),
-    //                new Pair("important_only", important_only),
-    //                new Pair("peer", peer),
-    //                new Pair("q", q),
-    //                new Pair("filter", filter),
-    //                new Pair("min_date", min_date),
-    //                new Pair("max_date", max_date),
-    //                new Pair("offset", offset),
-    //                new Pair("max_id", max_id),
-    //                new Pair("limit", limit)
-    //        );
-    //    }
+        /**
+         *
+         * @param peer  (TL Definition : InputPeer)
+         * @param q  (TL Definition : string)
+         * @param filter  (TL Definition : MessagesFilter)
+         * @param min_date  (TL Definition : int)
+         * @param max_date  (TL Definition : int)
+         * @param offset  (TL Definition : int)
+         * @param max_id  (TL Definition : int)
+         * @param limit  (TL Definition : int)
+         * @return messages.Messages
+         */
+        public  TlObject search ( TlObject peer, String q, TlObject filter, int min_date, int max_date, int offset, int max_id, int limit) throws MtpException {
+            return generate(
+
+                    new Pair("flags", 0),
+                    new Pair("peer", peer),
+                    new Pair("q", q),
+                    new Pair("filter", filter),
+                    new Pair("min_date", min_date),
+                    new Pair("max_date", max_date),
+                    new Pair("offset", offset),
+                    new Pair("max_id", max_id),
+                    new Pair("limit", limit)
+            );
+        }
 
         /**
          *
@@ -1508,33 +1544,31 @@ public class TelegramApi {
         }
 
         // TODO: 6/27/16 fix flags
-    //    /**
-    //     *
-    //     * @param flags  (TL Definition : #)
-    //     * @param no_webpage  (TL Definition : flags.1?true)
-    //     * @param broadcast  (TL Definition : flags.4?true)
-    //     * @param peer  (TL Definition : InputPeer)
-    //     * @param reply_to_msg_id  (TL Definition : flags.0?int)
-    //     * @param message  (TL Definition : string)
-    //     * @param random_id  (TL Definition : long)
-    //     * @param reply_markup  (TL Definition : flags.2?ReplyMarkup)
-    //     * @param entities  (TL Definition : flags.3?Vector<MessageEntity>)
-    //     * @return Updates
-    //     */
-    //    public  TlObject sendMessage ( # flags, flags.1?true no_webpage, flags.4?true broadcast, TlObject peer, flags.0?int reply_to_msg_id, String message, long random_id, flags.2?ReplyMarkup reply_markup, flags.3?Vector<MessageEntity> entities) throws MtpException {
-    //        return generate(
-    //
-    //                new Pair("flags", flags),
-    //                new Pair("no_webpage", no_webpage),
-    //                new Pair("broadcast", broadcast),
-    //                new Pair("peer", peer),
-    //                new Pair("reply_to_msg_id", reply_to_msg_id),
-    //                new Pair("message", message),
-    //                new Pair("random_id", random_id),
-    //                new Pair("reply_markup", reply_markup),
-    //                new Pair("entities", entities)
-    //        );
-    //    }
+//        /**
+//         *
+//         * @param flags  (TL Definition : #)
+//         *         no_webpage  (TL Definition : flags.1?true)
+//         *         broadcast  (TL Definition : flags.4?true)
+//         * @param peer  (TL Definition : InputPeer)
+//         * @param reply_to_msg_id  (TL Definition : flags.0?int)
+//         * @param message  (TL Definition : string)
+//         * @param random_id  (TL Definition : long)
+//         * @param reply_markup  (TL Definition : flags.2?ReplyMarkup)
+//         * @param entities  (TL Definition : flags.3?Vector<MessageEntity>)
+//         * @return Updates
+//         */
+//        public  TlObject sendMessage ( flags flags, TlObject peer, flags.0?int reply_to_msg_id, String message, long random_id, flags.2?ReplyMarkup reply_markup, flags.3?Vector<MessageEntity> entities) throws MtpException {
+//            return generate(
+//
+//                    new Pair("flags", flags),
+//                    new Pair("peer", peer),
+//                    new Pair("reply_to_msg_id", reply_to_msg_id),
+//                    new Pair("message", message),
+//                    new Pair("random_id", random_id),
+//                    new Pair("reply_markup", reply_markup),
+//                    new Pair("entities", entities)
+//            );
+//        }
 
         ////// TODO: 6/27/16  fix flags
     //    /**

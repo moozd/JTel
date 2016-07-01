@@ -31,6 +31,10 @@ public class Logger implements ILogger {
     private static Logger ins;
 
 
+    @Override
+    public void log(Colors color, Object... os) {
+        context.log(color,os);
+    }
 
     @Override
     public void log(Object... os) {

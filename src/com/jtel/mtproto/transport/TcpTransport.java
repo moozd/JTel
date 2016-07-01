@@ -17,7 +17,7 @@
 
 package com.jtel.mtproto.transport;
 
-import com.jtel.mtproto.secure.Util;
+import com.jtel.mtproto.secure.Utils;
 import com.jtel.mtproto.storage.ConfStorage;
 import com.jtel.mtproto.tl.InvalidTlParamException;
 import com.jtel.mtproto.tl.Streams;
@@ -61,6 +61,6 @@ public class TcpTransport extends Transport {
       //  socket.getOutputStream().flush();
        // socket.getOutputStream().close();
         errorCode = 200;
-        return Util.toByteArray(socket.getInputStream());
+        return Utils.toByteArray(socket.getInputStream());
     }
 }

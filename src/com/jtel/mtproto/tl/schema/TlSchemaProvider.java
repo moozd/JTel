@@ -37,7 +37,6 @@ package com.jtel.mtproto.tl.schema;
 import com.jtel.mtproto.tl.TlMethod;
 import com.jtel.mtproto.tl.TlObject;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -97,7 +96,7 @@ public abstract class TlSchemaProvider {
         }
 
         for (TlObject o : constructors) {
-            if (o.getPredicate().equals(predicate)) {
+            if (o.getName().equals(predicate)) {
                 //System.out.println(o);
                 return o;
             }
@@ -168,12 +167,12 @@ public abstract class TlSchemaProvider {
     public TlMethod getMethod(String method){
         initialize();
         for (TlMethod o : mtpSchema.methods) {
-            if (o.getMethodName().equals(method)) {
+            if (o.getName().equals(method)) {
                 return o;
             }
         }
         for (TlMethod o : apiSchema.methods) {
-            if (o.getMethodName().equals(method)) {
+            if (o.getName().equals(method)) {
                 return o;
             }
         }

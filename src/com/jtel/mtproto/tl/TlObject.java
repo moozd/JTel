@@ -19,17 +19,12 @@ package com.jtel.mtproto.tl;
 
 import com.jtel.common.log.Logger;
 import com.jtel.mtproto.tl.schema.TlSchemaProvider;
-import com.sun.org.apache.xerces.internal.impl.dv.util.HexBin;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.zip.GZIPInputStream;
 
 import static com.jtel.mtproto.tl.Streams.*;
 /**
@@ -43,14 +38,16 @@ import static com.jtel.mtproto.tl.Streams.*;
 
 public class TlObject implements Tl {
 
-    private int     id;
-    private String  predicate;
-    private String  type;
+    private int      id;
+    private int      flags;
+    private String predicate;
+    private String   type;
     private TlpFlags pFlags;
-    private int     flags;
     private List<TlParam> params;
 
+
     private Logger console = Logger.getInstance();
+
     public TlObject(){
         this.id     = 0;
         this.predicate = "unknown";
@@ -58,6 +55,7 @@ public class TlObject implements Tl {
         this.type   =  "unknown";
         this.pFlags = new TlpFlags();
     }
+
     public TlObject(String predicate) throws IOException{
 
         TlSchemaProvider schemaManagerService = TlSchemaProvider.getInstance();
@@ -77,7 +75,7 @@ public class TlObject implements Tl {
         this.predicate = object.predicate;
         this.params    = object.params;
         this.type      = object.type;
-        this.pFlags = object.getpFlags();
+        this.pFlags    = object.getpFlags();
     }
 
     public TlObject put(String field, Object o) {
@@ -91,44 +89,35 @@ public class TlObject implements Tl {
         return this;
     }
 
-    public String getPredicate() {
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    @Override
+    public String getName() {
         return predicate;
-    }
-
-    public int getFlags() {
-        return flags;
-    }
-
-    public void setFlags(int flags) {
-        this.flags = flags;
-    }
-
-    public TlpFlags getpFlags() {
-        return pFlags;
     }
 
     public String getType() {
         return type;
     }
 
-    public List<TlParam> getParams() {
-        return params;
-    }
-
-    @Override
-    public String getEntityName() {
-        return predicate;
-    }
-
-    @Override
     public int getId() {
         return id;
     }
 
-    @Override
-    public TlType getEntityType() {
-        return TlType.Object;
+    public int getFlags() {
+        return flags;
     }
+
+    public TlpFlags getpFlags() {
+        return pFlags;
+    }
+
+    public List<TlParam> getParams() {
+        return params;
+    }
+
 
     public <T> T get(String field){
         for (TlParam param : params) {
@@ -140,64 +129,47 @@ public class TlObject implements Tl {
         return null;
     }
 
+
+    public void setParams(List<TlParam> params) {
+        this.params = params;
+    }
+
+    public void setFlags(int flags) {
+        this.flags = flags;
+    }
+
     public void setType(String type) {
         this.type = type;
     }
 
-    public void setPredicate(String predicate) {
-        this.predicate = predicate;
+    public void setName(String name) {
+        this.predicate = name;
     }
+
 
     @Override
     public byte[] serialize() throws IOException,InvalidTlParamException {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
-        writeInt(os,id,predicate);
-        writeParams(os,params,predicate+" params");
+        writeObject(os,type,this);
         return os.toByteArray();
     }
 
 
-    @Override
-    public byte[] serializeBare() throws IOException, InvalidTlParamException {
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        writeParams(os,params,predicate+" params");
-        return os.toByteArray();
-    }
-
-    @Override
-    public void deserializeBare(InputStream is, String type) throws IOException{
-        TlObject object = TlSchemaProvider.getInstance().getFirstDefinition(type.substring(1));
-        if(object == null){
-            console.error("not found",type);
-            throw new IOException("constructor " + type + "does not exists in current schema layer");
-        }
-        this.id        = object.id;
-        this.predicate = object.predicate;
-        this.type      = object.type;
-        this.params    = object.params;
-        restoreParams(is);
-    }
 
     @Override
     public void deSerialize(InputStream is) throws IOException {
-        int  id = readInt(is);
-        TlObject object = null;
+
         try {
-            object = (TlObject) TlSchemaProvider.getInstance().getConstructor(id).clone();
+            TlObject obj = (TlObject)((TlObject) readObject(is, "").getValue()).clone();
+            this.id = obj.id;
+            this.predicate = obj.predicate;
+            this.type = obj.type;
+            this.params = obj.params;
+            this.pFlags = obj.pFlags;
+            this.flags = obj.flags;
         }catch (Exception e){
-            throw new IOException("clone failed, cannot cast constructor.");
 
         }
-        if(object == null){
-            throw new IOException("constructor " + type + "does not exists in current schema layer");
-        }
-        this.id        = object.id;
-        this.predicate = object.predicate;
-        this.type      = object.type;
-        this.params    = object.params;
-        this.pFlags    = new TlpFlags();
-        setFlags(0);
-        restoreParams(is);
     }
 
 
@@ -213,44 +185,10 @@ public class TlObject implements Tl {
         return object;
     }
 
-    private void restoreParams(InputStream is) throws IOException{
-        for (Iterator<TlParam> iterator = params.iterator(); iterator.hasNext(); ) {
-            TlParam toProcess = iterator.next();
-            TlParam processed = readParam(is, toProcess, getFlags());
-            if (processed.isConditionalType() && processed.getValue().equals("skip")) {
-                iterator.remove();
-                continue;
-            }
-            if (processed.getType().equals("#")) {
-                setFlags(processed.getValue());
-                iterator.remove();
-
-            } else if (processed.isConditionalType() && processed.getValue().equals("true")) {
-                getpFlags().addFlag(processed.getName());
-                iterator.remove();
-            } else {
-                toProcess = processed;
-            }
-        }
-        checkAndReadGzip();
-    }
-
-
-    private void checkAndReadGzip() throws IOException {
-        if(predicate.equals("gzip_packed")){
-            ByteArrayInputStream bis = new ByteArrayInputStream(get("packed_data"));
-            GZIPInputStream gis = new GZIPInputStream(bis);
-            deSerialize(gis);
-        }
-    }
-
 
     @Override
     public String toString() {
-        return String.format("%s#%s (flags:%s,%s) %s  = %s ",predicate ,Integer.toHexString(id),getFlags() ,getpFlags(),params.toString(),type);
+        return String.format("%s#%s (flags:%s,%s) %s", predicate,Integer.toHexString(id),getFlags() ,getpFlags(),params.toString());
     }
 
-    public void toSystemOut(){
-        console.log();
-    }
 }

@@ -110,6 +110,6 @@ public class TlParam {
                 val =getValue();
         }
         }
-        return String.format("%s<%s> %s",name,type,val);
+        return String.format("%s{%s} %s",name,type,val);
     }
 }

@@ -41,7 +41,7 @@ import com.jtel.mtproto.message.UnencryptedMessage;
 import com.jtel.mtproto.storage.ConfStorage;
 import com.jtel.mtproto.auth.pq.Pq;
 import com.jtel.mtproto.auth.pq.PqSolver;
-import com.jtel.mtproto.secure.Util;
+import com.jtel.mtproto.secure.Utils;
 import com.jtel.mtproto.secure.PublicKeyStorage;
 import com.jtel.mtproto.secure.Randoms;
 import com.jtel.mtproto.secure.TimeManager;
@@ -50,9 +50,8 @@ import com.jtel.mtproto.tl.TlMethod;
 import com.jtel.mtproto.tl.TlObject;
 import com.jtel.mtproto.transport.Transport;
 import com.jtel.mtproto.transport.TransportException;
-import org.junit.experimental.theories.suppliers.TestedOn;
 
-import static com.jtel.mtproto.secure.Util.*;
+import static com.jtel.mtproto.secure.Utils.*;
 
 import java.io.*;
 import java.math.BigInteger;
@@ -191,9 +190,9 @@ public final class AuthManager {
         //at the end we should add padding to to this new array
         //after that result array will be exactly 256 bytes.
         byte[] pqInner  = p_q_inner_data.serialize();
-        byte[] hash     = Util.SHA1(pqInner);
+        byte[] hash     = Utils.SHA1(pqInner);
         byte[] padding  = Randoms.nextRandomBytes(255 - hash.length- pqInner.length);
-        byte[] data_with_hash = Util.concat(hash,pqInner, padding);
+        byte[] data_with_hash = Utils.concat(hash,pqInner, padding);
 
         //after registering api_id on Telegram server they will give you a public key
         //they have limited count of public keys that are available at any Telegram
@@ -202,7 +201,7 @@ public final class AuthManager {
         //public key you must iterate list of keys that telegram gave you to match
         //fingerprints (the one server gave you and one your public key has) then you
         //can encrypt p_q_inner data by using RSA  and public key
-        byte[] encrypted_data = Util.RSA(data_with_hash, PublicKeyStorage.modulus, PublicKeyStorage.exponent);
+        byte[] encrypted_data = Utils.RSA(data_with_hash, PublicKeyStorage.modulus, PublicKeyStorage.exponent);
 
         //step 2 starts from here , starting dh key exchange
         //by invoking req_DH_params method
@@ -221,7 +220,7 @@ public final class AuthManager {
         //if not it will respond with "server_DH_params_ok" . in case it fails i will restart
         // the whole operation
 
-        if(Server_Dh_Params.getPredicate().equals("server_DH_params_fail")){
+        if(Server_Dh_Params.getName().equals("server_DH_params_fail")){
             console.error("dh key exchange failed","retrying...");
             return authAttempt(dcid);
 
@@ -232,13 +231,13 @@ public final class AuthManager {
         byte[] encrypted_answer = Server_Dh_Params.get("encrypted_answer");
 
         //to decrypt aes.ige we should generate a key and iv.
-        byte[] tmp_key = concat(Util.SHA1(concat(new_nonce,server_nonce)), subArray(Util.SHA1(concat(server_nonce,new_nonce)),0,12));
-        byte[] tmp_iv  = concat(subArray(Util.SHA1(concat(server_nonce,new_nonce)),12), Util.SHA1(concat(new_nonce,new_nonce)),subArray(new_nonce,0,4));
+        byte[] tmp_key = concat(Utils.SHA1(concat(new_nonce,server_nonce)), subArray(Utils.SHA1(concat(server_nonce,new_nonce)),0,12));
+        byte[] tmp_iv  = concat(subArray(Utils.SHA1(concat(server_nonce,new_nonce)),12), Utils.SHA1(concat(new_nonce,new_nonce)),subArray(new_nonce,0,4));
         byte[] answer_with_hash = new byte[encrypted_answer.length];
 
         TimeManager timeManager = TimeManager.getInstance();
         //decrypting...
-        Util.AES256IGEDecrypt(encrypted_answer,answer_with_hash,tmp_iv,tmp_key);
+        Utils.AES256IGEDecrypt(encrypted_answer,answer_with_hash,tmp_iv,tmp_key);
         long time = (timeManager.getUTCTime());
 
         //first 20 bytes of encrypted answer is answer hash and the rest of it
@@ -284,7 +283,7 @@ public final class AuthManager {
 
         //serialize this object and create sha1(data)+data+padding
         byte[] clientInnerData = client_DH_inner_data.serialize();
-        byte[] data_with_sha   = concat(Util.SHA1(clientInnerData),clientInnerData);
+        byte[] data_with_sha   = concat(Utils.SHA1(clientInnerData),clientInnerData);
 
         //creating padding bytes length,padding bytes are random
         int pad =data_with_sha.length;
@@ -310,7 +309,7 @@ public final class AuthManager {
 
         //creating auth_key -> (g^b) % dh_prime
         byte[] auth_key = fromBigInt(gaInt.modPow(bInt,dhPrimeInt));
-        byte[] auth_key_sha = Util.SHA1(auth_key);
+        byte[] auth_key_sha = Utils.SHA1(auth_key);
         byte[] auth_key_sha_aux = subArray(auth_key_sha,0,8);
         byte[] auth_key_id =subArray(auth_key_sha,auth_key_sha.length-8,8);
 
@@ -319,7 +318,7 @@ public final class AuthManager {
         byte[] new_nonce_hash_3 = subArray(SHA1(concat(new_nonce,new byte[]{3},auth_key_sha_aux)),4,16);
 
         //if server returns dh_gen_ok object then dh key exchange is done successfully
-        switch(set_client_DH_params.getPredicate()) {
+        switch(set_client_DH_params.getName()) {
             case "dh_gen_ok":
 
                 if(!bytesCmp(new_nonce_hash_1,set_client_DH_params.get("new_nonce_hash1"))){

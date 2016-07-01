@@ -28,9 +28,7 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.jtel.mtproto.tl.Streams.writeInt;
-import static com.jtel.mtproto.tl.Streams.writeParams;
+import static com.jtel.mtproto.tl.Streams.writeMethod;
 
 /**
  * This file is part of JTel
@@ -41,29 +39,26 @@ import static com.jtel.mtproto.tl.Streams.writeParams;
  * @author <a href="mailto:mohammad.mdz72@gmail.com">Mohammad Mohammad Zade</a>
  */
 
-public class TlMethod implements Tl {
-    private int id;
-    private String method;
-    private List<TlParam> params;
-    private String type;
+public class TlMethod extends TlObject {
+    private String method;;
 
     public TlMethod(String methodName) throws IOException{
         TlSchemaProvider schemaManagerService = TlSchemaProvider.getInstance();
         TlMethod method = schemaManagerService.getMethod(methodName);
-        this.id     = method.id;
+        setId( method.getId());
         this.method = method.method;
-        this.params = method.params;
-        this.type   = method.type;
+        setParams(method.getParams());
+        setType(method.getType());
 
     }
     public  TlMethod(){
         method ="unknown";
-        params = new ArrayList<>();
-        type   = "unknown";
+        setParams(new ArrayList<>());
+        setType("unknown");
     }
     @Nullable
     public TlMethod put(String field, @Nullable Object o) {
-        for (TlParam param : params) {
+        for (TlParam param : getParams()) {
             if(param.getName().equals(field)){
                 param.setValue(o);
                 return this;
@@ -72,59 +67,34 @@ public class TlMethod implements Tl {
         return this;
     }
 
-    public String getType() {
-        return type;
-    }
-
-    public String getMethodName() {
+    @Override
+    public String getName() {
         return method;
     }
 
-    public List<TlParam> getParams() {
-        return params;
+    @Override
+    public void setName(String name) {
+        method = name;
     }
 
     @Override
     public byte[] serialize() throws IOException,InvalidTlParamException {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
-        writeInt(os,id,method);
-        writeParams(os,params,method + " params");
+        writeMethod(os,this);
         return os.toByteArray();
     }
 
-    @Override
-    public byte[] serializeBare() throws IOException, InvalidTlParamException {
-        throw new NotImplementedException();
-    }
+
 
     @Override
     public void deSerialize(InputStream is) throws IOException {
         throw  new NotImplementedException();
     }
 
-    @Override
-    public void deserializeBare(InputStream is, String type) throws IOException {
-        throw  new NotImplementedException();
-    }
-
-    @Override
-    public String getEntityName() {
-        return method;
-    }
-
-    @Override
-    public int getId() {
-        return id;
-    }
-
-    @Override
-    public TlType getEntityType() {
-        return TlType.Method;
-    }
 
     @Override
     public String toString() {
-        return String.format("%s#%s %s = %s",method, HexBin.encode( ByteBuffer.allocate(4).putInt(id).array()),params.toString(),type);
+        return String.format("%s#%s %s = %s",method, HexBin.encode( ByteBuffer.allocate(4).putInt(getId()).array()),getParams().toString(),getType());
     }
 
 

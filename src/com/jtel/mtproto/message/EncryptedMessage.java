@@ -52,7 +52,7 @@
 package com.jtel.mtproto.message;
 
 import com.jtel.common.log.Logger;
-import com.jtel.mtproto.secure.Util;
+import com.jtel.mtproto.secure.Utils;
 import com.jtel.mtproto.tl.InvalidTlParamException;
 import com.jtel.mtproto.tl.Tl;
 import com.jtel.mtproto.tl.TlObject;
@@ -89,6 +89,7 @@ public class EncryptedMessage extends TlMessage {
 
         //serializing method
         byte[] message = prepareBody(toByteArray());
+        //console.table(message,getContext().getName());
 
         //message frame required fields
         byte[] auth_key_id   = rpcHeaders.getAuthKeyId();
@@ -109,8 +110,8 @@ public class EncryptedMessage extends TlMessage {
         writeInt(plain_text,message.length,"message_length");
         plain_text.write(message);
 
-        byte[] msg_key_sha = Util.SHA1(plain_text.toByteArray());
-        byte[] msg_key = Util.subArray(msg_key_sha,msg_key_sha.length-16, 16);
+        byte[] msg_key_sha = Utils.SHA1(plain_text.toByteArray());
+        byte[] msg_key = Utils.subArray(msg_key_sha,msg_key_sha.length-16, 16);
 
         int pad = plain_text.toByteArray().length;
         while (pad%16 !=0){
@@ -119,8 +120,8 @@ public class EncryptedMessage extends TlMessage {
         }
       //  console.table(plain_text.toByteArray(),"send");
         byte[] encrypted_data = new byte[pad];
-        Map<String,byte[]> keys = Util.getAESKeyIV(msg_key,rpcHeaders.getAuthKey(), true);
-        Util.AES256IGEEncrypt(plain_text.toByteArray(),encrypted_data, keys.get("iv"),keys.get("key"));
+        Map<String,byte[]> keys = Utils.getAESKeyIV(msg_key,rpcHeaders.getAuthKey(), true);
+        Utils.AES256IGEEncrypt(plain_text.toByteArray(),encrypted_data, keys.get("iv"),keys.get("key"));
         mainStream.write(auth_key_id);
         mainStream.write(msg_key);
         mainStream.write(encrypted_data);
@@ -136,14 +137,14 @@ public class EncryptedMessage extends TlMessage {
     public void deSerialize(InputStream is) throws IOException {
         byte[] auth_id = new byte[8];
         is.read(auth_id);
-        if(!Util.bytesCmp(auth_id, getHeaders().getAuthKeyId())){
+        if(!Utils.bytesCmp(auth_id, getHeaders().getAuthKeyId())){
             console.warn("auth_key_id" ,"dose not match.");
         }
         byte[] msg_key = readIntBytes(is,128);
-        byte[] encrypted = Util.toByteArray(is);
-        Map<String,byte[]> aesKey =  Util.getAESKeyIV(msg_key, getHeaders().getAuthKey(),false);
+        byte[] encrypted = Utils.toByteArray(is);
+        Map<String,byte[]> aesKey =  Utils.getAESKeyIV(msg_key, getHeaders().getAuthKey(),false);
         byte[] decrypted = new byte[encrypted.length];
-        Util.AES256IGEDecrypt(encrypted,decrypted,aesKey.get("iv"),aesKey.get("key"));
+        Utils.AES256IGEDecrypt(encrypted,decrypted,aesKey.get("iv"),aesKey.get("key"));
 
         ByteArrayInputStream msgInputStream = new ByteArrayInputStream(decrypted);
 
@@ -157,7 +158,6 @@ public class EncryptedMessage extends TlMessage {
 
         msgInputStream.read(innerMessage);
         TlObject object = new TlObject();
-       // console.table(innerMessage,getContext().type);
         object.deSerialize(new ByteArrayInputStream(innerMessage));
 
         MessageResponse rpcResponse = new MessageResponse();

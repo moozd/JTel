@@ -96,7 +96,7 @@ public class UnencryptedMessage extends TlMessage {
         os.write(message);
         if (conf.debug()){
             console.log(getContext());
-            console.table(os.toByteArray(), getContext().getEntityName());
+            console.table(os.toByteArray(),"method");
         }
         return os.toByteArray();
     }
@@ -123,7 +123,7 @@ public class UnencryptedMessage extends TlMessage {
 
         if(conf.debug()){
             console.log(responseObject);
-            console.table(responseBytes,responseObject.getPredicate());
+            console.table(responseBytes,responseObject.getName());
         }
 
         MessageResponse response = new MessageResponse();
