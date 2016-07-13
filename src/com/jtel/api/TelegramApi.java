@@ -78,15 +78,24 @@ public class TelegramApi {
 
 
         if(isUserOn()){
-         TlObject fullUser = null;
+            TlObject fullUser = null;
+            TlObject terms   = null;
             try {
                 fullUser = users.getFullUser(new TlObject("inputUserSelf")).get("user");
+                terms = help.getTermsOfService("en");
             }catch (IOException e){
                 //pass
             }
             if(fullUser != null){
                 console.log(Colors.CYAN, "welcome",  fullUser.get("first_name"),"(phone: "+fullUser.get("phone") + ")");
             }
+
+            if(terms != null){
+                System.out.println(Colors.YELLOW+"Terms Of Service");
+                System.out.println(Colors.BLUE +terms.get("text").toString() + Colors.RESET);
+            }
+
+
         }
    }
 

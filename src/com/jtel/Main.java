@@ -20,26 +20,19 @@ package com.jtel;
 
 import com.jtel.api.TelegramApi;
 import com.jtel.common.log.Logger;
-import com.jtel.mtproto.storage.ConfStorage;
 import com.jtel.mtproto.storage.MtpFileStorage;
-import com.jtel.mtproto.tl.Tl;
-import com.jtel.mtproto.tl.TlMethod;
 import com.jtel.mtproto.tl.TlObject;
-import com.jtel.mtproto.tl.TlParam;
-import com.jtel.mtproto.tl.schema.TlSchemaProvider;
 import com.jtel.mtproto.transport.HttpTransport;
-
-import java.io.ByteArrayInputStream;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.util.List;
 import java.util.Scanner;
+
+
 
 public class Main {
 
     static Scanner scanner = new Scanner(System.in);
     static Logger console = Logger.getInstance();
+
     public static void main(String[] args) throws Exception {
 
         try {
@@ -62,7 +55,6 @@ public class Main {
             }
 
         }catch (Exception e){
-           //console.error(e.getMessage(),e.getCause().getMessage());
             e.printStackTrace();
         }
     }
@@ -73,4 +65,7 @@ public class Main {
         System.out.print("[waiting for user input] "+message + " ");
         return scanner.next();
     }
+
+
+
 }

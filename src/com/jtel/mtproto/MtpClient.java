@@ -59,7 +59,7 @@ import java.util.*;
 
 public class MtpClient {
 
-    private final String TAG = getClass().getSimpleName();
+    private final String TAG = "Client";
     /**
      * class instance to hold single instance of it
      */
@@ -328,7 +328,7 @@ public class MtpClient {
         TlMessage message = new InitConnectionMessage(createMessageHeaders(currentDc,false));
         TlObject nearestDc =sendMessage(message);
         TlMethod method = message.getContext();
-        console.log(Colors.YELLOW,TAG,"conf    >","country="+nearestDc.get("country"),"dc="+nearestDc.get("nearest_dc"));
+        console.log(Colors.CYAN,TAG,"","country="+nearestDc.get("country"),"dc="+nearestDc.get("nearest_dc"));
         setDc(nearestDc.get("nearest_dc"));
 
     }
@@ -362,15 +362,14 @@ public class MtpClient {
      *         @see com.jtel.mtproto.tl.TlObject
      */
     protected TlObject sendMessage(TlMessage message) throws MtpException{
-       // clearPublishedResponse();
+        long t = System.currentTimeMillis();
         try {
-            long t = System.currentTimeMillis();
-            console.log(Colors.YELLOW,TAG,"request >","(dc:"+getDc()+")",message.getContext().getName());
+            console.log(Colors.PURPLE,"Client","request  >","(dc:"+getDc()+")",message.getContext().getName());
             byte[] msg = message.serialize();
             int currentDc = getDc();
             byte[] response = transport.send(currentDc, msg);
             message.deSerialize(new ByteArrayInputStream(response));
-            console.log(Colors.GREEN,TAG,"finished in ",(System.currentTimeMillis()-t)/1000F+"s");
+            console.log(Colors.GREEN,"Server","< response",(System.currentTimeMillis()-t)/1000F+"s");
             sentQueue.push(message);
         }
         catch (TransportException e){
@@ -386,7 +385,8 @@ public class MtpClient {
 
         }
 
-        return  processResponse(message.getHeaders().getMessageId(),message.getResponse().getObject().getName(),message.getResponse().getObject());
+        TlObject ret =  processResponse(message.getHeaders().getMessageId(),message.getResponse().getObject().getName(),message.getResponse().getObject());
+        return ret;
     }
 
     protected TlObject processResponse(long messageId,String predicate,TlObject response) throws MtpException{
