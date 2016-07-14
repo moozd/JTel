@@ -35,11 +35,14 @@ import com.jtel.mtproto.tl.*;
 
 import com.jtel.mtproto.transport.Transport;
 import com.jtel.mtproto.transport.TransportException;
+import com.sun.corba.se.impl.protocol.giopmsgheaders.Message;
 
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 /**
@@ -370,7 +373,7 @@ public class MtpClient {
             byte[] response = transport.send(currentDc, msg);
             message.deSerialize(new ByteArrayInputStream(response));
             console.log(Colors.GREEN,"Server","< response",(System.currentTimeMillis()-t)/1000F+"s");
-            sentQueue.push(message);
+            if(!(message instanceof AckMessage))sentQueue.push(message);
         }
         catch (TransportException e){
             throw new MtpException(MtpStates.NETWORK_FAILED,  e.getMessage(),e);
@@ -442,7 +445,7 @@ public class MtpClient {
             return processResponse(ack.getHeaders().getMessageId(),res.getName(),res);
     }
 
-    protected TlObject handleRpc(long messageId,TlObject rpc){
+    protected TlObject handleRpc(long messageId,TlObject rpc) throws MtpException{
 
         TlObject rpcResult = rpc.get("result");
 
@@ -450,6 +453,18 @@ public class MtpClient {
             String   error =rpcResult.get("error_message");;
             switch ((int)rpcResult.get("error_code")){
                 case 303:
+                    String pattern = "/(\\w+_)(\\d+)/g";
+                    Pattern r = Pattern.compile(pattern);
+                    Matcher matcher = r.matcher(error);
+                    String type = matcher.group(0);
+                    int value   = Integer.parseInt(matcher.group(2));
+                    if(type.equals("FILE_MIGRATE_") || type.equals("PHONE_MIGRATE_")){
+                        console.error(error);
+                        setDc(value);
+                        TlMessage message = sentQueue.poll();
+                        return sendMessage(message);
+                    }
+                    break;
                 case 420:
                     int X =Integer.parseInt(error.substring(error.lastIndexOf("_")+1));
                     String tag = error.substring(0,error.lastIndexOf("_"));

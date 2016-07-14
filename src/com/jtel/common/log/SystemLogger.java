@@ -58,9 +58,7 @@ public class SystemLogger implements ILogger {
         for (Object l : o){
             t += String.format(" %s ", l );
         }
-        DateFormat dateFormat = new SimpleDateFormat("yy/MM/dd HH:mm");
-        Date date = new Date();
-        return String.format(" %s%s: %s%s%s | %s%s %s  %s " ,Colors.WHITE,createLogNum(),color2,superTag,Colors.RESET.toString(),"",Colors.RESET.toString()+color.toString(),tag,t);
+        return String.format(" > %s %s  %s " ,Colors.RESET.toString()+color.toString(),tag,t);
     }
     @Override
     public synchronized void log(Object... os) {
