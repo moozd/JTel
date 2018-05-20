@@ -94,10 +94,6 @@ public class UnencryptedMessage extends TlMessage {
         writeLong(os,( getHeaders().getMessageId()),"Message ID");
         writeInt(os,message.length,"Message length");
         os.write(message);
-        if (conf.debug()){
-            console.log(getContext());
-            console.table(os.toByteArray(),"method");
-        }
         return os.toByteArray();
     }
 
@@ -107,11 +103,11 @@ public class UnencryptedMessage extends TlMessage {
         long message_id = readLong(is);
         int message_len = readInt(is);
 
-        if(conf.debug()){
-            console.log("auth_id",auth_id);
-            console.log("msg_id",message_id);
-            console.log("msg_len",message_len);
-        }
+//        if(conf.debug()){
+//            console.log("auth_id",auth_id);
+//            console.log("msg_id",message_id);
+//            console.log("msg_len",message_len);
+//        }
 
         byte[] responseBytes = new byte[message_len];
         is.read(responseBytes);
@@ -121,10 +117,10 @@ public class UnencryptedMessage extends TlMessage {
         responseObject.deSerialize(bis);
 
 
-        if(conf.debug()){
-            console.log(responseObject);
-            console.table(responseBytes,responseObject.getName());
-        }
+//        if(conf.debug()){
+//            console.log(responseObject);
+//            console.table(responseBytes,responseObject.getName());
+//        }
 
         MessageResponse response = new MessageResponse();
         response.setAuthKeyId(new byte[8]);

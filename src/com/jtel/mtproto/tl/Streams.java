@@ -49,8 +49,11 @@ public final class Streams {
 
     private static ConfStorage  conf = ConfStorage.getInstance();
     private static Logger console = Logger.getInstance();
-    private final static boolean DEBUG = conf.debug();
+    private final static boolean DEBUG = false;
 
+    public static void writeByte(byte v, OutputStream stream) throws IOException {
+        stream.write(v);
+    }
 
     /*-----------------------------------------------------------------------------*/
     public static void writeIntBytes(OutputStream os, byte[] b,int len,String field)    throws IOException {
@@ -63,18 +66,39 @@ public final class Streams {
 
     if (DEBUG)       console.log(String.format("%s<%s%s>:%s",field,"Int",b.length*8,HexBin.encode(b)));
     }
-    public static void writeInt     (OutputStream os, int n, String field)              throws IOException {
-            ByteBuffer buffer = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN);
-        buffer.putInt(n);
-        os.write(buffer.array());
-        if(field.equals("")) return;
-        if (DEBUG) console.log(String.format("%s<%s>:%s",field,"int",n));
+
+
+    public static void writeInt(OutputStream stream,int v,String field) throws IOException {
+        writeByte((byte) (v & 0xFF), stream);
+        writeByte((byte) ((v >> 8) & 0xFF), stream);
+        writeByte((byte) ((v >> 16) & 0xFF), stream);
+        writeByte((byte) ((v >> 24) & 0xFF), stream);
     }
-    public static void writeLong    (OutputStream os, long num, String field)           throws IOException {
-        byte[] bu = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN).putLong(num).array();
-        os.write(bu);
-        if (DEBUG)  console.log(String.format("%s<%s>:%s",field,"long",HexBin.encode(bu)));
+
+    public static void writeLong(OutputStream stream,long v,String f) throws IOException {
+        writeByte((byte) (v & 0xFF), stream);
+        writeByte((byte) ((v >> 8) & 0xFF), stream);
+        writeByte((byte) ((v >> 16) & 0xFF), stream);
+        writeByte((byte) ((v >> 24) & 0xFF), stream);
+
+        writeByte((byte) ((v >> 32) & 0xFF), stream);
+        writeByte((byte) ((v >> 40) & 0xFF), stream);
+        writeByte((byte) ((v >> 48) & 0xFF), stream);
+        writeByte((byte) ((v >> 56) & 0xFF), stream);
     }
+
+//    public static void writeInt     (OutputStream os, int n, String field)              throws IOException {
+//            ByteBuffer buffer = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN);
+//        buffer.putInt(n);
+//        os.write(buffer.array());
+//        if(field.equals("")) return;
+//        if (DEBUG) console.log(String.format("%s<%s>:%s",field,"int",n));
+//    }
+//    public static void writeLong    (OutputStream os, long num, String field)           throws IOException {
+//        byte[] bu = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN).putLong(num).array();
+//        os.write(bu);
+//        if (DEBUG)  console.log(String.format("%s<%s>:%s",field,"long",HexBin.encode(bu)));
+//    }
     public static void writeBool    (OutputStream os, boolean b,String field)           throws IOException {
         if (b) {
             writeInt(os, 0x997275b5,field+"[bool]");
@@ -141,9 +165,9 @@ public final class Streams {
                     return;
                 }
             case "bytes":
-                if(! (object.getValue() instanceof byte[])){
-                    throw new IOException("invalid type for bytes/string");
-                }
+//                if(! (object.getValue() instanceof byte[])){
+//                    throw new IOException("invalid type for bytes/string");
+//                }
                 writeBytes(os,object.getValue(),type);
                 return;
             case "Bool":
@@ -154,7 +178,7 @@ public final class Streams {
                 return;
             case "true":return;
         }
-
+     //   console.log(type);
         if(type.startsWith("Vector") || type.startsWith("vector")){
             String innerType = type.substring(type.indexOf("<")+1,type.indexOf(">"));
             if(!(object.getValue() instanceof  List)){
@@ -184,6 +208,7 @@ public final class Streams {
             writeInt(os,tlObject.getId(),type);
         }
         for (int i =0;i<tlObject.getParams().size();i++){
+       //     console.log(tlObject.getParams().get(i));
             TlParam param = tlObject.getParams().get(i);
             int  flags = tlObject.getFlags();
             String[] condType,fieldBit;
@@ -247,13 +272,34 @@ public final class Streams {
 
         return a + (b << 8) + (c << 16) + (d << 24);
     }
-    public static long   readUInt (InputStream is)      throws IOException {
-        return (long) readInt(is);
+    public static long   readUInt (InputStream stream)      throws IOException {
+        long a = stream.read();
+        if (a < 0) {
+            throw new IOException();
+        }
+        long b = stream.read();
+        if (b < 0) {
+            throw new IOException();
+        }
+        long c = stream.read();
+        if (c < 0) {
+            throw new IOException();
+        }
+        long d = stream.read();
+        if (d < 0) {
+            throw new IOException();
+        }
+
+        return a + (b << 8) + (c << 16) + (d << 24);
     }
     public static long   readLong (InputStream is)      throws IOException {
         long a = readUInt(is);
         long b = readUInt(is);
+
         return a+(b<<32);
+//        byte[] buff =new byte[8];
+//        is.read(buff);
+//        return  ByteBuffer.wrap(buff).order(ByteOrder.LITTLE_ENDIAN).getLong();
     }
     public static byte[] readBytes(InputStream stream)  throws IOException {
 

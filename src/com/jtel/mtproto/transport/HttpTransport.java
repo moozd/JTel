@@ -47,10 +47,12 @@ public class HttpTransport extends Transport {
 
     @Override
     protected byte[] onSend(byte[] message) throws IOException,InvalidTlParamException {
+    // console.log("Http", "sending rpc [",message.length,"Bytes]");
         connection.getOutputStream().write(message);
         connection.getOutputStream().flush();
         connection.getOutputStream().close();
         errorCode = connection.getResponseCode();
+        console.log("Http", "[",message.length,"Bytes] sent.");
         return Utils.toByteArray(connection.getInputStream());
     }
 

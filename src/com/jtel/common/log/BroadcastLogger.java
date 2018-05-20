@@ -18,74 +18,64 @@
 package com.jtel.common.log;
 
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * This file is part of JTel
  * IntelliJ idea.
- * Date     : 6/9/16
- * Package : com.jtel.common
+ * Date     : 7/15/16
+ * Package : com.jtel.common.log
  *
  * @author <a href="mailto:mohammad.mdz72@gmail.com">Mohammad Mohammad Zade</a>
  */
 
-public class Logger implements ILogger {
-    private static Logger ins;
+public class BroadcastLogger implements ILogger{
 
+    public interface Callback {
+        void status(String s);
+    }
+
+   static List<Callback> callback= new ArrayList<>();
+
+    public void setCallback(Callback callback) {
+     BroadcastLogger.callback.add(callback);
+    }
 
     @Override
     public void log(Colors color, Object... os) {
-        context.log(color,os);
-        DEF.log(color,os);
+        log(os);
     }
 
     @Override
-    public void log(Object... os) {
-        context.log(os);
-        DEF.log(os);
-    }
+    public  void log(Object... os) {
 
-    public ILogger getContext() {
-        return context;
+           String a = "";
+
+           for (int i = 0; i < os.length ; i++) {
+               a+=os[i] + " ";
+           }
+        for (int i = 0; i < callback.size() ; i++) {
+            if(callback.get(i) !=null) callback.get(i).status(a);
+        }
+
+
     }
 
     @Override
     public void warn(Object... os) {
-        context.warn(os);
-        DEF.warn(os);
-    }
-
-
-    @Override
-    public void table(byte[] data,String name) {
-           context.table(data,name);
-        DEF.table(data,name);
+        log(os);
     }
 
     @Override
     public void error(Object... os) {
-        context.error(os);
-        DEF.error(os);
+        log(os);
     }
 
-    private ILogger context;
-    private ILogger DEF = new SystemLogger();
+    @Override
+    public void table(byte[] d, String name) {
 
-
-    private Logger(){
-        setContext(new SystemLogger());
     }
 
 
-    public void setContext(ILogger context) {
-        this.context = context;
-    }
-
-
-    public static Logger getInstance() {
-        if (ins == null) {
-            ins = new Logger();
-        }
-        return ins;
-    }
 }

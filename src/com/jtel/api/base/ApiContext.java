@@ -43,8 +43,8 @@ public class ApiContext {
 
     public ApiContext() {
         this.client = client;
-        this.apiId   = ConfStorage.getInstance().getItem("api-id");
-        this.apiHash = ConfStorage.getInstance().getItem("api-hash");
+        this.apiId   = ConfStorage.getInstance().getApiConfiguration().getApiId();
+        this.apiHash = ConfStorage.getInstance().getApiConfiguration().getApiHash();
     }
 
 

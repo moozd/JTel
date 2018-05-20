@@ -34,6 +34,8 @@
 
 package com.jtel.mtproto.storage;
 
+import com.jtel.common.db.ConfApi;
+import com.jtel.common.db.DbContext;
 import com.jtel.common.io.Storage;
 
 /**
@@ -58,34 +60,15 @@ public final class ConfStorage extends Storage {
 
 
     public ConfStorage() {
-        setItem("debug",false);
-
-        setItem("dc1","149.154.175.50" ,true);
-        setItem("dc2","149.154.167.51" ,true);
-        setItem("dc3","149.154.175.100",true);
-        setItem("dc4","149.154.167.91" ,true);
-        setItem("dc5","149.154.171.5"  ,true);
-
-        setItem("api-hash"  ,"6e7e20a046e44cb801dc1e8325233396",true);
-        setItem("api-id"    ,37516,true);
-
-        setItem("schema-layer",45,true);
-
-        setItem("tl-schema-provide","json");
-
 
     }
 
     public final String getDc(int dc){
-        return getItem("dc"+dc);
+        return new DbContext().getDataCenter(dc).getIp();
     }
 
-    public final void setDebugging(boolean d){
-        setItem("debug",d);
-    }
-
-    public final boolean debug(){
-        return getItem("debug");
+    public final ConfApi getApiConfiguration(){
+        return new DbContext().getApiDetails();
     }
 
 

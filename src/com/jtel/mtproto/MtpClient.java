@@ -18,11 +18,13 @@
 
 package com.jtel.mtproto;
 
+import com.jtel.common.db.ConfCurrentState;
+import com.jtel.common.db.DbContext;
 import com.jtel.common.io.FileStorage;
 import com.jtel.common.log.Colors;
 import com.jtel.common.log.Logger;
 
-import com.jtel.mtproto.auth.AuthCredentials;
+import com.jtel.common.db.ConfCredentials;
 import com.jtel.mtproto.auth.AuthFailedException;
 import com.jtel.mtproto.auth.AuthManager;
 
@@ -35,7 +37,7 @@ import com.jtel.mtproto.tl.*;
 
 import com.jtel.mtproto.transport.Transport;
 import com.jtel.mtproto.transport.TransportException;
-import com.sun.corba.se.impl.protocol.giopmsgheaders.Message;
+import com.sun.xml.internal.bind.v2.TODO;
 
 
 import java.io.ByteArrayInputStream;
@@ -87,11 +89,6 @@ public class MtpClient {
      */
     private Logger      console;
 
-    /**
-     * file layer to store state of application
-     * @see com.jtel.common.io.FileStorage
-     */
-    private FileStorage storage;
     
     /**
      *authenticates client for each dc
@@ -140,13 +137,10 @@ public class MtpClient {
      * save auth data for a dc
      * @param dc dc number
      * @param auth auth data to be saved
-     *             @see com.jtel.mtproto.auth.AuthCredentials
+     *             @see ConfCredentials
      */
-    protected void saveAuth(int dc, AuthCredentials auth) {
-        storage.setItem("auth_state",true);
-        storage.setItem("dcId",dc);
-        storage.setItem("dcId_"+dc+"_auth", auth);
-        storage.save();
+    protected void saveAuth(int dc, ConfCredentials auth) {
+        new DbContext().updateCredentials(auth);
     }
 
 
@@ -157,17 +151,10 @@ public class MtpClient {
      *         this means client has completed the authentication
      */
     protected boolean isAuthenticatedOnDc(int dc){
-        return storage.hasKey("dcId_"+dc+"_auth");
+        return new DbContext().getCredential(dc).getServerSalt() == new byte[0];
     }
 
 
-    /**
-     * setter
-     * @param storage storage object
-     */
-    public void setStorage(FileStorage storage) {
-        this.storage = storage;
-    }
 
     /**
      * setter
@@ -186,7 +173,7 @@ public class MtpClient {
      * @return true if client did authentication before
      */
     public  boolean isNetworkReady(){
-        return storage.getItem("auth_state") == null ? false : storage.getItem("auth_state") ;
+        return ! new DbContext().getCurrentState().isAuthenticationRequired(); //storage.getItem("auth_state") == null ? false : storage.getItem("auth_state") ;
     }
     
 
@@ -195,26 +182,18 @@ public class MtpClient {
      * @param currentDcID data center id
      */
     public void setDc(int currentDcID) {
-        console.log(TAG,"dcid changed to" , currentDcID);
-        storage.setItem("dcId",currentDcID);
-        storage.save();
+        ConfCurrentState state = new DbContext().getCurrentState();
+        state.setDcId(currentDcID);
+        new DbContext().updateApiState(state);
     }
 
-
-    /**
-     * getter
-     * @return get storage object
-      */
-    public FileStorage getStorage() {
-        return storage;
-    }
 
     /**
      *
      * @return getAuth current data center id
      */
     public int getDc() {
-        return storage.getItem("dcId") == null ? 1 :storage.getItem("dcId");
+        return new DbContext().getCurrentState().getDcId();
     }
 
 
@@ -223,28 +202,27 @@ public class MtpClient {
      * clear storage items
      */
     public void reset(){
-        storage.clear();
+        ////// TODO: 7/24/2016 fix this
     }
 
     /**
      * createSession client to start authenticate
-     * @param storage storage file
      * @param transport transport object
      * @throws MtpException
      */
-    public void createSession(FileStorage storage, Transport transport) throws MtpException{
-        createSession(storage,transport,false);
+    public void createSession( Transport transport) throws MtpException{
+        createSession(transport,false);
     }
 
     /**
      * 
-     * @param storage storage object
+
      * @param transport transport object
      * @param reset rest if (true) storage will be removed
      * @throws MtpException
      */
-    public void createSession(FileStorage storage, Transport transport, boolean reset) throws MtpException{
-        setStorage(storage);
+    public void createSession( Transport transport, boolean reset) throws MtpException{
+
         setTransport(transport);
         setAuthManager(new AuthManager(transport));
         if(reset){
@@ -259,7 +237,11 @@ public class MtpClient {
             }
            setDc(1);
         }
-        getStorage().setItem("session_id", Randoms.nextRandomBytes(8));
+
+
+        ConfCurrentState state = new DbContext().getCurrentState();
+        state.setSessionId(Randoms.nextRandomBytes(8));
+        new DbContext().updateApiState(state);
         initConnection();
 
     }
@@ -269,8 +251,8 @@ public class MtpClient {
      * @param dc data center id
      * @return auth_key and server_salt
      */
-    public AuthCredentials getAuth(int dc) {
-        return storage.getItem("dcId_"+dc+"_auth");
+    public ConfCredentials getAuth(int dc) {
+        return new DbContext().getCredential(dc);
     }
 
     /**
@@ -289,14 +271,13 @@ public class MtpClient {
 
 
     public boolean isUserSignedIn(){
-        Object v = getStorage().getItem("need_sign_in");
-        if(v==null) v= false;
-        return (boolean)v;
+       return ! new DbContext().getCurrentState().isSignInRequired();
     }
 
     public  void setSignIn(boolean t){
-        getStorage().setItem("need_sign_in",t);
-        getStorage().save();
+        ConfCurrentState state = new DbContext().getCurrentState();
+        state.setSignInRequired(false);
+        new DbContext().updateApiState(state);
     }
 
 
@@ -309,12 +290,12 @@ public class MtpClient {
      */
     public MessageHeaders createMessageHeaders(int dc,boolean contentRelated){
         MessageHeaders headers = new MessageHeaders();
-        AuthCredentials credentials = getAuth(dc);
+        ConfCredentials credentials = getAuth(dc);
         TimeManager.getInstance().setTimeDelta(credentials.getServerTime());
         headers.setAuthKey(credentials.getAuthKey());
         headers.setAuthKeyId(credentials.getAuthKeyId());
         headers.setServerSalt(credentials.getServerSalt());
-        headers.setSessionId(storage.getItem("session_id"));
+        headers.setSessionId(new DbContext().getCurrentState().getSessionId());
         headers.setSequenceId(TimeManager.getInstance().generateSeqNo(contentRelated));
         headers.setMessageId(TimeManager.getInstance().generateMessageId());
         return headers;
@@ -330,7 +311,8 @@ public class MtpClient {
         int currentDc = getDc();
         TlMessage message = new InitConnectionMessage(createMessageHeaders(currentDc,false));
         TlObject nearestDc =sendMessage(message);
-        TlMethod method = message.getContext();
+       // TlMethod method = message.getContext();
+        //console.log(method);
         console.log(Colors.CYAN,TAG,"","country="+nearestDc.get("country"),"dc="+nearestDc.get("nearest_dc"));
         setDc(nearestDc.get("nearest_dc"));
 
@@ -367,13 +349,13 @@ public class MtpClient {
     protected TlObject sendMessage(TlMessage message) throws MtpException{
         long t = System.currentTimeMillis();
         try {
-            console.log(Colors.PURPLE,"Client","request  >","(dc:"+getDc()+")",message.getContext().getName());
+            console.log(Colors.PURPLE,"requesting","(dc:"+getDc()+")",message.getContext().getName());
             byte[] msg = message.serialize();
             int currentDc = getDc();
             byte[] response = transport.send(currentDc, msg);
             message.deSerialize(new ByteArrayInputStream(response));
-            console.log(Colors.GREEN,"Server","< response",(System.currentTimeMillis()-t)/1000F+"s");
-            if(!(message instanceof AckMessage))sentQueue.push(message);
+            console.log(Colors.GREEN,"Done in ",(System.currentTimeMillis()-t)/1000F+"s");
+            /*if(!(message instanceof AckMessage))*/sentQueue.push(message);
         }
         catch (TransportException e){
             throw new MtpException(MtpStates.NETWORK_FAILED,  e.getMessage(),e);
@@ -388,50 +370,89 @@ public class MtpClient {
 
         }
 
-        TlObject ret =  processResponse(message.getHeaders().getMessageId(),message.getResponse().getObject().getName(),message.getResponse().getObject());
+        TlObject ret = new TlObject();
+        if( processResponse(message.getHeaders().getMessageId(),message.getResponse().getObject())){
+            ret = rpcResult;
+        }
         return ret;
     }
 
-    protected TlObject processResponse(long messageId,String predicate,TlObject response) throws MtpException{
-        //console.log(TAG,"processing message", messageId , predicate);
+    protected TlObject rpcResult;
+
+    static  final String MSG_UNKNOWN    = "unknown";
+    static  final String MSG_ID         = "msg_id";
+    static  final String MSG_CONTAINER  = "msg_container";
+    static  final String MESSAGES       = "messages";
+    static  final String MESSAGE       = "message";
+    static  final String MSG_ACK        = "msgs_ack";
+    static  final String MSG_IDS        = "msg_ids";
+    static  final String BAD_MSG_ID     = "bad_msg_id";
+    static  final String BAD_SERVER_SALT= "bad_server_salt";
+    static  final String NEW_SERVER_SALT= "new_server_salt";
+    static  final String RPC_RESULT     = "rpc_result";
+    static  final String RESULT         = "result";
+    static  final String BODY           = "body";
+    static  final String RPC_ERROR      = "rpc_error";
+    static  final String ERROR_MESSAGE  = "error_message";
+    static  final String ERROR_CODE     = "error_code";
+    static  final String FLOOD_WAIT     = "flood_wait";
+    static  final String FILE_MIGRATE  = "FILE_MIGRATE_";
+    static  final String PHONE_MIGRATE = "PHONE_MIGRATE_";
+    static  final String MSG_DETAILED_INFO = "msg_detailed_info";
+
+    protected boolean processResponse(long messageId,TlObject object) throws MtpException{
+
+        String   predicate = object.getName();
+     //   console.log("processing message", predicate,object.getParams());
+        boolean res = true;
         switch (predicate){
-            case "msg_container":
-                List<TlObject> messages = response.get("messages");
-               return handleMessageContainer(messages).get(messages.size()-1);
-            case "message":
-                TlObject body = response.get("body");
-                return processResponse(response.get("msg_id"),body.getName(),body);
-            case "bad_server_salt":
-                return handleBadServerSalt(getDc(),response.get("new_server_salt"));
-            case "msgs_ack":
-                List<Long> messageAck = response.get("msg_ids");
-                return handleMessageAck(messageAck);
+            case MSG_UNKNOWN:
+                throw new MtpException(MtpStates.MTP_UNKNOWN_FAILURE,"Object type is unknown.");
+            case MSG_CONTAINER:
+                List<TlObject> messages = object.get(MESSAGES);
+                for(TlObject message : messages){
+                 //  console.log(message);
+                   res = processResponse(message.get(MSG_ID),message);
+                }
+              break;
+            case MSG_ACK:
+                List<Long> messageAck = object.get(MSG_IDS);
+                res = handleMessageAck(messageAck);
+                break;
+            case BAD_SERVER_SALT:
+                res = handleBadServerSalt(getDc(),object.get(NEW_SERVER_SALT));
+                break;
+            case MESSAGE:
+                TlObject body = object.get(BODY);
+                res = processResponse(messageId,body);
+                break;
+            case RPC_RESULT:
+                res = handleRpc(messageId,object);
+                break;
+//            case MSG_DETAILED_INFO:
+//                long answer = object.get("answer_msg_id");
+//                res = handleMessageAck(Arrays.<Long>asList(answer));
 
-            case "rpc_result":
-                return handleRpc(messageId,response);
         }
-        return response;
+       // console.log("IDLE");
+        return res;
     }
 
-    protected List<TlObject> handleMessageContainer(List<TlObject> messages) throws MtpException{
-        List<TlObject> responses = new ArrayList<>();
-        for(int i=0;i<messages.size();i++){
-            responses.add(  processResponse(messages.get(i).get("msg_id"),messages.get(i).getName(),messages.get(i)));
-        }
-        return responses;
-    }
-
-    protected TlObject handleBadServerSalt(int dc, long salt) throws MtpException{
-        AuthCredentials credentials = getAuth(dc);
+    protected boolean handleBadServerSalt(int dc, long salt) throws MtpException{
+        console.log("BAD_SERVER_SALT " + salt);
+        ConfCredentials credentials = getAuth(dc);
         credentials.setServerSalt(salt);
         saveAuth(dc, credentials);
+        console.table(credentials.getServerSalt(),"salt");
         TlMessage lastMessage = sentQueue.getTop();
+
         lastMessage.getHeaders().setServerSalt(credentials.getServerSalt());
         TlObject resend = sendMessage(lastMessage);
-        return processResponse(lastMessage.getHeaders().getMessageId(),resend.getName(),resend);
+
+        return processResponse(lastMessage.getHeaders().getMessageId(),resend);
     }
 
-    protected TlObject handleMessageAck(List<Long> messageIds) throws MtpException{
+    protected boolean handleMessageAck(List<Long> messageIds) throws MtpException{
         TlMessage ack;
         try {
              ack = new AckMessage(createMessageHeaders(getDc(), false), new ArrayList<Long>(messageIds));
@@ -442,34 +463,35 @@ public class MtpClient {
             throw  new MtpException(MtpStates.NETWORK_FAILED,"could not send ack messages.",e);
         }
             TlObject res = sendMessage(ack);
-            return processResponse(ack.getHeaders().getMessageId(),res.getName(),res);
+            return processResponse(ack.getHeaders().getMessageId(),res);
     }
 
-    protected TlObject handleRpc(long messageId,TlObject rpc) throws MtpException{
+    protected boolean handleRpc(long messageId,TlObject rpc) throws MtpException{
 
-        TlObject rpcResult = rpc.get("result");
+        TlObject tempResult = rpc.get(RESULT);
 
-        if(rpcResult.getName().equals("rpc_error")){
-            String   error =rpcResult.get("error_message");;
-            switch ((int)rpcResult.get("error_code")){
+        if(tempResult.getName().equals(RPC_ERROR)){
+            String   error = tempResult.get(ERROR_MESSAGE);
+       //     Dialogs.showError(error);
+            switch ((int) tempResult.get(ERROR_CODE)){
                 case 303:
                     String pattern = "/(\\w+_)(\\d+)/g";
                     Pattern r = Pattern.compile(pattern);
                     Matcher matcher = r.matcher(error);
                     String type = matcher.group(0);
                     int value   = Integer.parseInt(matcher.group(2));
-                    if(type.equals("FILE_MIGRATE_") || type.equals("PHONE_MIGRATE_")){
+                    if(type.equals(FILE_MIGRATE) || type.equals(PHONE_MIGRATE)){
                         console.error(error);
                         setDc(value);
                         TlMessage message = sentQueue.poll();
-                        return sendMessage(message);
+                       return processResponse(message.getHeaders().getMessageId(),sendMessage(message));
                     }
                     break;
                 case 420:
                     int X =Integer.parseInt(error.substring(error.lastIndexOf("_")+1));
                     String tag = error.substring(0,error.lastIndexOf("_"));
                     switch (tag){
-                        case "FLOOD_WAIT":
+                        case FLOOD_WAIT:
                             console.error(TAG,"\\",tag,"\\");
                             console.error(TAG,"you have to wait about " +Math.floor( X/60 )+" minutes.");
                             break;
@@ -482,10 +504,12 @@ public class MtpClient {
 
         }
 
-        return rpcResult;
+        rpcResult = tempResult;
+        return true;
+
     }
 
-    protected TlObject sendLongPoll(){
+    public TlObject sendLongPoll(){
         console.log(TAG,"Long poll sent.");
         try{
             return invokeApiCall(new TlMethod("http_wait").put("max_delay",500).put("wait_after",500).put("max_wait",25000));

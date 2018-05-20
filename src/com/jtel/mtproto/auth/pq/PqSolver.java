@@ -122,7 +122,7 @@ public class PqSolver {
         pq.p = p.toByteArray();
         pq.q = q.toByteArray();
 
-        if(ConfStorage.getInstance().debug()) console.log("Pq solved ","Finished in " + ( System.currentTimeMillis() - time )/1000f + " s" ,pqInt.toString(), "=",p.toString()," x ",q.toString());
+//        if(ConfStorage.getInstance().debug()) console.log("Pq solved ","Finished in " + ( System.currentTimeMillis() - time )/1000f + " s" ,pqInt.toString(), "=",p.toString()," x ",q.toString());
         return pq;
     }
 }

@@ -8,40 +8,19 @@ Java Telegram API Client.
 
 <h3>Usage</h3>
 
-         String phone_number = "989118836748";
-        int    sms_type     = 0;
-        int    api_id       = ConfStorage.getInstance().getItem("api-id");
-        String api_hash     = ConfStorage.getInstance().getItem("api-hash");
-        String lang_code    = "en";
+        try {
+           TelegramApi api = TelegramApi.getInstance();
+           
+           String phone_number= "xxxxxxxxx"
+           String phone_code_hash;  
+           String phone_code = ""; // code from telegram (sms) 
+           int sms_type = 0;
+           String lang_code = 'en';
+           TlObject sentCode  = api.sendCode(phone_number, sms_type, lang_code);
+           phone_code_hash = sentCode.get("phone_code_hash");
+           TlObject authorization  = api.auth.signIn(phone_number,sentCode("phone_code_hash"),phone_code);
 
-
-        TlObject sentCode = engine.invokeApiCall(
-                new TlMethod("auth.sendCode")
-                        .put("phone_number" ,phone_number)
-                        .put("sms_type"     ,sms_type    )
-                        .put("api_id"       ,api_id      )
-                        .put("api_hash"     ,api_hash    )
-                        .put("lang_code"    ,lang_code   )
-        );
-
-        if(sentCode.getPredicate().equals("rpc_error")) {
-            return;
+        }catch (Exception e){
+            //exception
         }
-        console.log("sms sent",sentCode);
-        console.log("enter code");
-
-        Scanner scanner = new Scanner(System.in);
-
-        String phone_code_hash = sentCode.get("phone_code_hash");
-        String phone_code      = scanner.next();
-
-        TlObject auth = engine.invokeApiCall(
-                new TlMethod("auth.signIn")
-                        .put("phone_number"     ,phone_number)
-                        .put("phone_code_hash"  ,phone_code_hash)
-                        .put("phone_code",phone_code)
-        );
-
-        console.log("signIn done",auth);
-        engine.saveSignIn(auth);
 

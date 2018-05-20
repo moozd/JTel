@@ -25,7 +25,10 @@ import com.jtel.common.log.Logger;
 import com.jtel.mtproto.MtpClient;
 import com.jtel.mtproto.MtpException;
 
+import com.jtel.mtproto.storage.MtpFileStorage;
+import com.jtel.mtproto.tl.Tl;
 import com.jtel.mtproto.tl.TlObject;
+import com.jtel.mtproto.transport.HttpTransport;
 import com.jtel.mtproto.transport.Transport;
 
 import java.io.IOException;
@@ -57,13 +60,24 @@ public class TelegramApi {
     private MtpClient   mtpClient;
     Logger console = Logger.getInstance();
 
-    public TelegramApi(FileStorage storage, Transport transport)  throws MtpException{
+    public static  TelegramApi ins;
+    public static TelegramApi getInstance() throws MtpException {
+        if (ins == null) {
+            ins = new TelegramApi(new HttpTransport());
+        }
+        return ins;
+    }
 
-        this.mtpFileStorage = storage;
+    public TlObject longPull(){
+       return MtpClient.getInstance().sendLongPoll();
+    }
+
+    private TelegramApi( Transport transport)  throws MtpException{
+
         this.mtpTransport   = transport;
         //MtpClient configuration
         this.mtpClient = MtpClient.getInstance();
-        mtpClient.createSession(storage,transport);
+        mtpClient.createSession(transport);
 
         //loading methods
         this.account  = new Account();
@@ -77,23 +91,9 @@ public class TelegramApi {
         this.users    = new Users();
 
 
-        if(isUserOn()){
-            TlObject terms   = null;
-            try {
-
-                    terms = help.getTermsOfService("en");
-                    if(terms != null){
-                        System.out.println(Colors.YELLOW+"Terms Of Service");
-                        System.out.println(Colors.BLUE +terms.get("text").toString() + Colors.RESET);
-
-                }
-            }catch (Exception e){
-                //pass
-            }
-
-
-        }
    }
+
+
 
     public FileStorage getFileStorage() {
         return mtpFileStorage;
@@ -105,7 +105,7 @@ public class TelegramApi {
 
     public void removeSession() throws MtpException{
         auth.logOut();
-        mtpClient.createSession(mtpFileStorage,mtpTransport,true);
+        mtpClient.createSession(mtpTransport,true);
         mtpClient.setSignIn(false);
     }
 
@@ -120,7 +120,7 @@ public class TelegramApi {
     protected void exportAuthToAll() throws MtpException{
         for(int i=1;i<6;i++){
             TlObject exported = auth.exportAuthorization(1);
-            auth.importAuthorization(exported.get("id"),exported.get("bytes"));
+            if(exported != null)  auth.importAuthorization(exported.get("id"),exported.get("bytes"));
         }
     }
 
@@ -1446,12 +1446,12 @@ public class TelegramApi {
         public  TlObject getHistory ( TlObject peer, int offset_id, int add_offset, int limit, int max_id, int min_id) throws MtpException {
             return generate(
 
-                    new Pair("peer", peer),
-                    new Pair("offset_id", offset_id),
-                    new Pair("add_offset", add_offset),
-                    new Pair("limit", limit),
-                    new Pair("max_id", max_id),
-                    new Pair("min_id", min_id)
+                    new Pair("peer",(TlObject) peer),
+                    new Pair("offset_id", (int)offset_id),
+                    new Pair("add_offset", (int)add_offset),
+                    new Pair("limit", (int)limit),
+                    new Pair("max_id", (int)max_id),
+                    new Pair("min_id", (int)min_id)
             );
         }
 

@@ -188,7 +188,7 @@ public class TlObject implements Tl {
 
     @Override
     public String toString() {
-        return String.format("%s#%s (flags:%s,%s) %s", predicate,Integer.toHexString(id),getFlags() ,getpFlags(),params.toString());
+        return String.format("%s#%s (flags:%s,%s) %s", predicate,Integer.toHexString(id),getFlags() ,getpFlags(),params);
     }
 
 }

@@ -34,6 +34,7 @@
 
 package com.jtel.mtproto.auth;
 
+import com.jtel.common.db.ConfCredentials;
 import com.jtel.common.log.Logger;
 import com.jtel.mtproto.message.MessageHeaders;
 import com.jtel.mtproto.message.TlMessage;
@@ -97,7 +98,7 @@ public final class AuthManager {
      * @throws AuthFailedException if network fails or if invalid parameter is supplied
      */
 
-    public AuthCredentials authenticate(int dcid) throws AuthFailedException{
+    public ConfCredentials authenticate(int dcid) throws AuthFailedException{
         try {
             return authAttempt(dcid);
         }
@@ -148,7 +149,7 @@ public final class AuthManager {
      * @throws IOException if network fails
      * @throws InvalidTlParamException if invalid parameter is supplied
      */
-    protected AuthCredentials authAttempt(int dcid) throws IOException,InvalidTlParamException{
+    protected ConfCredentials authAttempt(int dcid) throws IOException,InvalidTlParamException{
 
         console.log(TAG,"authenticating on dc" ,"["+dcid+"]");
         long started = System.currentTimeMillis();
@@ -325,20 +326,20 @@ public final class AuthManager {
                     console.warn(TAG,"new_nonce_hash1" , "failed");
                     console.table(new_nonce_hash_1,"client");
                     console.table(set_client_DH_params.get("new_nonce_hash1"),"server");
-                    return new AuthCredentials();
+                    return new ConfCredentials();
                 }
 
                 //server_salt is bytesXor of first eight byte of new_nonce and first eight byte of server_nonce
                 byte[] server_salt = bytesXor(subArray(new_nonce,0,8),subArray(server_nonce,0,8));
                 long finished = System.currentTimeMillis();
                 console.log(TAG,"Done.", (finished -started)/1000F ,"s");
-                if(conf.debug()) {
-                    //printing hex table of server salt and auth_key
-                    console.table(server_salt, "server_salt");
-                    console.table(auth_key, "auth_key");
-                }
+//                if(conf.debug()) {
+//                    //printing hex table of server salt and auth_key
+//                    console.table(server_salt, "server_salt");
+//                    console.table(auth_key, "auth_key");
+//                }
                 //saving auth_key and server_salt for this data center id
-               return  new AuthCredentials(dcid,auth_key,server_salt,server_time,auth_key_id);
+               return  new ConfCredentials(dcid,auth_key,server_salt,server_time,auth_key_id);
             case "dh_gen_retry":
                 if(!bytesCmp(new_nonce_hash_2,set_client_DH_params.get("new_nonce_hash2"))){
                     console.warn("new_nonce_hash2" , "failed");
@@ -351,7 +352,7 @@ public final class AuthManager {
             break;
         }
 
-        return new AuthCredentials();
+        return new ConfCredentials();
     }
 
 

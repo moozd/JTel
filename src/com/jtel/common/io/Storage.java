@@ -35,10 +35,6 @@
 package com.jtel.common.io;
 
 
-import com.jtel.mtproto.auth.AuthCredentials;
-import com.sun.org.apache.xpath.internal.operations.Bool;
-
-import java.io.File;
 import java.io.Serializable;
 import java.util.HashMap;
 

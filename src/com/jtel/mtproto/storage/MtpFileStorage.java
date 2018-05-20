@@ -53,7 +53,7 @@ package com.jtel.mtproto.storage;
 
 import com.jtel.common.io.FileStorage;
 import com.jtel.common.io.Storage;
-import com.jtel.mtproto.auth.AuthCredentials;
+import com.jtel.common.db.ConfCredentials;
 import com.jtel.mtproto.secure.TimeManager;
 import com.jtel.mtproto.tl.TlObject;
 
@@ -85,11 +85,11 @@ public class MtpFileStorage extends FileStorage implements Serializable {
         setItem("user_info",new TlObject());
         setItem("dcId", 1);
         setItem("session_id", TimeManager.getInstance().getSessionId());
-        setItem("dcId_1_auth", new AuthCredentials());
-        setItem("dcId_2_auth", new AuthCredentials());
-        setItem("dcId_3_auth", new AuthCredentials());
-        setItem("dcId_4_auth", new AuthCredentials());
-        setItem("dcId_5_auth", new AuthCredentials());
+        setItem("dcId_1_auth", new ConfCredentials());
+        setItem("dcId_2_auth", new ConfCredentials());
+        setItem("dcId_3_auth", new ConfCredentials());
+        setItem("dcId_4_auth", new ConfCredentials());
+        setItem("dcId_5_auth", new ConfCredentials());
     }
 
     @Override

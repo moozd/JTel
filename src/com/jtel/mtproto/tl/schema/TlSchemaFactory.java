@@ -30,7 +30,7 @@ import com.jtel.mtproto.storage.ConfStorage;
 
 public final class TlSchemaFactory {
 
-    public static String defaultProvider =  ConfStorage.getInstance().getItem("tl-schema-provide");
+    public static String defaultProvider =  ConfStorage.getInstance().getApiConfiguration().getApiTlSchemaProvider();
 
 
     public static TlSchemaProvider createDefault(){

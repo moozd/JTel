@@ -23,9 +23,7 @@ import com.jtel.mtproto.tl.InvalidTlParamException;
 import com.jtel.mtproto.tl.Streams;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.util.zip.CRC32;
 
 /**
  * This file is part of JTel
@@ -38,29 +36,70 @@ import java.util.zip.CRC32;
 
 public class TcpTransport extends Transport {
     Socket socket;
+    byte[] outPut;
     static boolean created = false;
     @Override
     protected void createConnection(int dcId) throws IOException {
-        if(!created) {
-            this.socket = new Socket();
-            this.socket.connect(new InetSocketAddress(ConfStorage.getInstance().getDc(dcId), 443));
+       if(!created) {
+            this.socket = new Socket(ConfStorage.getInstance().getDc(dcId),443);
+         //   this.socket.connect();
             this.socket.setKeepAlive(true);
             this.socket.setTcpNoDelay(true);
-          //  socket.getOutputStream().write(0xef);
+           socket.getOutputStream().write(0xef);
             created=true;
-        }
+      }
     }
 
     @Override
     protected byte[] onSend(byte[] message) throws IOException, InvalidTlParamException {
-        socket.getOutputStream().write(message);
-        CRC32 crc32 = new CRC32();
-        crc32.reset();
-        crc32.update(message);
-        Streams.writeInt(socket.getOutputStream(),(int) (crc32.getValue() & 0xFFFFFFFF),"crc");
-      //  socket.getOutputStream().flush();
+
+       Thread sender = new Thread(()->{
+           try {
+               console.log("writing ",message.length + "bytes" );
+               socket.getOutputStream().write(message.length +15);
+               Streams.writeInt(socket.getOutputStream(),message.length+12,"");
+               Streams.writeInt(socket.getOutputStream(),0,"");
+               socket.getOutputStream().write(message);
+               socket.getOutputStream().flush();
+           }catch (Exception e){
+               console.error(e.getMessage());
+           }
+       });
+
+       Thread receiver = new Thread(()->{
+           try {
+               console.log("reading ",message.length + "bytes" );
+               outPut = Utils.toByteArray(socket.getInputStream());
+           }catch (Exception e){
+               console.error(e.getMessage());
+           }
+
+       });
+//
+//        CRC32 crc32 = new CRC32();
+//        crc32.reset();
+//        crc32.update(message);
+      //  Streams.writeInt(socket.getOutputStream(),(int) (crc32.getValue()),"crc");
+      //   socket.getOutputStream().flush();
        // socket.getOutputStream().close();
+        sender.start();
+        try {
+            sender.join();
+        }catch (Exception e){
+
+        }
+        receiver.start();
+        try {
+            receiver.join();
+        }catch (Exception e){
+            console.error(e.getMessage());
+        }
         errorCode = 200;
-        return Utils.toByteArray(socket.getInputStream());
+     //   new Thread(()->{console.log(1);}).start();
+      //  Thread.yield();
+      //  socket.getInputStream();
+        return outPut ;
     }
+
+
 }

@@ -2,7 +2,7 @@ package com.jtel.mtproto.secure;
 
 import com.jtel.common.log.Logger;
 import com.jtel.mtproto.MtpClient;
-import com.jtel.mtproto.auth.AuthCredentials;
+import com.jtel.common.db.ConfCredentials;
 import com.jtel.mtproto.secure.aes.AESFastEngine;
 import com.jtel.mtproto.secure.aes.KeyParameter;
 
@@ -224,6 +224,7 @@ public class Utils {
 
     public static byte[] toByteArray(InputStream in) throws IOException{
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        Thread.yield();
         int next = in.read();
         while (next > -1) {
             bos.write(next);
@@ -235,7 +236,7 @@ public class Utils {
 
     public  static void printDc(MtpClient engine, int dc){
 
-        AuthCredentials credentials = engine.getAuth(dc);
+        ConfCredentials credentials = engine.getAuth(dc);
         Logger.getInstance().log("dc "+dc+" credentials");
         Logger.getInstance().log("server_time",credentials.getServerTime());
         Logger.getInstance().table(credentials.getAuthKeyId() ,"auth_key_id");

@@ -69,7 +69,7 @@ public class InitConnectionMessage extends EncryptedMessage {
             invokeWithLayer.put("layer", conf.getItem("schema-layer"));
             TlMethod initConnection = new TlMethod("initConnection");
             initConnection.put("api_id", conf.getItem("api-id"));
-            initConnection.put("device_model","Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/45.0.2454.101 Chrome/45.0.2454.101 Safari/537.36");
+            initConnection.put("device_model","JTel author: Mohammad Mohammad Zade ");
             initConnection.put("system_version","Linux x86_64");
             initConnection.put("app_version","0.0.3");
             initConnection.put("lang_code","en-US");
