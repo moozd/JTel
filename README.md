@@ -1,9 +1,9 @@
 #  JTel
 ## Java Telegram API Client.
 
-## MTProto implementation 
-## Tl language support to serialize and deserialize objects from known types to tl and vice versa.
-## Aes ige and pq resolver implementation belongs to ex3ndr.
+> MTProto implementation 
+> Tl language support to serialize and deserialize objects from known types to tl and vice versa.
+> Aes ige and pq resolver implementation belongs to ex3ndr.
 
 # Usage
 ```java
