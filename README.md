@@ -1,5 +1,4 @@
-#  JTel
-## Java Telegram API Client.
+#  JTel (Java Telegram API Client)
 
 > MTProto implementation 
 > Tl language support to serialize and deserialize objects from known types to tl and vice versa.
